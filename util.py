@@ -4,5 +4,5 @@ def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
 def psf_sample_to_pupil_sample(psf_sample, num_samples, wavelength, efl):
     return (psf_sample * num_samples) / (wavelength * efl * 1e3)
 
-def correct_gamma(img):
-  return img**(1/2.2)
+def correct_gamma(img, encoding=2.2):
+  return img**(1/encoding)
