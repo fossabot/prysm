@@ -7,8 +7,8 @@ from numpy import power as npow
 from numpy import floor
 from matplotlib import pyplot as plt
 
-from util import pupil_sample_to_psf_sample, correct_gamma
-from fttools import pad2d
+from code6.util import pupil_sample_to_psf_sample, correct_gamma
+from code6.fttools import pad2d
 
 class PSF(object):
     def __init__(self, data, samples, sample_spacing):

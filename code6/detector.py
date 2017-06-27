@@ -2,7 +2,6 @@
 Basic detector interface
 '''
 import numpy as np
-from pillow import PIL
 
 px_size_default = 5                    # um
 resolution_default = (1024, 1024)      # px * px
@@ -34,8 +33,7 @@ class Detector(object):
         output_image += self.noise['bias']
 
         # add the dark current
-        output_image += (np.random.random(self.resolution, self.resolution) * self.noise['dark']*ts)
-                      + self.noise['dsnu']
+        output_image += (np.random.random(self.resolution, self.resolution) * self.noise['dark']*ts) + self.noise['dsnu']
 
         # add the read noise
         output_image += np.random.random((self.resolution, self.resolution)) * self.noise['read']

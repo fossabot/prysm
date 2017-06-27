@@ -5,15 +5,15 @@ import numpy as np
 from numpy import arctan2, exp, floor, nan, sqrt, pi
 from numpy import power as npow
 from numpy.fft import fft2, fftshift, ifftshift
-from fttools import pad2d
 from matplotlib import pyplot as plt
 
-from util import pupil_sample_to_psf_sample, psf_sample_to_pupil_sample
-from lens import Lens
-from fringezernike import FringeZernike
-from simulation import Simulation
-from psf import PSF
-from otf import MTF
+from code6.lens import Lens
+from code6.fringezernike import FringeZernike
+from code6.simulation import Simulation
+from code6.psf import PSF
+from code6.otf import MTF
+from code6.fttools import pad2d
+from code6.util import pupil_sample_to_psf_sample, psf_sample_to_pupil_sample
 
 class Engine(object):
     def __init__(self, parameters=Simulation(), lens=Lens(), pupil=FringeZernike()):

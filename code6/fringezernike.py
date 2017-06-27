@@ -6,7 +6,7 @@ import numpy as np
 from numpy import arctan2, exp, cos, sin, pi, sqrt, nan
 from numpy import power as npow
 
-from pupil import Pupil
+from code6.pupil import Pupil
 
 _names = [
         'Z0  - Piston / Bias',

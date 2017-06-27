@@ -7,7 +7,7 @@ from numpy.fft import fft2, fftshift, ifftshift
 
 from matplotlib import pyplot as plt
 
-from util import correct_gamma
+from code6.util import correct_gamma
 
 class MTF(object):
     def __init__(self, data, unit):
