@@ -7,7 +7,7 @@ from numpy import power as npow
 from numpy import floor
 from matplotlib import pyplot as plt
 
-from util import pupil_sample_to_psf_sample
+from util import pupil_sample_to_psf_sample, correct_gamma
 from fttools import pad2d
 
 class PSF(object):
@@ -48,7 +48,7 @@ class PSF(object):
             label_str = 'Normalized Intensity [dB]'
             lims = (-100, 0) # show first 100dB -- range from (1e-6, 1) in linear scale
         else:
-            fcn = self.data
+            fcn = correct_gamma(self.data)
             label_str = 'Normalized Intensity [a.u.]'
             lims = (0, 1)
 

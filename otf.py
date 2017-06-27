@@ -7,6 +7,8 @@ from numpy.fft import fft2, fftshift, ifftshift
 
 from matplotlib import pyplot as plt
 
+from util import correct_gamma
+
 class MTF(object):
     def __init__(self, data, unit):
         # dump inputs into class instance
@@ -41,7 +43,7 @@ class MTF(object):
             label_str = 'MTF [dB]'
             lims = (-120, 0)
         else:
-            fcn = self.data
+            fcn = correct_gamma(self.data)
             label_str = 'MTF [Rel 1.0]'
             lims = (0, 1)
 
