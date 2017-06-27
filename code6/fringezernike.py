@@ -208,6 +208,23 @@ class FringeZernike(Pupil):
         self.fcn = exp(1j * 2 * pi / wavelength * self.phase)
         return self.phase, self.fcn
 
+    def __repr__(self):
+        interleaved = zip(self.coefs, _names)
+        if self.normalize is True:
+            header = 'rms normalized Fringe Zernike description with:\n\t'
+        else:
+            header = 'Fringe Zernike description with:\n\t'
+
+        body = '\n\t'.join(map(str, map(str, interleaved)))
+
+        if not self.computed:
+            footer_attach = ' (not built)'
+        else:
+            footer_attach = ''
+
+        footer = f'\n\t{self.PV}PV, {self.rms}RMS{footer_attach}'
+        return f'{header}{body}{footer}'
+
 def fit(data, num_terms=36, normalize=False):
     '''
     fits a number of zernike coefficients to provided data by minimizing the root sum square
@@ -221,6 +238,9 @@ def fit(data, num_terms=36, normalize=False):
     xv, yv = np.meshgrid(x,y)
     rho = sqrt(npow(xv,2), npow(yv,2))
     phi = arctan2(yv, xv)
+
+    # enforce circularity of the pupil
+    data[rho > 1] = 0
 
     coefficients = []
     for i in range(num_terms):

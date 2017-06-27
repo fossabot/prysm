@@ -14,8 +14,10 @@ class Pupil(object):
         self.rho  = self.phi  = empty((samples, samples))
         self.center           = int(floor(samples/2))
         self.computed         = False
+        self.rms              = 0
+        self.PV               = 0
 
-    # quick-access slices ------------------------------------------------------
+    # quick-access slices, properties ------------------------------------------
 
     @property
     def slice_x(self):
@@ -31,7 +33,7 @@ class Pupil(object):
         '''
         return self.unit, self.phase[:, self.center]
 
-    # quick-access slices ------------------------------------------------------
+    # quick-access slices, properties ------------------------------------------
 
     # plotting -----------------------------------------------------------------
 
@@ -60,6 +62,7 @@ class Pupil(object):
         return fig, ax
 
     # meat 'n potatoes ---------------------------------------------------------
+
     def build(self, wavelength=0.5):
         '''
         Constructs a numerical model of an exit pupil.  The method should be overloaded

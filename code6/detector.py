@@ -5,7 +5,7 @@ import numpy as np
 from pillow import PIL
 
 px_size_default = 5                    # um
-resolution_default = (1024,1024)       # px * px
+resolution_default = (1024, 1024)      # px * px
 noise_default = dict(read=5,           # e-
     bias=200,                          # DN
     dark=0.2,                          # e-/s
@@ -34,10 +34,11 @@ class Detector(object):
         output_image += self.noise['bias']
 
         # add the dark current
-        output_image += (self.noise['dark']*ts) + self.noise['dsnu']
+        output_image += (np.random.random(self.resolution, self.resolution) * self.noise['dark']*ts)
+                      + self.noise['dsnu']
 
         # add the read noise
-        output_image += np.random.rand((self.resolution, self.resolution)) * self.noise['read']
+        output_image += np.random.random((self.resolution, self.resolution)) * self.noise['read']
 
         # add the signal
         spectral_content = np.dot(self.light['qe'], truth_wavelengths[:,:,2])
