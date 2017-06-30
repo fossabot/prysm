@@ -165,18 +165,21 @@ class FringeZernike(Pupil):
         else:
             self.coefs = [0] * 36
 
+        pass_args = {}
         if kwargs is not None:
             for key, value in kwargs.items():
-                if key[0].lower() is 'z':
+                if key[0].lower() == 'z':
                     idx = int(key[1:]) # strip 'Z' from index
                     self.coefs[idx] = value
+                else:
+                    pass_args[key] = value
 
         if 'rms_norm' in kwargs:
             self.normalize = bool(kwargs['rms_norm'])
         else:
             self.normalize = False
-        
-        super().__init__(**kwargs)
+
+        super().__init__(**pass_args)
 
     def build(self, wavelength=0.5):
         # construct an equation for the phase of the pupil
