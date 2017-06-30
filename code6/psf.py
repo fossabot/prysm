@@ -94,7 +94,7 @@ class PSF(object):
     # plotting -----------------------------------------------------------------
     
     @staticmethod
-    def from_pupil(pupil, wavelength, efl, padding):
+    def from_pupil(pupil, wavelength, efl, padding=1):
         '''
         Uses fresnel diffraction to propogate a pupil and compute a point spread function
         '''
