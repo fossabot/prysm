@@ -1,11 +1,11 @@
 '''
 A base pupil interface for different aberration models.
 '''
-from numpy import nan, pi, arctan2, floor, sqrt, exp, empty, ones, linspace, meshgrid
+from numpy import nan, pi, arctan2, cos, floor, sqrt, exp, empty, ones, linspace, meshgrid
 from matplotlib import pyplot as plt
 
 class Pupil(object):
-    def __init__(self, samples=512, epd=1):
+    def __init__(self, samples=128, epd=1, autobuild=True, wavelength=0.5):
         self.samples          = samples
         self.phase = self.fcn = empty((samples, samples))
         self.unit             = linspace(-epd/2, epd/2, samples)
@@ -16,6 +16,10 @@ class Pupil(object):
         self.computed         = False
         self.rms              = 0
         self.PV               = 0
+
+        if autobuild:
+            self.build(wavelength)
+            self.clip()
 
     # quick-access slices, properties ------------------------------------------
 
@@ -51,13 +55,26 @@ class Pupil(object):
 
     def plot_slice_xy(self, opd_unit='$\lambda$'):
         fig, ax = plt.subplots()
-        u, x = self.pupil_slice_x
-        _, y = self.pupil_slice_y
+        u, x = self.slice_x
+        _, y = self.slice_y
         ax.plot(u, x, lw=3, label='Slice X')
         ax.plot(u, y, lw=3, label='Slice Y')
         ax.set(xlabel=r'Pupil $\rho$ [mm]',
                ylabel=f'OPD [{opd_unit}]')
         plt.legend()
+        plt.show()
+        return fig, ax
+
+    def interferogram(self, visibility=1):
+        fig, ax = plt.subplots()
+        plotdata = (0.5 + 0.5 * visibility * cos(2 * pi * self.phase))
+        ax.imshow(plotdata,
+                  extent=[-1, 1, -1, 1],
+                  cmap='Greys_r',
+                  interpolation='bicubic',
+                  clim=(0,1))
+        ax.set(xlabel='Normalized Pupil X [a.u.]',
+               ylabel='Normalized Pupil Y [a.u.]')
         plt.show()
         return fig, ax
 
