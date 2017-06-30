@@ -84,3 +84,13 @@ class MTF(object):
         f_s = int(floor(psf.samples / 2))
         unit = 1 / (psf.sample_spacing / 1e3) * range(-f_s, f_s) / psf.samples
         return MTF(dat/dat[f_s,f_s], unit)
+
+def diffraction_limited_mtf(fno=1, wavelength=0.5, num_pts=128):
+    '''
+    Gives the diffraction limited MTF for a circular pupil and the given parameters.
+    f/# is unitless, wavelength is in microns, num_pts is length of the output array
+    '''
+    normalized_frequency = np.linspace(0, 1, num_pts)
+    extinction = 1/(wavelength/1000*fno)
+    mtf = (2/np.pi)*(np.arccos(normalized_frequency) - normalized_frequency * np.sqrt(1 - normalized_frequency**2))
+    return normalized_frequency*extinction, mtf
