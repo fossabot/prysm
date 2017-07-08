@@ -5,10 +5,14 @@ import numpy as np
 from numpy.fft import fft2, fftshift, ifftshift
 from numpy import power as npow
 from numpy import floor
+
+from scipy import interpolate
+
 from matplotlib import pyplot as plt
 
 from code6.util import pupil_sample_to_psf_sample, correct_gamma
-from code6.fttools import pad2d
+from code6.fttools import pad2d, matrix_dft
+from code6.coordinates import cart_to_polar, polar_to_cart
 
 class PSF(object):
     def __init__(self, data, samples, sample_spacing):
@@ -38,11 +42,54 @@ class PSF(object):
         '''
         return self.unit, self.data[:, self.center]
 
+    
+    def encircled_energy(self, azimuth=None):
+        '''
+        returns the encircled energy at the requested azumith.  If azimuth is None, returns the
+        azimuthal average
+        '''
+
+        # 1 - create a set of polar coordinates to interpolate onto
+        xmin, xmax = self.unit[0], self.unit[-1]
+        num_pts = len(self.unit)
+        center = int(np.floor(num_pts/2))
+        rho = np.linspace(xmin, xmax, num_pts)
+        phi = np.linspace(0, 2*np.pi, num_pts)
+        rv, pv = np.meshgrid(rho, phi)
+
+        # 2 - map them to x, y and make a grid for the original samples
+        xv, yv = polar_to_cart(rv, pv)
+        u, v = self.unit, self.unit #np.flip(self.unit, axis=0)
+        x, y = np.meshgrid(u, v)
+
+        # 3 - interpolate the function onto the new points
+        f = interpolate.RegularGridInterpolator((u, v), self.data)
+        interp_dat = f((xv, yv), method='linear')
+
+        # 4 - fold the array in half and average
+        left_chunk = interp_dat[:, :center]
+        right_chunk = interp_dat[:, center:]
+        folded_array = np.concatenate((right_chunk[:, :, np.newaxis],
+                                       np.flip(np.flip(left_chunk, axis=1), axis=0)[:, :, np.newaxis]),
+                                      axis=2)
+        avg_fold = np.average(folded_array, axis=2)
+
+        if azimuth is None:
+            # take average of all azimuths as input data
+            dat = np.average(avg_fold, axis=0)
+        else:
+            index = np.searchsorted(phi, np.radians(azimuth))
+            dat = avg_fold[index, :]
+        
+        enc_eng = np.cumsum(dat)
+        enc_eng /= enc_eng[-1]
+        return self.unit[self.center:], enc_eng
+
     # quick-access slices ------------------------------------------------------
 
     # plotting -----------------------------------------------------------------
 
-    def plot2d(self, log=False):
+    def plot2d(self, log=False, axlim=25):
         if log:
             fcn = 20 * np.log10(1e-100 + self.data)
             label_str = 'Normalized Intensity [dB]'
@@ -63,8 +110,8 @@ class PSF(object):
         fig.colorbar(im, label=label_str)
         ax.set(xlabel=r'Image Plane X [$\mu m$]',
                ylabel=r'Image Plane Y [$\mu m$]',
-               xlim=(-10,10),
-               ylim=(-10,10))
+               xlim=(-axlim,axlim),
+               ylim=(-axlim,axlim))
         return fig, ax
 
     def plot_slice_xy(self, log=False):
