@@ -7,7 +7,7 @@ from numpy.fft import fft2, fftshift, ifftshift
 
 from matplotlib import pyplot as plt
 
-from code6.util import correct_gamma
+from code6.util import correct_gamma, share_fig_ax
 
 class MTF(object):
     def __init__(self, data, unit):
@@ -37,7 +37,7 @@ class MTF(object):
 
     # plotting -----------------------------------------------------------------
 
-    def plot2d(self, log=False):
+    def plot2d(self, log=False, max_freq=200, fig=None, ax=None):
         if log:
             fcn = 20 * np.log10(1e-24 + self.data)
             label_str = 'MTF [dB]'
@@ -49,20 +49,21 @@ class MTF(object):
 
         left, right = self.unit[0], self.unit[-1]
 
-        fig, ax = plt.subplots()
+        fig, ax = share_fig_ax(fig, ax)
+
         im = ax.imshow(fcn,
                        extent=[left, right, left, right],
                        cmap='Greys_r',
                        interpolation='bicubic',
                        clim=lims)
-        fig.colorbar(im, label=label_str)
+        fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         ax.set(xlabel='Spatial Frequency X [cy/mm]',
                ylabel='Spatial Frequency Y [cy/mm]',
-               xlim=(-200,200),
-               ylim=(-200,200))
+               xlim=(-max_freq,max_freq),
+               ylim=(-max_freq,max_freq))
         return fig, ax
 
-    def plot_tan_sag(self):
+    def plot_tan_sag(self, max_freq=200):
         u, tan = self.tan
         _, sag = self.sag
 
@@ -71,7 +72,7 @@ class MTF(object):
         ax.plot(u, sag, label='Sagittal', linestyle='--', lw=3)
         ax.set(xlabel='Spatial Frequency [cy/mm]',
                ylabel='MTF [Rel 1.0]',
-               xlim=(0,200),
+               xlim=(0,max_freq),
                ylim=(0,1))
         plt.legend(loc='lower left')
         return fig, ax

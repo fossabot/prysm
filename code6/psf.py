@@ -10,7 +10,7 @@ from scipy import interpolate
 
 from matplotlib import pyplot as plt
 
-from code6.util import pupil_sample_to_psf_sample, correct_gamma
+from code6.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax
 from code6.fttools import pad2d, matrix_dft
 from code6.coordinates import cart_to_polar, polar_to_cart
 
@@ -59,7 +59,7 @@ class PSF(object):
 
         # 2 - map them to x, y and make a grid for the original samples
         xv, yv = polar_to_cart(rv, pv)
-        u, v = self.unit, self.unit #np.flip(self.unit, axis=0)
+        u, v = self.unit, self.unit
         x, y = np.meshgrid(u, v)
 
         # 3 - interpolate the function onto the new points
@@ -80,7 +80,7 @@ class PSF(object):
         else:
             index = np.searchsorted(phi, np.radians(azimuth))
             dat = avg_fold[index, :]
-        
+
         enc_eng = np.cumsum(dat)
         enc_eng /= enc_eng[-1]
         return self.unit[self.center:], enc_eng
@@ -89,7 +89,7 @@ class PSF(object):
 
     # plotting -----------------------------------------------------------------
 
-    def plot2d(self, log=False, axlim=25):
+    def plot2d(self, log=False, axlim=25, fig=None, ax=None):
         if log:
             fcn = 20 * np.log10(1e-100 + self.data)
             label_str = 'Normalized Intensity [dB]'
@@ -101,13 +101,14 @@ class PSF(object):
 
         left, right = self.unit[0], self.unit[-1]
 
-        fig, ax = plt.subplots()
+        fig, ax = share_fig_ax(fig, ax)
+
         im = ax.imshow(fcn,
                        extent=[left, right, left, right],
                        cmap='Greys_r',
                        interpolation='bicubic',
                        clim=lims)
-        fig.colorbar(im, label=label_str)
+        fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         ax.set(xlabel=r'Image Plane X [$\mu m$]',
                ylabel=r'Image Plane Y [$\mu m$]',
                xlim=(-axlim,axlim),

@@ -4,6 +4,8 @@ A base pupil interface for different aberration models.
 from numpy import nan, pi, arctan2, cos, floor, sqrt, exp, empty, ones, linspace, meshgrid
 from matplotlib import pyplot as plt
 
+from code6.util import share_fig_ax
+
 class Pupil(object):
     def __init__(self, samples=128, epd=1, autobuild=True, wavelength=0.5):
         self.samples          = samples
@@ -41,16 +43,15 @@ class Pupil(object):
 
     # plotting -----------------------------------------------------------------
 
-    def plot2d(self, opd_unit='$\lambda$'):
-        fig, ax = plt.subplots()
+    def plot2d(self, opd_unit='$\lambda$', fig=None, ax=None):
+        fig, ax = share_fig_ax(fig, ax)
         im = ax.imshow(self.phase,
                        extent=[-1, 1, -1, 1],
                        cmap='Spectral',
                        interpolation='bicubic')
-        fig.colorbar(im, label=f'OPD [{opd_unit}]')
+        fig.colorbar(im, label=f'OPD [{opd_unit}]', ax=ax, fraction=0.046)
         ax.set(xlabel='Normalized Pupil X [a.u.]',
                ylabel='Normalized Pupil Y [a.u.]')
-        plt.show()
         return fig, ax
 
     def plot_slice_xy(self, opd_unit='$\lambda$'):
@@ -62,20 +63,19 @@ class Pupil(object):
         ax.set(xlabel=r'Pupil $\rho$ [mm]',
                ylabel=f'OPD [{opd_unit}]')
         plt.legend()
-        plt.show()
         return fig, ax
 
-    def interferogram(self, visibility=1):
-        fig, ax = plt.subplots()
+    def interferogram(self, visibility=1, opd_unit='$\lambda$', fig=None, ax=None):
+        fig, ax = share_fig_ax(fig, ax)
         plotdata = (0.5 + 0.5 * visibility * cos(2 * pi * self.phase))
-        ax.imshow(plotdata,
+        im = ax.imshow(plotdata,
                   extent=[-1, 1, -1, 1],
                   cmap='Greys_r',
                   interpolation='bicubic',
                   clim=(0,1))
+        fig.colorbar(im, label=f'OPD [{opd_unit}]')
         ax.set(xlabel='Normalized Pupil X [a.u.]',
                ylabel='Normalized Pupil Y [a.u.]')
-        plt.show()
         return fig, ax
 
     # meat 'n potatoes ---------------------------------------------------------
