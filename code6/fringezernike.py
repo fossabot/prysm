@@ -165,19 +165,17 @@ class FringeZernike(Pupil):
         else:
             self.coefs = [0] * 36
 
+        self.normalize = False
         pass_args = {}
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key[0].lower() == 'z':
                     idx = int(key[1:]) # strip 'Z' from index
                     self.coefs[idx] = value
+                elif key in ('rms_norm'):
+                    self.normalize = True
                 else:
                     pass_args[key] = value
-
-        if 'rms_norm' in kwargs:
-            self.normalize = bool(kwargs['rms_norm'])
-        else:
-            self.normalize = False
 
         super().__init__(**pass_args)
 
@@ -185,7 +183,7 @@ class FringeZernike(Pupil):
         # construct an equation for the phase of the pupil
         mathexpr = 'np.zeros((self.samples, self.samples))'
         if self.normalize is True:
-            for term, coef, norm in enumerate(zip(self.coefs,_normalizations)):
+            for term, coef, norm in zip(list(range(0,36)), self.coefs, _normalizations):
                 if coef is 0:
                     pass
                 else:
@@ -202,6 +200,7 @@ class FringeZernike(Pupil):
 
         # compute the pupil phase and wave function
         self.phase = eval(mathexpr)
+        self._correct_phase_units()
         self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase)
         return self.phase, self.fcn
 

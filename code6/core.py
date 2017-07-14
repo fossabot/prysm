@@ -35,4 +35,6 @@ def convolve_pixel(pitch, psf):
     pixel_aperture[psf.center-steps:psf.center+steps, psf.center-steps:psf.center+steps] = 1
     ft_ape = fft2(pixel_aperture)
     ft_psf = fft2(psf.data)
-    return ifftshift(ifft2(np.absolute(ft_ape * ft_psf)))
+    return PSF(data=ifftshift(ifft2(np.absolute(ft_ape * ft_psf))),
+               samples=psf.samples,
+               sample_spacing = psf.sample_spacing)

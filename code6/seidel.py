@@ -48,6 +48,7 @@ class Seidel(Pupil):
 
         # compute the pupil phase and wave function
         self.phase = eval(mathexpr)
+        self._correct_phase_units()
         self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase)
         return self.phase, self.fcn
 
