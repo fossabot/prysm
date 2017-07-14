@@ -152,11 +152,11 @@ class FringeZernike(Pupil):
 
         Supports normalization and unit conversion, can pass kwargs:
             - rms_norm=True: coefficients have unit rms value
-            - 
+            -
 
         The kwargs syntax overrides the args syntax.
         '''
-        
+
         if args is not None:
             if len(args) is 0:
                 self.coefs = [0] * 36
@@ -198,16 +198,10 @@ class FringeZernike(Pupil):
                     mathexpr += '+' + str(coef) + '*(' + _eqns[term] + ')'
 
         # build a coordinate system over which to evaluate this function
-        x = y    = np.linspace(-1, 1, self.samples)
-        xv, yv   = np.meshgrid(x,y)
-        self.rho = sqrt(npow(xv,2) + npow(yv,2))
-        self.phi = arctan2(yv, xv)
+        rho, phi = self._gengrid()
 
-        # duplicate for the eval() below
-        rho, phi = self.rho, self.phi
-        
         # compute the pupil phase and wave function
-        self.phase = eval(mathexpr)      
+        self.phase = eval(mathexpr)
         self.fcn = exp(1j * 2 * pi / wavelength * self.phase)
         return self.phase, self.fcn
 

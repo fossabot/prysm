@@ -2,12 +2,13 @@
 A base pupil interface for different aberration models.
 '''
 from numpy import nan, pi, arctan2, cos, floor, sqrt, exp, empty, ones, linspace, meshgrid
+from numpy import power as npow
 from matplotlib import pyplot as plt
 
 from code6.util import share_fig_ax
 
 class Pupil(object):
-    def __init__(self, samples=128, epd=1, autobuild=True, wavelength=0.5):
+    def __init__(self, samples=128, epd=1, autobuild=True, wavelength=0.55):
         self.samples          = samples
         self.phase = self.fcn = empty((samples, samples))
         self.unit             = linspace(-epd/2, epd/2, samples)
@@ -22,6 +23,7 @@ class Pupil(object):
         if autobuild:
             self.build(wavelength)
             self.clip()
+            self.computed = True
 
     # quick-access slices, properties ------------------------------------------
 
@@ -72,8 +74,8 @@ class Pupil(object):
                   extent=[-1, 1, -1, 1],
                   cmap='Greys_r',
                   interpolation='bicubic',
-                  clim=(0,1))
-        fig.colorbar(im, label=f'OPD [{opd_unit}]')
+                  clim=(-1,1))
+        fig.colorbar(im, label=f'Wrapped Phase [{opd_unit}]')
         ax.set(xlabel='Normalized Pupil X [a.u.]',
                ylabel='Normalized Pupil Y [a.u.]')
         return fig, ax
@@ -106,4 +108,10 @@ class Pupil(object):
         self.fcn[self.rho > 1] = 0
         return self.phase, self.fcn
 
+    def _gengrid(self):
+        x = y    = linspace(-1, 1, self.samples)
+        xv, yv   = meshgrid(x,y)
+        self.rho = sqrt(npow(xv,2) + npow(yv,2))
+        self.phi = arctan2(yv, xv)
+        return self.rho, self.phi
     # meat 'n potatoes ---------------------------------------------------------
