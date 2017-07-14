@@ -181,7 +181,7 @@ class FringeZernike(Pupil):
 
         super().__init__(**pass_args)
 
-    def build(self, wavelength=0.5):
+    def build(self):
         # construct an equation for the phase of the pupil
         mathexpr = 'np.zeros((self.samples, self.samples))'
         if self.normalize is True:
@@ -202,7 +202,7 @@ class FringeZernike(Pupil):
 
         # compute the pupil phase and wave function
         self.phase = eval(mathexpr)
-        self.fcn = exp(1j * 2 * pi / wavelength * self.phase)
+        self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase)
         return self.phase, self.fcn
 
     def __repr__(self):

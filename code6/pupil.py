@@ -10,6 +10,7 @@ from code6.util import share_fig_ax
 class Pupil(object):
     def __init__(self, samples=128, epd=1, autobuild=True, wavelength=0.55):
         self.samples          = samples
+        self.wavelength       = wavelength
         self.phase = self.fcn = empty((samples, samples))
         self.unit             = linspace(-epd/2, epd/2, samples)
         self.unit_norm        = linspace(-1, 1, samples)
@@ -21,7 +22,7 @@ class Pupil(object):
         self.PV               = 0
 
         if autobuild:
-            self.build(wavelength)
+            self.build()
             self.clip()
             self.computed = True
 
@@ -82,7 +83,7 @@ class Pupil(object):
 
     # meat 'n potatoes ---------------------------------------------------------
 
-    def build(self, wavelength=0.5):
+    def build(self):
         '''
         Constructs a numerical model of an exit pupil.  The method should be overloaded
         by all subclasses to impart their unique mathematical models to the simulation.
@@ -90,13 +91,10 @@ class Pupil(object):
 
         # build up the pupil
         self.phase = ones((self.samples, self.samples))
-        self.fcn   = exp(1j * 2 * pi / wavelength * self.phase)
+        self.fcn   = exp(1j * 2 * pi / self.wavelength * self.phase)
 
         # fill in the phase of the pupil
-        x = y    = self.unit_norm
-        xv, yv   = meshgrid(x,y)
-        self.rho = sqrt(xv**2, yv**2)
-        self.phi = arctan2(yv, xv)
+        self._gengrid()
 
         return self.unit, self.phase, self.fcn
 

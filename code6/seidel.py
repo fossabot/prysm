@@ -22,6 +22,7 @@ class Seidel(Pupil):
         self.eqns = []
         self.coefs = []
         pass_args = {}
+        self.field = 1
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key[0].lower() == 'w':
@@ -33,12 +34,9 @@ class Seidel(Pupil):
                 else:
                     pass_args[key] = value
 
-        if not hasattr(self, 'field'):
-            self.field = 1
-
         super().__init__(**pass_args)
 
-    def build(self, wavelength=0.5, relative_image_height=1):
+    def build(self, relative_image_height=1):
         # construct an equation for the phase of the pupil
         mathexpr = 'np.zeros((self.samples, self.samples))'
         for term, coef in zip(self.eqns, self.coefs):
@@ -51,7 +49,7 @@ class Seidel(Pupil):
 
         # compute the pupil phase and wave function
         self.phase = eval(mathexpr)
-        self.fcn = exp(1j * 2 * pi / wavelength * self.phase)
+        self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase)
         return self.phase, self.fcn
 
 def wexpr_to_opd_expr(Wxxx):
