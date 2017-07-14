@@ -142,7 +142,7 @@ class PSF(object):
     # plotting -----------------------------------------------------------------
     
     @staticmethod
-    def from_pupil(pupil, wavelength, efl, padding=1):
+    def from_pupil(pupil, efl, padding=1):
         '''
         Uses fresnel diffraction to propogate a pupil and compute a point spread function
         '''
@@ -150,7 +150,7 @@ class PSF(object):
         psf_samples = (pupil.samples * padding) * 2 + pupil.samples
         sample_spacing = pupil_sample_to_psf_sample(pupil_sample=pupil.sample_spacing * 1000,
                                                     num_samples=psf_samples,
-                                                    wavelength=wavelength,
+                                                    wavelength=pupil.wavelength,
                                                     efl=efl)
         padded_wavefront = pad2d(pupil.fcn, padding)
         impulse_response = ifftshift(fft2(fftshift(padded_wavefront)))
