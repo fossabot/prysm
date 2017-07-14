@@ -8,68 +8,6 @@ from numpy import power as npow
 
 from code6.pupil import Pupil
 
-_names = [
-    'W000 - Piston',
-    'W111 - Tilt',
-    'W020 - Defocus',
-    'W040 - 3rd order Spherical',
-    'W060 - 5th order Spherical',
-    'W080 - 7th order Spherical',
-    'W131 - 3rd order Coma',
-    'W151 - 5th order Coma',
-    'W171 - 7th order Coma',
-    'W222 - 3rd order Astigmatism',
-    'W224 - 5th order Astigmatism',
-    'W226 - 7th order Astigmatism',
-]
-_termnos = [
-    'W000',
-    'W111',
-    'W020',
-    'W040',
-    'W060',
-    'W080',
-    'W131',
-    'W151',
-    'W171',
-    'W222',
-    'W224',
-    'W226'
-]
-
-# see fringezernike.py -- equations are stored as text and will be
-# eval'd to produce the pupil model
-_eqns_pupil = [
-    'np.ones((self.samples, self.samples))', # W000
-    'rho * cos(phi)',                        # W111
-    'npow(rho,2)',                           # W020
-    'npow(rho,4)',                           # W040
-    'npow(rho,6)',                           # W060
-    'npow(rho,8)',                           # W080
-    'npow(rho,3) * cos(phi)',                # W131
-    'npow(rho,5) * cos(phi)',                # W151
-    'npow(rho,7) * cos(phi)',                # W171
-    'npow(rho,2) * npow(cos(phi),2)',        # W222
-    'npow(rho,2) * npow(cos(phi),2)',        # W224
-    'npow(rho,2) * npow(cos(phi),2)',        # W226
-]
-
-# Seidel aberrations also have field dependence
-_eqns_field = [
-    '1',    # W000
-    'H',    # W111
-    '1',    # W020
-    '1',    # W040
-    '1',    # W060
-    '1',    # W080
-    'H',    # W131
-    'H',    # W151
-    'H',    # W171
-    'H**2', # W222
-    'H**4', # W224
-    'H**6', # W226
-]
-
 class Seidel(Pupil):
     '''
     A pupil described by a set of Seidel coefficients

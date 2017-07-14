@@ -50,3 +50,14 @@ class ADC(object):
     def __init(self, precision=16, noise=5):
         self.precision = precision
         self.noise = noise
+
+def generate_mtf(pixel_pitch=1, azimuth=0, num_samples=128):
+    '''
+    generates the diffraction-limited MTF for a given pixel size and azimuth w.r.t. the pixel grid
+    pixel pitch in units of microns, azimuth in units of degrees
+    '''
+    pitch_unit = pixel_pitch / 1000
+    normalized_frequencies = np.linspace(0, 2, num_samples)
+    otf = np.sinc(2 * np.pi * normalized_frequencies / pixel_pitch)
+    mtf = np.abs(otf)
+    return normalized_frequencies/pitch_unit, mtf
