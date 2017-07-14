@@ -25,9 +25,8 @@ class Seidel(Pupil):
         self.field = 1
         if kwargs is not None:
             for key, value in kwargs.items():
-                if key[0].lower() == 'w':
-                    expr = wexpr_to_opd_expr(key)
-                    self.eqns.append(expr)
+                if key[0].lower() == 'w' and len(key) == 4:
+                    self.eqns.append(wexpr_to_opd_expr(key))
                     self.coefs.append(value)
                 elif key.lower() in ('field', 'relative_field', 'h'):
                     self.field = value
@@ -36,7 +35,7 @@ class Seidel(Pupil):
 
         super().__init__(**pass_args)
 
-    def build(self, relative_image_height=1):
+    def build(self):
         # construct an equation for the phase of the pupil
         mathexpr = 'np.zeros((self.samples, self.samples))'
         for term, coef in zip(self.eqns, self.coefs):
