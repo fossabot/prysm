@@ -14,15 +14,23 @@ from code6.otf import MTF
 from code6.fttools import pad2d
 from code6.util import pupil_sample_to_psf_sample, psf_sample_to_pupil_sample, share_fig_ax
 
-def plot_fourier_chain(pupil, psf, mtf, fig=None, axs=None):
+def plot_fourier_chain(pupil, psf, mtf, fig=None, axs=None, sizex=12, sizey=6):
 
     # create a figure
-    fig, axs = share_fig_ax(fig, axs)
+    fig, axs = share_fig_ax(fig, axs, numax=3)
 
     pupil.plot2d(fig=fig, ax=axs[0])
     psf.plot2d(fig=fig, ax=axs[1])
     mtf.plot2d(fig=fig, ax=axs[2])
 
+    axs[0].set(title='Pupil')
+    axs[1].set(title='PSF')
+    axs[2].set(title='MTF')
+
+    bbox_props = dict(boxstyle="rarrow", fill=None, lw=1)
+    axs[0].text(1.75, 1.25, r'|Fourier Transform|$^2$', ha='center', va='center', bbox=bbox_props)
+    axs[0].text(5.3, 1.25, r'|Fourier Transform|', ha='center', va='center', bbox=bbox_props)
+    fig.set_size_inches(sizex, sizey)
     fig.tight_layout()
     return fig, axs
 
