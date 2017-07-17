@@ -71,7 +71,7 @@ class Pupil(object):
                ylabel='Normalized Pupil Y [a.u.]')
         return fig, ax
 
-    def plot_slice_xy(self,):
+    def plot_slice_xy(self):
         u, x = self.slice_x
         _, y = self.slice_y
 
@@ -79,6 +79,7 @@ class Pupil(object):
 
         x = convert_phase(x, self)
         y = convert_phase(y, self)
+
         ax.plot(u, x, lw=3, label='Slice X')
         ax.plot(u, y, lw=3, label='Slice Y')
         ax.set(xlabel=r'Pupil $\rho$ [mm]',
@@ -147,4 +148,4 @@ def convert_phase(array, pupil):
     elif pupil._opd_unit == 'nanometers':
         return array * nanometers_to_waves(pupil.wavelength)
     else:
-        return pupil.phase
+        return array
