@@ -64,13 +64,13 @@ class MTF(object):
                ylim=(-max_freq,max_freq))
         return fig, ax
 
-    def plot_tan_sag(self, max_freq=200):
+    def plot_tan_sag(self, max_freq=200, fig=None, ax=None, labels=('Tangential','Sagittal')):
         u, tan = self.tan
         _, sag = self.sag
 
-        fig, ax = plt.subplots()
-        ax.plot(u, tan, label='Tangential', linestyle='-', lw=3)
-        ax.plot(u, sag, label='Sagittal', linestyle='--', lw=3)
+        fig, ax = share_fig_ax(fig, ax)
+        ax.plot(u, tan, label=labels[0], linestyle='-', lw=3)
+        ax.plot(u, sag, label=labels[1], linestyle='--', lw=3)
         ax.set(xlabel='Spatial Frequency [cy/mm]',
                ylabel='MTF [Rel 1.0]',
                xlim=(0,max_freq),
@@ -90,7 +90,7 @@ class MTF(object):
     @staticmethod
     def from_pupil(pupil, efl):
         psf = PSF.from_pupil(pupil, efl=efl)
-        return __class__.from_psf(psf)
+        return MTF.from_psf(psf)
 
 def diffraction_limited_mtf(fno=1, wavelength=0.5, num_pts=128):
     '''

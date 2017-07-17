@@ -4,7 +4,7 @@ A base point spread function interface
 import numpy as np
 from numpy import floor
 from numpy import power as npow
-from numpy.fft import fft2, fftshift, ifftshift
+from numpy.fft import fft2, fftshift, ifftshift, ifft2
 
 from matplotlib import pyplot as plt
 
@@ -124,8 +124,17 @@ class PSF(object):
                ylabel=r'Encircled Energy [Rel 1.0]',
                xlim=(0,20))
         return fig, ax
+
     # plotting -----------------------------------------------------------------
+
+    # helpers ------------------------------------------------------------------
+
+    def _renorm(self):
+        self.data /= self.data.max()
+        return self
     
+    # helpers ------------------------------------------------------------------
+
     @staticmethod
     def from_pupil(pupil, efl, padding=1):
         '''
@@ -141,3 +150,13 @@ class PSF(object):
         impulse_response = ifftshift(fft2(fftshift(padded_wavefront)))
         psf = npow(abs(impulse_response), 2)
         return PSF(psf / np.max(psf), psf_samples, sample_spacing)
+
+def convpsf(psf1, psf2):
+    if psf2.samples == psf1.samples and psf2.sample_spacing == psf1.sample_spacing:
+        # no need to interpolate, use FFTs to convolve
+        psf3 = PSF(data=np.absolute(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data)))),
+                   samples=psf1.samples,
+                   sample_spacing=psf1.sample_spacing)
+        return psf3._renorm()
+    else:
+        raise ValueError('psfs must be sampled equally')
