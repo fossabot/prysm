@@ -2,17 +2,15 @@
 A base point spread function interface
 '''
 import numpy as np
-from numpy.fft import fft2, fftshift, ifftshift
-from numpy import power as npow
 from numpy import floor
-
-from scipy import interpolate
+from numpy import power as npow
+from numpy.fft import fft2, fftshift, ifftshift
 
 from matplotlib import pyplot as plt
 
-from code6.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax
 from code6.fttools import pad2d, matrix_dft
-from code6.coordinates import cart_to_polar, polar_to_cart
+from code6.coordinates import cart_to_polar, polar_to_cart, uniform_cart_to_polar
+from code6.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax, fold_array
 
 class PSF(object):
     def __init__(self, data, samples, sample_spacing):
@@ -49,30 +47,8 @@ class PSF(object):
         azimuthal average
         '''
 
-        # 1 - create a set of polar coordinates to interpolate onto
-        xmin, xmax = self.unit[0], self.unit[-1]
-        num_pts = len(self.unit)
-        center = int(np.floor(num_pts/2))
-        rho = np.linspace(xmin, xmax, num_pts)
-        phi = np.linspace(0, 2*np.pi, num_pts)
-        rv, pv = np.meshgrid(rho, phi)
-
-        # 2 - map them to x, y and make a grid for the original samples
-        xv, yv = polar_to_cart(rv, pv)
-        u, v = self.unit, self.unit
-        x, y = np.meshgrid(u, v)
-
-        # 3 - interpolate the function onto the new points
-        f = interpolate.RegularGridInterpolator((u, v), self.data)
-        interp_dat = f((xv, yv), method='linear')
-
-        # 4 - fold the array in half and average
-        left_chunk = interp_dat[:, :center]
-        right_chunk = interp_dat[:, center:]
-        folded_array = np.concatenate((right_chunk[:, :, np.newaxis],
-                                       np.flip(np.flip(left_chunk, axis=1), axis=0)[:, :, np.newaxis]),
-                                      axis=2)
-        avg_fold = np.average(folded_array, axis=2)
+        rho, phi, interp_dat = uniform_cart_to_polar(self.unit, self.unit, self.data)
+        avg_fold = fold_array(interp_dat)
 
         if azimuth is None:
             # take average of all azimuths as input data
@@ -139,6 +115,15 @@ class PSF(object):
         plt.legend(loc='upper right')
         return fig, ax
 
+    def plot_encircled_energy(self):
+        unit, data = self.encircled_energy()
+        
+        fig, ax = plt.subplots()
+        ax.plot(unit, data, lw=3)
+        ax.set(xlabel=r'Image Plane Distance [$\mu m$]',
+               ylabel=r'Encircled Energy [Rel 1.0]',
+               xlim=(0,20))
+        return fig, ax
     # plotting -----------------------------------------------------------------
     
     @staticmethod

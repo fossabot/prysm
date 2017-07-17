@@ -41,6 +41,23 @@ def correct_gamma(img, encoding=2.2):
     '''
     return np.power(img, (1/float(encoding)))
 
+def fold_array(array):
+    '''folds an array in half over the given axis and averages
+
+    Args:
+        array (numpy.array): 2d array to fold
+
+    Returns
+        numpy.array.  new array
+    '''
+    xs, ys = array.shape
+    xh = int(np.floor(xs/2))
+    left_chunk = array[:, :xh]
+    right_chunk = array[:, xh:]
+    folded_array = np.concatenate((right_chunk[:, :, np.newaxis],
+                                   np.flip(np.flip(left_chunk, axis=1), axis=0)[:, :, np.newaxis]),
+                                  axis=2)
+    return np.average(folded_array, axis=2)
 def share_fig_ax(fig=None, ax=None, numax=1):
     '''Reurns the given figure and/or axis if given one.  If they are None, creates a new fig/ax
 
