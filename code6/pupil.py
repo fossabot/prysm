@@ -90,7 +90,7 @@ class Pupil(object):
     def interferogram(self, visibility=1, fig=None, ax=None):
         phase = convert_phase(self.phase, self)
         fig, ax = share_fig_ax(fig, ax)
-        plotdata = (0.5 + 0.5 * visibility * cos(2 * pi * phase))
+        plotdata = (visibility * cos(2 * pi * phase))
         im = ax.imshow(plotdata,
                   extent=[-1, 1, -1, 1],
                   cmap='Greys_r',
