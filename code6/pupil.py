@@ -1,11 +1,12 @@
 '''
 A base pupil interface for different aberration models.
 '''
-from numpy import nan, pi, arctan2, cos, floor, sqrt, exp, empty, ones, linspace, meshgrid
+from numpy import nan, pi, arctan2, cos, sin, floor, sqrt, exp, empty, ones, linspace, meshgrid
 from numpy import power as npow
 from matplotlib import pyplot as plt
 
 from code6.util import share_fig_ax
+from code6.coordinates import cart_to_polar
 from code6.units import waves_to_microns, waves_to_nanometers, microns_to_waves, nanometers_to_waves
 
 class Pupil(object):
@@ -19,7 +20,6 @@ class Pupil(object):
         self.sample_spacing   = self.unit[-1] - self.unit[-2]
         self.rho  = self.phi  = empty((samples, samples))
         self.center           = int(floor(samples/2))
-        self.computed         = False
         self.rms              = 0
         self.PV               = 0
 
@@ -35,10 +35,8 @@ class Pupil(object):
         else:
             raise ValueError('OPD must be expressed in waves, microns, or nm')
 
-        if autobuild:
-            self.build()
-            self.clip()
-            self.computed = True
+        self.build()
+        self.clip()
 
     # quick-access slices, properties ------------------------------------------
 
@@ -90,7 +88,7 @@ class Pupil(object):
     def interferogram(self, visibility=1, passes=1, fig=None, ax=None):
         phase = convert_phase(self.phase, self)
         fig, ax = share_fig_ax(fig, ax)
-        plotdata = (visibility * cos(2 * pi * passes * phase))
+        plotdata = (visibility * sin(2 * pi * passes * phase))
         im = ax.imshow(plotdata,
                   extent=[-1, 1, -1, 1],
                   cmap='Greys_r',
@@ -104,9 +102,8 @@ class Pupil(object):
     # meat 'n potatoes ---------------------------------------------------------
 
     def build(self):
-        '''
-        Constructs a numerical model of an exit pupil.  The method should be overloaded
-        by all subclasses to impart their unique mathematical models to the simulation.
+        ''' Constructs a numerical model of an exit pupil.  The method should be overloaded by all
+        subclasses to impart their unique mathematical models to the simulation.
         '''
 
         # build up the pupil
@@ -120,21 +117,21 @@ class Pupil(object):
         return self.unit, self.phase, self.fcn
 
     def clip(self):
-        '''
-        # clip outside the circular boundary of the pupil
+        '''Clips outside the circular boundary of the pupil
         '''
         self.phase[self.rho > 1] = nan
         self.fcn[self.rho > 1] = 0
         return self.phase, self.fcn
 
     def _gengrid(self):
+        '''Generates a uniform (x,y) grid and maps it to (rho,phi) coordinates for zernike eval'''
         x = y    = linspace(-1, 1, self.samples)
         xv, yv   = meshgrid(x,y)
-        self.rho = sqrt(npow(xv,2) + npow(yv,2))
-        self.phi = arctan2(yv, xv)
+        self.rho, self.phi = cart_to_polar(xv, yv)
         return self.rho, self.phi
 
     def _correct_phase_units(self):
+        '''Converts an expression of OPD in a unit to waves'''
         if self._opd_unit == 'microns':
             self.phase *= waves_to_microns(self.wavelength)
         elif self._opd_unit == 'nanometers':
@@ -143,6 +140,15 @@ class Pupil(object):
     # meat 'n potatoes ---------------------------------------------------------
 
 def convert_phase(array, pupil):
+    '''Converts an OPD/phase map to have the same unit of expression as a pupil
+
+    Args:
+        array (numpy.ndarray): array of phase data
+        pupil (code6.Pupil): a pupil to match the phase units to
+
+    Returns:
+        numpy.ndarray.  phase-corrected array.
+    ''' 
     if pupil._opd_unit == 'microns':
         return array * microns_to_waves(pupil.wavelength)
     elif pupil._opd_unit == 'nanometers':
