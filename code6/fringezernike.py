@@ -101,6 +101,7 @@ _eqns =  [
     ]
 
 _normalizations = [
+    '1',                   # Z0
     '1/pi',                # Z1
     '2/pi',                # Z2
     '2/pi',                # Z3
