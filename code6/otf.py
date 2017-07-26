@@ -88,8 +88,8 @@ class MTF(object):
         return MTF(dat/dat[f_s,f_s], unit)
 
     @staticmethod
-    def from_pupil(pupil, efl):
-        psf = PSF.from_pupil(pupil, efl=efl)
+    def from_pupil(pupil, efl, padding=1):
+        psf = PSF.from_pupil(pupil, efl=efl, padding=padding)
         return MTF.from_psf(psf)
 
 def diffraction_limited_mtf(fno=1, wavelength=0.5, num_pts=128):
