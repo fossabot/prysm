@@ -78,3 +78,19 @@ def share_fig_ax(fig=None, ax=None, numax=1):
         ax = fig.gca()
 
     return fig, ax
+
+def guarantee_array(variable):
+    '''Guarantees that a varaible is a numpy ndarray and supports -, *, +, and other operators
+
+    Args:
+        variable (float or numpy.ndarray): variable to coalesce
+
+    Returns:
+        numpy ndarray equivalent
+    '''
+    if type(variable) in [float, np.ndarray]:
+        return variable
+    elif type(variable) is int:
+        return float(variable)
+    elif type(variable) is list:
+        return np.asarray(variable)
