@@ -6,6 +6,7 @@ from code6.fringezernike import FringeZernike
 from code6.seidel import Seidel
 from code6.psf import PSF, convpsf
 from code6.otf import MTF
+import code6.thinlens
 
 __all__ = [
     'plot_fourier_chain',
@@ -21,4 +22,5 @@ __all__ = [
     'PSF',
     'convpsf'
     'MTF',
+    'thinlens',
 ]
