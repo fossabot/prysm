@@ -129,6 +129,9 @@ class PSF(object):
 
     # helpers ------------------------------------------------------------------
 
+    def conv(self, psf2):
+        return convpsf(self, psf2)
+    
     def _renorm(self):
         self.data /= self.data.max()
         return self
@@ -150,6 +153,7 @@ class PSF(object):
         impulse_response = ifftshift(fft2(fftshift(padded_wavefront)))
         psf = npow(abs(impulse_response), 2)
         return PSF(psf / np.max(psf), psf_samples, sample_spacing)
+
 
 def convpsf(psf1, psf2):
     if psf2.samples == psf1.samples and psf2.sample_spacing == psf1.sample_spacing:
