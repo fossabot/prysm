@@ -58,6 +58,7 @@ def fold_array(array):
                                    np.flip(np.flip(left_chunk, axis=1), axis=0)[:, :, np.newaxis]),
                                   axis=2)
     return np.average(folded_array, axis=2)
+
 def share_fig_ax(fig=None, ax=None, numax=1):
     '''Reurns the given figure and/or axis if given one.  If they are None, creates a new fig/ax
 
@@ -78,6 +79,18 @@ def share_fig_ax(fig=None, ax=None, numax=1):
         ax = fig.gca()
 
     return fig, ax
+
+def rms(array):
+    '''Returns the RMS value of an array
+
+    Args:
+        array (numpy.ndarray)
+
+    Returns:
+        rms value
+    '''
+    non_nan = np.isfinite(array)
+    return np.sqrt(np.mean(np.square(array[non_nan])))
 
 def guarantee_array(variable):
     '''Guarantees that a varaible is a numpy ndarray and supports -, *, +, and other operators

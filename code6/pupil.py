@@ -1,13 +1,23 @@
 '''
 A base pupil interface for different aberration models.
 '''
-from numpy import nan, pi, arctan2, cos, sin, floor, sqrt, exp, empty, ones, linspace, meshgrid
+from numpy import (
+    nan, pi,
+    arctan2, cos, sin,
+    sqrt, exp,
+    empty, ones,
+    linspace, meshgrid,
+    floor, isfinite,
+    )
 from numpy import power as npow
 from matplotlib import pyplot as plt
 
-from code6.util import share_fig_ax
+from code6.util import share_fig_ax, rms
 from code6.coordinates import cart_to_polar
-from code6.units import waves_to_microns, waves_to_nanometers, microns_to_waves, nanometers_to_waves
+from code6.units import (
+    waves_to_microns, waves_to_nanometers,
+    microns_to_waves, nanometers_to_waves,
+    )
 
 class Pupil(object):
     def __init__(self, samples=128, epd=1, autobuild=True, wavelength=0.55, opd_unit='$\lambda$'):
@@ -20,8 +30,6 @@ class Pupil(object):
         self.sample_spacing   = self.unit[-1] - self.unit[-2]
         self.rho  = self.phi  = empty((samples, samples))
         self.center           = int(floor(samples/2))
-        self.rms              = 0
-        self.PV               = 0
 
         if self.opd_unit in ('$\lambda$', 'waves'):
             self._opd_unit = 'waves'
@@ -54,6 +62,18 @@ class Pupil(object):
         '''
         return self.unit, self.phase[:, self.center]
 
+    @property
+    def pv(self):
+        '''returns the peak-to-valley wavefront error
+        '''
+        non_nan = isfinite(self.phase)
+        return self.phase[non_nan].max() - self.phase[non_nan].min()
+
+    @property
+    def rms(self):
+        '''Returns the RMS wavefront error
+        '''
+        return rms(self.phase)
     # quick-access slices, properties ------------------------------------------
 
     # plotting -----------------------------------------------------------------
