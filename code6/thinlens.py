@@ -11,11 +11,11 @@ def object_to_image_dist(efl, object_distance):
 
     Args:
         efl (float): focal length of the lens
-        object_distance (float or numpy.ndarray): distance from the object to the front principal plane of the lens,
-            negative for an object to the left of the lens.
+        object_distance (float or numpy.ndarray): distance from the object to the front principal
+            plane of the lens, negative for an object to the left of the lens.
 
     Returns:
-        image distance.  Distance from rear principal plane (assumed to be in contact with front 
+        image distance.  Distance from rear principal plane (assumed to be in contact with front
             principal plane) to image
     '''
     object_distance = guarantee_array(object_distance)
@@ -86,18 +86,19 @@ def logitudinal_mag_from_linear(lateral_mag):
     '''
     return lateral_mag**2
 
-def mag_to_fno(mag, infinite_fno):
+def mag_to_fno(mag, infinite_fno, pupil_mag=1):
     '''Computes the working f/# from the magnification and infinite f/#
 
     Args:
         mag (float or numpy.ndarray): linear or lateral magnification
         infinite_fno (float): f/# as defined by EFL/EPD
+        pupil_mag (float): pupil magnification
 
     Returns:
         working fno.
     '''
     mag = guarantee_array(mag)
-    return np.absolute((1 - mag) * infinite_fno)
+    return (1 + np.absolute(mag) / pupil_mag) * infinite_fno)
 
 def defocus_to_image_displacement(defocus, fno, wavelength, zernike=False, rms_norm=False):
     '''Computes image displacment from wavefront defocuse xpressed in waves 0-P to
