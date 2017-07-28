@@ -13,24 +13,24 @@ _names = [
     'Z1  - Tilt X',
     'Z2  - Tilt Y',
     'Z3  - Defocus / Power',
-    'Z4  - Primary Astigmatism X',
-    'Z5  - Primary Astigmatism Y',
+    'Z4  - Primary Astigmatism 00deg',
+    'Z5  - Primary Astigmatism 45deg',
     'Z6  - Primary Coma X',
     'Z7  - Primary Coma Y',
     'Z8  - Primary Spherical',
     'Z9  - Primary Trefoil X',
     'Z10 - Primary Trefoil Y',
-    'Z11 - Secondary Astigmatism X',
-    'Z12 - Secondary Astigmatism Y',
+    'Z11 - Secondary Astigmatism 00deg',
+    'Z12 - Secondary Astigmatism 45deg',
     'Z13 - Secondary Coma X',
-    'Z14 - Secondary Coma X',
-    'Z15 - Secondary Spherical Y',
+    'Z14 - Secondary Coma Y',
+    'Z15 - Secondary Spherical',
     'Z16 - Primary Tetrafoil X',
     'Z17 - Primary Tetrafoil Y',
     'Z18 - Secondary Trefoil X',
     'Z19 - Secondary Trefoil Y',
-    'Z20 - Tertiary Astigmatism X',
-    'Z21 - Tertiary Astigmatism Y',
+    'Z20 - Tertiary Astigmatism 00deg',
+    'Z21 - Tertiary Astigmatism 45deg',
     'Z22 - Tertiary Coma X',
     'Z23 - Tertiary Coma Y',
     'Z24 - Tertiary Spherical',
@@ -40,8 +40,8 @@ _names = [
     'Z28 - Secondary Tetrafoil Y',
     'Z29 - Tertiary Trefoil X',
     'Z30 - Tertiary Trefoil Y',
-    'Z31 - Quarternary Astigmatism X',
-    'Z32 - Quarternary Astigmatism Y',
+    'Z31 - Quarternary Astigmatism 00deg',
+    'Z32 - Quarternary Astigmatism 45deg',
     'Z33 - Quarternary Coma X',
     'Z34 - Quarternary Coma Y',
     'Z35 - Quarternary Spherical',
@@ -98,7 +98,7 @@ _eqns =  [
         - 630 * npow(rho,8)
         + 252 * npow(rho,10)
         - 1 ''',                                                                        #Z35
-    ]
+]
 
 # See JCW - http://wp.optics.arizona.edu/jcwyant/wp-content/uploads/sites/13/2016/08/ZernikePolynomialsForTheWeb.pdf
 _normalizations = [
