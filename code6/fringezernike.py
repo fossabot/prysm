@@ -207,15 +207,18 @@ class FringeZernike(Pupil):
         return self.phase, self.fcn
 
     def __repr__(self):
-        interleaved = zip(self.coefs, _names)
         if self.normalize is True:
             header = 'rms normalized Fringe Zernike description with:\n\t'
         else:
             header = 'Fringe Zernike description with:\n\t'
 
-        body = '\n\t'.join(map(str, map(str, interleaved)))
+        strs = []
+        for coef, name in zip(self.coefs, _names):
+            _ = f'{coef:.3f}'
+            strs.append(' '.join([_, name]))
+        body = '\n\t'.join(strs)
 
-        footer = f'\n\t{self.pv}PV, {self.rms}RMS'
+        footer = f'\n\t{self.pv:.3f} PV, {self.rms:.3f} RMS'
         return f'{header}{body}{footer}'
 
 def fit(data, num_terms=36, normalize=False):
