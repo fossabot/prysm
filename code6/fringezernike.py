@@ -100,43 +100,44 @@ _eqns =  [
         - 1 ''',                                                                        #Z35
     ]
 
+# See JCW - http://wp.optics.arizona.edu/jcwyant/wp-content/uploads/sites/13/2016/08/ZernikePolynomialsForTheWeb.pdf
 _normalizations = [
-    '1',                   # Z0
-    '1/pi',                # Z1
-    '2/pi',                # Z2
-    '2/pi',                # Z3
-    'sqrt(3/pi)',          # Z4
-    'sqrt(6/pi)',          # Z5
-    'sqrt(6/pi)',          # Z6
-    'sqrt(8/pi)',          # Z7
-    'sqrt(8/pi)',          # Z8
-    'sqrt(5/pi)',          # Z9
-    'sqrt(8/pi)',          # Z10
-    'sqrt(8/pi)',          # Z11
-    'sqrt(10/pi)',         # Z12
-    'sqrt(10/pi)',         # Z13
-    'sqrt(12/pi)',         # Z14
-    'sqrt(7/pi)',          # Z15
-    'sqrt(10/pi)',         # Z16
-    'sqrt(10/pi)',         # Z17
-    'sqrt(12/pi)',         # Z18
-    'sqrt(12/pi)',         # Z19
-    'sqrt(14/pi)',         # Z20
-    'sqrt(14/pi)',         # Z21
-    'sqrt(16/pi)',         # Z22
-    'sqrt(16/pi)',         # Z23
-    'sqrt(9/pi)',          # Z24
-    'sqrt(12/pi)',         # Z25
-    'sqrt(12/pi)',         # Z26
-    'sqrt(14/pi)',         # Z27
-    'sqrt(14/pi)',         # Z28
-    'sqrt(16/pi)',         # Z29
-    'sqrt(16/pi)',         # Z30
-    'sqrt(18/pi)',         # Z31 -- may contain error
-    'sqrt(18/pi)',         # Z32 -- may contain error
-    'sqrt(20/pi)',         # Z33 -- may contain error
-    'sqrt(20/pi)',         # Z34 -- may contain error
-    'sqrt(11/pi)',         # Z35 -- may contain error
+    '1',         # Z0
+    '2',         # Z1
+    '2',         # Z2
+    'sqrt(3)',   # Z3
+    'sqrt(6)',   # Z4
+    'sqrt(6)',   # Z5
+    '2*sqrt(2)', # Z6
+    '2*sqrt(2)', # Z7
+    'sqrt(5)',   # Z8
+    '2*sqrt(2)', # Z9
+    '2*sqrt(2)', # Z10
+    'sqrt(10)',  # Z11
+    'sqrt(10)',  # Z12
+    '2*sqrt(3)', # Z13
+    '2*sqrt(3)', # Z14
+    'sqrt(7)',   # Z15
+    'sqrt(10)',  # Z16
+    'sqrt(10)',  # Z17
+    '2*sqrt(3)', # Z18
+    '2*sqrt(3)', # Z19
+    'sqrt(14)',  # Z20
+    'sqrt(14)',  # Z21
+    '4',         # Z22
+    '4',         # Z23
+    '3',         # Z24
+    '2*sqrt(3)', # Z25
+    '2*sqrt(3)', # Z26
+    'sqrt(14)',  # Z27
+    'sqrt(14)',  # Z28
+    '4',         # Z29
+    '4',         # Z30
+    '3*sqrt(2)', # Z31
+    '3*sqrt(2)', # Z32
+    '2*sqrt(5)', # Z33
+    '2*sqrt(5)', # Z34
+    'sqrt(11)',  # Z35
 ]
 
 class FringeZernike(Pupil):
@@ -214,12 +215,7 @@ class FringeZernike(Pupil):
 
         body = '\n\t'.join(map(str, map(str, interleaved)))
 
-        if not self.computed:
-            footer_attach = ' (not built)'
-        else:
-            footer_attach = ''
-
-        footer = f'\n\t{self.PV}PV, {self.rms}RMS{footer_attach}'
+        footer = f'\n\t{self.pv}PV, {self.rms}RMS'
         return f'{header}{body}{footer}'
 
 def fit(data, num_terms=36, normalize=False):

@@ -88,7 +88,7 @@ class OLPF(PSF):
 class PixelAperture(PSF):
     '''creates a PSF view of the pixel aperture
     '''
-    def __init__(self, size, sample_spacing, samples):
+    def __init__(self, size, sample_spacing=0.1, samples=384):
         center = int(np.floor(samples/2))
         half_width = size / 2
         steps = int(np.floor(half_width / sample_spacing))
