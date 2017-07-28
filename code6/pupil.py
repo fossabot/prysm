@@ -12,6 +12,8 @@ from numpy import (
 from numpy import power as npow
 from matplotlib import pyplot as plt
 
+from copy import deepcopy
+
 from code6.util import share_fig_ax, rms
 from code6.coordinates import cart_to_polar
 from code6.units import (
@@ -74,6 +76,7 @@ class Pupil(object):
         '''Returns the RMS wavefront error
         '''
         return rms(self.phase)
+
     # quick-access slices, properties ------------------------------------------
 
     # plotting -----------------------------------------------------------------
@@ -106,15 +109,14 @@ class Pupil(object):
         return fig, ax
 
     def interferogram(self, visibility=1, passes=1, fig=None, ax=None):
-        phase = convert_phase(self.phase, self)
         fig, ax = share_fig_ax(fig, ax)
-        plotdata = (visibility * sin(2 * pi * passes * phase))
+        plotdata = (visibility * sin(2 * pi * passes * self.phase))
         im = ax.imshow(plotdata,
                   extent=[-1, 1, -1, 1],
                   cmap='Greys_r',
                   interpolation='bicubic',
                   clim=(-1,1))
-        fig.colorbar(im, label=f'Wrapped Phase [{self._opd_str}]')
+        fig.colorbar(im, label=r'Wrapped Phase [$\lambda$]')
         ax.set(xlabel='Normalized Pupil X [a.u.]',
                ylabel='Normalized Pupil Y [a.u.]')
         return fig, ax
@@ -143,6 +145,17 @@ class Pupil(object):
         self.fcn[self.rho > 1] = 0
         return self.phase, self.fcn
 
+    def merge(self, pupil2):
+        '''merges this pupil with another
+
+        Args:
+            pupil2 (Pupil): pupil with same sampling and OPD units as this one
+
+        Returns:
+            Pupil.  A new pupil with the OPD of both pupils combined
+        '''
+        return merge_pupils(self, pupil2)
+
     def _gengrid(self):
         '''Generates a uniform (x,y) grid and maps it to (rho,phi) coordinates for zernike eval'''
         x = y    = linspace(-1, 1, self.samples)
@@ -168,10 +181,32 @@ def convert_phase(array, pupil):
 
     Returns:
         numpy.ndarray.  phase-corrected array.
-    ''' 
+    '''
     if pupil._opd_unit == 'microns':
         return array * microns_to_waves(pupil.wavelength)
     elif pupil._opd_unit == 'nanometers':
         return array * nanometers_to_waves(pupil.wavelength)
     else:
         return array
+
+def merge_pupils(pupil1, pupil2):
+    '''Merges the phase from two pupils and returns a new Pupil instance
+
+    Args:
+        pupil1 (Pupil): first pupil
+        pupil2 (Pupil): second pupil
+
+    Returns
+        Pupil.  New pupil with merged phase
+    '''
+    if pupil1.sample_spacing != pupil2.sample_spacing or pupil1.samples != pupil2.samples:
+        raise ValueError('Pupils must be identically sampled')
+
+    # create a new pupil and copy Pupil1's dictionary into it
+    props = deepcopy(pupil1.__dict__)
+    retpupil = Pupil()
+    retpupil.__dict__ = props
+
+    retpupil.phase = pupil1.phase + pupil2.phase
+    retpupil.fcn = exp(1j * 2 * pi / retpupil.wavelength * retpupil.phase)
+    return retpupil
