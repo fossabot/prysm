@@ -98,7 +98,7 @@ def mag_to_fno(mag, infinite_fno, pupil_mag=1):
         working fno.
     '''
     mag = guarantee_array(mag)
-    return (1 + np.absolute(mag) / pupil_mag) * infinite_fno)
+    return (1 + np.absolute(mag) / pupil_mag) * infinite_fno
 
 def defocus_to_image_displacement(defocus, fno, wavelength, zernike=False, rms_norm=False):
     '''Computes image displacment from wavefront defocuse xpressed in waves 0-P to
