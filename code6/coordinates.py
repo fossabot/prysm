@@ -67,12 +67,38 @@ def resample_2d(array, sample_pts, query_pts):
 
     Args:
         array (numpy.ndarray): 2D array
-        sample_pts (tuple): pair of numpy.ndarray objects that contain the x and y sample locations
-        query_pts, points to interpolate onto
+        sample_pts (tuple): pair of numpy.ndarray objects that contain the x and y sample locations,
+            each array should be 1D
+        query_pts (tuple): points to interpolate onto, also 1D for each array
 
     Returns:
-        numpy.ndarray.  Array2 resampled to match array1
+        numpy.ndarray.  array resampled onto query_pts via bivariate spline
     '''
-    xq, yq = query_pts
-    interpf = interpolate.RegularGridInterpolator(sample_pts, array)
-    return interpf((xq, yq), method='linear')
+    xq, yq = np.meshgrid(*query_pts)
+    interpf = interpolate.RectBivariateSpline(*sample_pts, array)
+    return interpf.ev(xq, yq)
+
+def resample_2d_complex(array, sample_pts, query_pts):
+    '''Resamples a 2D complex array by interpolating the magnitude and phase independently and
+    merging the results into a complex value
+
+    Args:
+        array (numpy.ndarray): complex 2D array
+        sample_pts (tuple): pair of numpy.ndarray objects that contain the x and y sample locations,
+            each array should be 1D
+        query_pts (tuple): points to interpolate onto, also 1D for each array
+
+    Returns:
+        numpy.ndarray array resampled onto query_pts via bivariate spline
+    '''
+    xq, yq = np.meshgrid(*query_pts)
+    mag = np.absolute(array)
+    phase = np.angle(array)
+
+    magfunc = interpolate.RectBivariateSpline(*sample_pts, mag)
+    phasefunc = interpolate.RectBivariateSpline(*sample_pts, phase)
+
+    interp_mag = magfunc.ev(xq, yq)
+    interp_phase = magfunc.ev(xq, yq)
+
+    return interp_mag + 1j*interp_phase
