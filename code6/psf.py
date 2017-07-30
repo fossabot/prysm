@@ -8,8 +8,8 @@ from numpy.fft import fft2, fftshift, ifftshift, ifft2
 
 from matplotlib import pyplot as plt
 
-from code6.fttools import pad2d, matrix_dft
-from code6.coordinates import cart_to_polar, polar_to_cart, uniform_cart_to_polar
+from code6.fttools import pad2d, forward_ft_unit
+from code6.coordinates import cart_to_polar, polar_to_cart, uniform_cart_to_polar, resample_2d
 from code6.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax, fold_array
 
 class PSF(object):
@@ -40,7 +40,7 @@ class PSF(object):
         '''
         return self.unit, self.data[:, self.center]
 
-    
+
     def encircled_energy(self, azimuth=None):
         '''
         returns the encircled energy at the requested azumith.  If azimuth is None, returns the
@@ -117,7 +117,7 @@ class PSF(object):
 
     def plot_encircled_energy(self):
         unit, data = self.encircled_energy()
-        
+
         fig, ax = plt.subplots()
         ax.plot(unit, data, lw=3)
         ax.set(xlabel=r'Image Plane Distance [$\mu m$]',
@@ -131,11 +131,11 @@ class PSF(object):
 
     def conv(self, psf2):
         return convpsf(self, psf2)
-    
+
     def _renorm(self):
         self.data /= self.data.max()
         return self
-    
+
     # helpers ------------------------------------------------------------------
 
     @staticmethod
@@ -163,4 +163,21 @@ def convpsf(psf1, psf2):
                    sample_spacing=psf1.sample_spacing)
         return psf3._renorm()
     else:
-        raise ValueError('psfs must be sampled equally')
+        # need to interpolate, suppress all frequency content above nyquist for the less sampled psf
+        if psf1.sample_spacing > psf2.sample_spacing:
+            # psf1 has the lower nyquist, resample psf2 in the fourier domain to match psf1
+            return _unequal_spacing_conv_core(psf1, psf2)
+        else:
+            # psf2 has lower nyquist, resample psf1 in the fourier domain to match psf2
+            return _unequal_spacing_conv_core(psf2, psf1)
+
+def _unequal_spacing_conv_core(psf1, psf2):
+    ft1 = fft2(psf1.data)
+    unit1 = forward_ft_unit(psf1.sample_spacing, psf1.samples)
+    ft2 = fft2(psf2.data)
+    unit2 = forward_ft_unit(psf2.sample_spacing, psf2.samples)
+    ft3 = resample_2d(ft2, (unit2, unit2), unit1)
+    psf3 = PSF(data=np.absolute(ifftshift(ifft2(ft1 * ft3))),
+               samples=psf1.samples,
+               sample_spacing=psf2.sample_spacing)
+    return psf3._renorm()

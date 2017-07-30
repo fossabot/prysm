@@ -13,7 +13,7 @@ def pad2d(array, factor=1):
     return np.pad(array, pad_width=pad_shape, mode='constant', constant_values=0)
 
 def forward_ft_unit(sample_spacing, samples):
-    f_s = int(floor(samples / 2))
+    f_s = int(np.floor(samples / 2))
     return 1 / (sample_spacing / 1e3) * np.arange(-f_s, f_s) / samples
 def matrix_dft(f, alpha, npix, shift=None, unitary=False):
     '''

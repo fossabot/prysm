@@ -61,3 +61,18 @@ def uniform_cart_to_polar(x, y, data):
     # 3 - interpolate the function onto the new points
     f = interpolate.RegularGridInterpolator((x, y), data)
     return rv, pv, f((xv, yv), method='linear')
+
+def resample_2d(array, sample_pts, query_pts):
+    '''Resamples 2D array to be sampled along queried points
+
+    Args:
+        array (numpy.ndarray): 2D array
+        sample_pts (tuple): pair of numpy.ndarray objects that contain the x and y sample locations
+        query_pts, points to interpolate onto
+
+    Returns:
+        numpy.ndarray.  Array2 resampled to match array1
+    '''
+    xq, yq = query_pts
+    interpf = interpolate.RegularGridInterpolator(sample_pts, array)
+    return interpf((xq, yq), method='linear')
