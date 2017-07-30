@@ -9,10 +9,15 @@ from numpy.fft import fft2, fftshift, ifftshift, ifft2
 from matplotlib import pyplot as plt
 
 from code6.fttools import pad2d, forward_ft_unit
-from code6.coordinates import cart_to_polar, polar_to_cart, uniform_cart_to_polar, resample_2d
+from code6.coordinates import cart_to_polar, polar_to_cart, uniform_cart_to_polar, resample_2d_complex
 from code6.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax, fold_array
 
 class PSF(object):
+    '''Point Spread Function representations
+
+    info:
+        Subclasses must implement an analyic_ft method with signature a_ft(unit_x, unit_y)
+    '''
     def __init__(self, data, samples, sample_spacing):
         # dump inputs into class instance
         self.data = data
@@ -130,6 +135,16 @@ class PSF(object):
     # helpers ------------------------------------------------------------------
 
     def conv(self, psf2):
+        if issubclass(psf2.__class__, PSF):
+            # subclasses have analytic fourier transforms and we can exploit this for high speed,
+            # aliasing-free convolution
+            psf_ft = fft2(self.data)
+            psf_unit = forward_ft_unit(self.sample_spacing, self.samples)
+            psf2_ft = fftshift(psf2.analytic_ft(psf_unit, psf_unit))
+            psf3 = PSF(data=np.absolute(ifft2(psf_ft * psf2_ft)),
+                       samples=self.samples,
+                       sample_spacing=self.sample_spacing)
+            return psf3._renorm()
         return convpsf(self, psf2)
 
     def _renorm(self):
@@ -176,7 +191,7 @@ def _unequal_spacing_conv_core(psf1, psf2):
     unit1 = forward_ft_unit(psf1.sample_spacing, psf1.samples)
     ft2 = fft2(psf2.data)
     unit2 = forward_ft_unit(psf2.sample_spacing, psf2.samples)
-    ft3 = resample_2d(ft2, (unit2, unit2), unit1)
+    ft3 = resample_2d_complex(ft2, (unit2, unit2), (unit1, unit1[::-1]))
     psf3 = PSF(data=np.absolute(ifftshift(ifft2(ft1 * ft3))),
                samples=psf1.samples,
                sample_spacing=psf2.sample_spacing)

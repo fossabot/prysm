@@ -71,30 +71,62 @@ class OLPF(PSF):
         # compute relevant spacings
         if width_y is None:
             width_y = width_x
+
+        self.width_x = width_x
+        self.width_y = width_y
+
         space_x = width_x / 2
         space_y = width_y / 2
         shift_x = int(np.floor(space_x / sample_spacing))
         shift_y = int(np.floor(space_y / sample_spacing))
         center  = int(np.floor(samples/2))
-        
+
         data = np.zeros((samples, samples))
 
-        data[center-shift_x, center-shift_y] = 1##0.75
-        data[center-shift_x, center+shift_y] = 1#0.75
-        data[center+shift_x, center-shift_y] = 1#0.75
-        data[center+shift_x, center+shift_y] = 1#0.75
+        data[center-shift_x, center-shift_y] = 1
+        data[center-shift_x, center+shift_y] = 1
+        data[center+shift_x, center-shift_y] = 1
+        data[center+shift_x, center+shift_y] = 1
         super().__init__(data=data, samples=samples, sample_spacing=sample_spacing)
 
+    def analytic_ft(self, unit_x, unit_y):
+        '''Analytic fourier transform of a pixel aperture
+            
+            Args:
+                unit_x (numpy.ndarray): sample points in x axis
+                unit_y (numpy.ndarray): sample points in y axis
+
+            Returns:
+                numpy.ndarray.  2D numpy array containing the analytic fourier transform
+        '''
+        xq, yq = np.meshgrid(unit_x, unit_y)
+        return (np.cos(xq*self.width_x/1e3)*np.cos(yq*self.width_y/1e3)).astype(np.complex128)
+
 class PixelAperture(PSF):
-    '''creates a PSF view of the pixel aperture
+    '''creates an image plane view of the pixel aperture
     '''
     def __init__(self, size, sample_spacing=0.1, samples=384):
+        self.size = size
+
         center = int(np.floor(samples/2))
         half_width = size / 2
         steps = int(np.floor(half_width / sample_spacing))
         pixel_aperture = np.zeros((samples, samples))
         pixel_aperture[center-steps:center+steps, center-steps:center+steps] = 1
         super().__init__(data=pixel_aperture, sample_spacing=sample_spacing, samples=samples)
+
+    def analytic_ft(self, unit_x, unit_y):
+        '''Analytic fourier transform of a pixel aperture
+        
+        Args:
+            unit_x (numpy.ndarray): sample points in x axis
+            unit_y (numpy.ndarray): sample points in y axis
+
+        Returns:
+            numpy.ndarray.  2D numpy array containing the analytic fourier transform
+        '''
+        xq, yq = np.meshgrid(unit_x, unit_y)
+        return (np.sinc(xq*self.size/1e3)*np.sinc(yq*self.size/1e3)).astype(np.complex128)
 
 def generate_mtf(pixel_pitch=1, azimuth=0, num_samples=128):
     '''
