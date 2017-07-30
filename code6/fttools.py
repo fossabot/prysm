@@ -1,7 +1,6 @@
 '''
 Supplimental tools for computing fourier transforms
 '''
-
 import numpy as np
 
 def pad2d(array, factor=1):
@@ -13,6 +12,9 @@ def pad2d(array, factor=1):
     pad_shape = ((x*factor, x*factor), (y*factor, y*factor))
     return np.pad(array, pad_width=pad_shape, mode='constant', constant_values=0)
 
+def forward_ft_unit(sample_spacing, samples):
+    f_s = int(floor(samples / 2))
+    return 1 / (sample_spacing / 1e3) * np.arange(-f_s, f_s) / samples
 def matrix_dft(f, alpha, npix, shift=None, unitary=False):
     '''
     A technique shamelessly stolen from Andy Kee @ NASA JPL

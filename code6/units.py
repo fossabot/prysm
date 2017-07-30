@@ -1,3 +1,6 @@
+'''Unit manipulation
+'''
+
 def waves_to_microns(wavelength):
     '''Returns a conversion factor to yield microns from OPD expressed in waves
 

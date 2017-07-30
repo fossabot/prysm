@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 
 from code6.psf import PSF
 from code6.util import correct_gamma, share_fig_ax
+from code6.fttools import forward_ft_unit
 
 class MTF(object):
     def __init__(self, data, unit):
@@ -83,9 +84,8 @@ class MTF(object):
     @staticmethod
     def from_psf(psf):
         dat = abs(fftshift(fft2(psf.data)))
-        f_s = int(floor(psf.samples / 2))
-        unit = 1 / (psf.sample_spacing / 1e3) * range(-f_s, f_s) / psf.samples
-        return MTF(dat/dat[f_s,f_s], unit)
+        unit = forward_ft_unit(psf.sample_spacing, psf.samples)
+        return MTF(dat/dat[psf.center,psf.center], unit)
 
     @staticmethod
     def from_pupil(pupil, efl, padding=1):
