@@ -96,7 +96,7 @@ class PSF(object):
                ylim=(-axlim,axlim))
         return fig, ax
 
-    def plot_slice_xy(self, log=False):
+    def plot_slice_xy(self, log=False, axlim=20):
         u, x = self.slice_x
         _, y = self.slice_y
         if log:
@@ -115,7 +115,7 @@ class PSF(object):
         ax.plot(u, fcn_y, label='Slice Y', lw=3)
         ax.set(xlabel=r'Image Plane X [$\mu m$]',
                ylabel=label_str,
-               xlim=(-10,10),
+               xlim=(-axlim, axlim),
                ylim=lims)
         plt.legend(loc='upper right')
         return fig, ax
