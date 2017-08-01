@@ -99,6 +99,6 @@ def resample_2d_complex(array, sample_pts, query_pts):
     phasefunc = interpolate.RectBivariateSpline(*sample_pts, phase)
 
     interp_mag = magfunc.ev(xq, yq)
-    interp_phase = magfunc.ev(xq, yq)
+    interp_phase = phasefunc.ev(xq, yq)
 
     return interp_mag + 1j*interp_phase

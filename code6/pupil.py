@@ -22,7 +22,7 @@ from code6.units import (
     )
 
 class Pupil(object):
-    def __init__(self, samples=128, epd=1, autobuild=True, wavelength=0.55, opd_unit='$\lambda$'):
+    def __init__(self, samples=128, epd=1, wavelength=0.55, opd_unit='$\lambda$'):
         self.samples          = samples
         self.wavelength       = wavelength
         self.opd_unit         = opd_unit
