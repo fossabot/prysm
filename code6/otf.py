@@ -5,11 +5,14 @@ import numpy as np
 from numpy import floor
 from numpy.fft import fft2, fftshift, ifftshift
 
+from scipy import interpolate
+
 from matplotlib import pyplot as plt
 
 from code6.psf import PSF
-from code6.util import correct_gamma, share_fig_ax
 from code6.fttools import forward_ft_unit
+from code6.util import correct_gamma, share_fig_ax
+from code6.coordinates import polar_to_cart
 
 class MTF(object):
     def __init__(self, data, unit):
@@ -23,18 +26,53 @@ class MTF(object):
 
     @property
     def tan(self):
-        '''
-        Retrieves the tangential MTF
+        '''Retrieves the tangential MTF
         '''
         return self.unit[self.center:-1], self.data[self.center, self.center:-1]
 
     @property
     def sag(self):
-        '''
-        Retrieves the sagittal MTF
+        '''Retrieves the sagittal MTF
         '''
         return self.unit[self.center:-1], self.data[self.center:-1, self.center]
 
+    def exact_polar(self, freqs, azimuths):
+        '''Retrieves the MTF at the specified frequency-azimuth pairs
+        
+        Args:
+            freqs (iterable): radial frequencies to retrieve MTF for
+            azimuths (iterable): corresponding azimuths to retrieve MTF for
+
+        Returns:
+            list: MTF at the given points
+        '''
+        self._make_interp_function()
+
+        outs = []
+        for freq, az in zip(freqs, azimuths):
+            x, y = polar_to_cart(freq, az)
+            outs.append(list(self.interpf.ev(x, y)))
+
+        return outs
+
+    def exact_xy(self, x, y):
+        '''Retrieves the MTF at the specified X-Y frequency pairs
+
+        Args:
+            x (iterable): X frequencies to retrieve the MTF at
+            y (iterable): Y frequencies to retrieve the MTF at
+
+        Returns:
+            list: MTF at the given points
+        '''
+        self._make_interp_function()
+
+        outs = []
+
+        for x, y in zip(x, y):
+            outs.append(list(self.interpf.ev(x,y)))
+
+        return outs
     # quick-access slices ------------------------------------------------------
 
     # plotting -----------------------------------------------------------------
@@ -81,6 +119,13 @@ class MTF(object):
 
     # plotting -----------------------------------------------------------------
 
+    # helpers ------------------------------------------------------------------
+
+    def _make_interp_function(self):
+        if not hasattr(self, 'interpf'):
+            self.interpf = interpolate.RectBivariateSpline(self.unit, self.unit, self.data)
+
+        return self
     @staticmethod
     def from_psf(psf):
         dat = abs(fftshift(fft2(psf.data)))
