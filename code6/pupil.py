@@ -108,7 +108,7 @@ class Pupil(object):
         plt.legend()
         return fig, ax
 
-    def interferogram(self, visibility=1, passes=1, fig=None, ax=None):
+    def interferogram(self, visibility=1, passes=2, fig=None, ax=None):
         fig, ax = share_fig_ax(fig, ax)
         plotdata = (visibility * sin(2 * pi * passes * self.phase))
         im = ax.imshow(plotdata,

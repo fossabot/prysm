@@ -53,7 +53,7 @@ _names = [
 # multiple times, and we are guaranteed safety since we have typed the equations properly and
 # using properties to protect exposure
 _eqns =  [
-    'np.ones((self.samples, self.samples))',                                            # Z0
+    'np.zeros((self.samples, self.samples))',                                           # Z0
     'rho * cos(phi)',                                                                   # Z1
     'rho * sin(phi)',                                                                   # Z2
     '2 * npow(rho,2) - 1',                                                              # Z3
