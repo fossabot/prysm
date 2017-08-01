@@ -209,4 +209,5 @@ def merge_pupils(pupil1, pupil2):
 
     retpupil.phase = pupil1.phase + pupil2.phase
     retpupil.fcn = exp(1j * 2 * pi / retpupil.wavelength * retpupil.phase)
+    retpupil.clip()
     return retpupil
