@@ -100,7 +100,7 @@ class OLPF(PSF):
                 numpy.ndarray.  2D numpy array containing the analytic fourier transform
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.cos(xq*self.width_x/1e3)*np.cos(yq*self.width_y/1e3)).astype(np.complex128)
+        return (np.cos(2*xq*self.width_x/1e3)*np.cos(2*yq*self.width_y/1e3)).astype(np.complex128)
 
 class PixelAperture(PSF):
     '''creates an image plane view of the pixel aperture
