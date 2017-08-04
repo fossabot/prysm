@@ -140,8 +140,8 @@ def image_displacement_to_defocus(image_displacement, fno, wavelength, zernike=F
     defocus = image_displacement / (8 * np.power(fno,2) * wavelength)
     if zernike is True:
         if rms_norm is True:
-            return defocus * 2 / eval(_normalizations[4])
+            return defocus / 2 / eval(_normalizations[4])
         else:
-            return defocus * 2
+            return defocus / 2
     else:
         return defocus
