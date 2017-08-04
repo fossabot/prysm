@@ -11,7 +11,7 @@ from matplotlib import pyplot as plt
 
 from code6.psf import PSF
 from code6.fttools import forward_ft_unit
-from code6.util import correct_gamma, share_fig_ax
+from code6.util import correct_gamma, share_fig_ax, guarantee_array
 from code6.coordinates import polar_to_cart
 
 class MTF(object):
@@ -36,7 +36,7 @@ class MTF(object):
         '''
         return self.unit[self.center:-1], self.data[self.center:-1, self.center]
 
-    def exact_polar(self, freqs, azimuths):
+    def exact_polar(self, freqs, azimuths=None):
         '''Retrieves the MTF at the specified frequency-azimuth pairs
         
         Args:
@@ -48,14 +48,26 @@ class MTF(object):
         '''
         self._make_interp_function()
 
+        # handle user-unspecified azimuth
+        if azimuths is None:
+            if type(freqs) in (int, float):
+                # single azimuth
+                azimuths = 0
+            else:
+                azimuths = [0] * len(freqs)
+
+        # handle single value case
+        if type(freqs) in (int, float):
+            x, y = polar_to_cart(freqs, azimuths)
+            return float(self.interpf.ev(x, y))
+
         outs = []
         for freq, az in zip(freqs, azimuths):
             x, y = polar_to_cart(freq, az)
-            outs.append(list(self.interpf.ev(x, y)))
-
+            outs.append(float(self.interpf.ev(x, y)))
         return outs
 
-    def exact_xy(self, x, y):
+    def exact_xy(self, x, y=None):
         '''Retrieves the MTF at the specified X-Y frequency pairs
 
         Args:
@@ -67,11 +79,21 @@ class MTF(object):
         '''
         self._make_interp_function()
 
+        # handle user-unspecified azimuth
+        if y is None:
+            if type(x) in (int, float):
+                # single azimuth
+                y = 0
+            else:
+                y = [0] * len(x)
+
+        # handle single value case
+        if type(x) in (int, float):
+            return float(self.interpf.ev(x, y))
+
         outs = []
-
         for x, y in zip(x, y):
-            outs.append(list(self.interpf.ev(x,y)))
-
+            outs.append(float(self.interpf.ev(x, y)))
         return outs
     # quick-access slices ------------------------------------------------------
 
@@ -126,6 +148,7 @@ class MTF(object):
             self.interpf = interpolate.RectBivariateSpline(self.unit, self.unit, self.data)
 
         return self
+
     @staticmethod
     def from_psf(psf):
         dat = abs(fftshift(fft2(psf.data)))

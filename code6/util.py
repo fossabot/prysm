@@ -101,9 +101,11 @@ def guarantee_array(variable):
     Returns:
         numpy ndarray equivalent
     '''
-    if type(variable) in [float, np.ndarray]:
+    if type(variable) in [float, np.ndarray, np.int32, np.int64, np.float32, np.float64]:
         return variable
     elif type(variable) is int:
         return float(variable)
     elif type(variable) is list:
         return np.asarray(variable)
+    else:
+        raise ValueError(f'variable is of invalid type {type(variable)}')
