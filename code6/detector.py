@@ -3,53 +3,54 @@ Basic detector interface
 '''
 import numpy as np
 from code6.psf import PSF
-
-px_size_default = 5                    # um
-resolution_default = (1024, 1024)      # px * px
-noise_default = dict(read=5,           # e-
-    bias=200,                          # DN
-    dark=0.2,                          # e-/s
-    prnu=np.zeros(resolution_default), # e- per pixel
-    dsnu=np.zeros(resolution_default)  # e- per pixel
-)
-wavelengths_default = np.arange(400, 700, 10)    # nm
-qe_default = (wavelengths_default-700)/700 + 0.5 # e-/photon
-light_default = dict(wavelengths=wavelengths_default,
-    qe=qe_default,
-    fwc=50000 # e-
-)
+from code6.util import is_odd
 
 class Detector(object):
-    def __init__(self, pixel_size=px_size_default, resolution=resolution_default, noise=noise_default, light=light_default):
+    def __init__(self, pixel_size, resolution=(1024,1024), nbits=14):
         self.pixel_size = pixel_size
         self.resolution = resolution
-        self.noise = noise
-        self.light = light
+        self.bit_depth = nbits
 
-    def expose(self, truth_img, truth_wavelengths, ts=1/100):
-        # start from nothing
-        output_image = np.zeros((self.resolution, self.resolution))
+    def sample_psf(self, psf):
+        '''Samples a PSF, mimics capturing a photo of an oversampled representation of an image
 
-        # add the bias
-        output_image += self.noise['bias']
+        Args:
+            PSF (code6.PSF): a point spread function
 
-        # add the dark current
-        output_image += (np.random.random(self.resolution, self.resolution) * self.noise['dark']*ts) + self.noise['dsnu']
+        Returns:
+            PSF.  A new PSF object, as it would be sampled by the detector
 
-        # add the read noise
-        output_image += np.random.random((self.resolution, self.resolution)) * self.noise['read']
+        Notes:
+            inspired by
+            https://stackoverflow.com/questions/14916545/numpy-rebinning-a-2d-array
+        '''
 
-        # add the signal
-        spectral_content = np.dot(self.light['qe'], truth_wavelengths[:,:,2])
-        output_image += truth_img * spectral_content * ts
-        
-        return output_image
+        # we assume the pixels are bigger than the samples in the PSF
+        samples_per_pixel = int(np.ceil(self.pixel_size / psf.sample_spacing))
 
+        # determine amount we need to trim the psf
+        psf_width = 2 * psf.unit[-1]
+        total_samples = int(np.floor(psf.samples / samples_per_pixel))
+        output_extent = total_samples * self.pixel_size
+        final_idx = total_samples * samples_per_pixel
 
-class ADC(object):
-    def __init(self, precision=16, noise=5):
-        self.precision = precision
-        self.noise = noise
+        residual = int(psf.samples - final_idx)
+        if not is_odd(residual):
+            samples_to_trim = int(residual / 2)
+            trimmed_data = psf.data[samples_to_trim:final_idx+samples_to_trim,
+                                    samples_to_trim:final_idx+samples_to_trim]
+        else:
+            samples_tmp = float(residual) / 2
+            samples_left = int(np.ceil(samples_tmp))
+            samples_right = int(np.floor(samples_tmp))
+            trimmed_data = psf.data[samples_left:final_idx+samples_right,
+                                    samples_left:final_idx+samples_right]
+
+        intermediate_view = trimmed_data.reshape(total_samples, samples_per_pixel,
+                                                 total_samples, samples_per_pixel)
+
+        output_data = intermediate_view.mean(axis=(1,3))
+        return PSF(data=output_data, samples=total_samples, sample_spacing=self.pixel_size)
 
 
 class OLPF(PSF):

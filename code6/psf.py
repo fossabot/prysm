@@ -70,7 +70,7 @@ class PSF(object):
 
     # plotting -----------------------------------------------------------------
 
-    def plot2d(self, log=False, axlim=25, fig=None, ax=None):
+    def plot2d(self, log=False, axlim=25, interp_method='bicubic', fig=None, ax=None):
         if log:
             fcn = 20 * np.log10(1e-100 + self.data)
             label_str = 'Normalized Intensity [dB]'
@@ -87,7 +87,7 @@ class PSF(object):
         im = ax.imshow(fcn,
                        extent=[left, right, left, right],
                        cmap='Greys_r',
-                       interpolation='bicubic',
+                       interpolation=interp_method,
                        clim=lims)
         fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         ax.set(xlabel=r'Image Plane X [$\mu m$]',

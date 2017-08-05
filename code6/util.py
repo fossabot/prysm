@@ -1,6 +1,17 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+def is_odd(int):
+    '''Determines if an interger is odd using binary operations for speed (~150ns/execution)
+
+    Args:
+        int: an integer
+
+    Returns:
+        bool.  True if odd, False if even
+    '''
+    return int & 0x1
+
 def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
     '''Converts pupil sample spacing to PSF sample spacing
 
