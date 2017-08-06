@@ -8,14 +8,14 @@ def pad2d(array, factor=1, value=0):
 
     Args:
         array (numpy.ndarray): source array
-        factor (int): number of widths of source array to add to each side (L/R/U/D)
+        factor (number): number of widths of source array to add to each side (L/R/U/D)
         value (number): value with which to pad the array
 
     Returns
         Array.  Padded array.
     '''
     x, y = array.shape
-    pad_shape = ((x*factor, x*factor), (y*factor, y*factor))
+    pad_shape = ((int(x*factor), int(x*factor)), (int(y*factor), int(y*factor)))
     return np.pad(array, pad_width=pad_shape, mode='constant', constant_values=value)
 
 def forward_ft_unit(sample_spacing, samples):
