@@ -1,4 +1,4 @@
-from code6.extra import plot_fourier_chain
+from code6.extras import plot_fourier_chain
 from code6.detector import Detector, OLPF, PixelAperture
 from code6.pupil import Pupil
 from code6.fringezernike import FringeZernike
