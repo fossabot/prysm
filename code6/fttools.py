@@ -3,18 +3,34 @@ Supplimental tools for computing fourier transforms
 '''
 import numpy as np
 
-def pad2d(array, factor=1):
-    '''
-        pads a 2D array such that the output array is 2*factor times larger in each dimmension than
-        the input array
+def pad2d(array, factor=1, value=0):
+    '''Symmetrically pads a 2D array with a value
+
+    Args:
+        array (numpy.ndarray): source array
+        factor (int): number of widths of source array to add to each side (L/R/U/D)
+        value (number): value with which to pad the array
+
+    Returns
+        Array.  Padded array.
     '''
     x, y = array.shape
     pad_shape = ((x*factor, x*factor), (y*factor, y*factor))
-    return np.pad(array, pad_width=pad_shape, mode='constant', constant_values=0)
+    return np.pad(array, pad_width=pad_shape, mode='constant', constant_values=value)
 
 def forward_ft_unit(sample_spacing, samples):
+    '''Computes the units resulting from a fourier transform
+
+    Args:
+        sample_spacing (float): center-to-center spacing of samples in an array
+        samples (int): number of samples
+
+    Returns:
+        numpy.ndarray.  array of sample frequencies in the output
+    '''
     f_s = int(np.floor(samples / 2))
-    return 1 / (sample_spacing / 1e3) * np.arange(-f_s, f_s) / samples
+    return np.arange(-f_s, f_s) / (sample_spacing / 1e3) / samples
+
 def matrix_dft(f, alpha, npix, shift=None, unitary=False):
     '''
     A technique shamelessly stolen from Andy Kee @ NASA JPL
@@ -55,10 +71,3 @@ def matrix_dft(f, alpha, npix, shift=None, unitary=False):
         return F * norm_coef
     else:
         return F
-
-def is_power_of_2(value):
-    '''
-    c++ inspired implementation, see SO:
-    https://stackoverflow.com/questions/29480680/finding-if-a-number-is-a-power-of-2-using-recursion
-    '''
-    return bool(value and not value&(value-1))

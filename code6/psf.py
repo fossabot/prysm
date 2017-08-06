@@ -15,7 +15,7 @@ from code6.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax, 
 class PSF(object):
     '''Point Spread Function representations
 
-    info:
+    Notes:
         Subclasses must implement an analyic_ft method with signature a_ft(unit_x, unit_y)
     '''
     def __init__(self, data, samples, sample_spacing):
@@ -36,7 +36,7 @@ class PSF(object):
         '''
         Retrieves a slice through the x axis of the PSF
         '''
-        return self.unit, self.data[self.center,:]
+        return self.unit, self.data[self.center, :]
 
     @property
     def slice_y(self):
@@ -92,8 +92,8 @@ class PSF(object):
         fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         ax.set(xlabel=r'Image Plane X [$\mu m$]',
                ylabel=r'Image Plane Y [$\mu m$]',
-               xlim=(-axlim,axlim),
-               ylim=(-axlim,axlim))
+               xlim=(-axlim, axlim),
+               ylim=(-axlim, axlim))
         return fig, ax
 
     def plot_slice_xy(self, log=False, axlim=20):
@@ -127,7 +127,7 @@ class PSF(object):
         ax.plot(unit, data, lw=3)
         ax.set(xlabel=r'Image Plane Distance [$\mu m$]',
                ylabel=r'Encircled Energy [Rel 1.0]',
-               xlim=(0,20))
+               xlim=(0, 20))
         return fig, ax
 
     # plotting -----------------------------------------------------------------

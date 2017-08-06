@@ -12,6 +12,22 @@ def is_odd(int):
     '''
     return int & 0x1
 
+def is_power_of_2(value):
+    '''Checks if a value is a power of 2 with high speed binary operations
+
+    Args:
+        value (number): value to check
+
+    Returns:
+        bool.  True if the value is a power of two, False if the value is no
+
+    Notes:
+        c++ inspired implementation, see SO:
+        https://stackoverflow.com/questions/29480680/finding-if-a-number-is-a-power-of-2-using-recursion
+    '''
+    return bool(value and not value&(value-1))
+
+
 def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
     '''Converts pupil sample spacing to PSF sample spacing
 
@@ -44,11 +60,11 @@ def correct_gamma(img, encoding=2.2):
     '''Applies an inverse gamma curve to image data that linearizes the given encoding
 
     Args:
-        img (numpy.array): array of image data, floats avoid quantization error
+        img (numpy.ndarray): array of image data, floats avoid quantization error
         encoding (float): gamma the data is encoded in (1.0 is linear)
 
     Returns:
-        numpy.array.  Array of corrected data.
+        numpy.ndarray.  Array of corrected data.
     '''
     return np.power(img, (1/float(encoding)))
 
@@ -56,10 +72,10 @@ def fold_array(array):
     '''folds an array in half over the given axis and averages
 
     Args:
-        array (numpy.array): 2d array to fold
+        array (numpy.ndarray): 2d array to fold
 
     Returns
-        numpy.array.  new array
+        numpy.ndarray.  new array
     '''
     xs, ys = array.shape
     xh = int(np.floor(xs/2))
@@ -92,13 +108,13 @@ def share_fig_ax(fig=None, ax=None, numax=1):
     return fig, ax
 
 def rms(array):
-    '''Returns the RMS value of an array
+    '''Returns the RMS value of the valid elements of an array
 
     Args:
         array (numpy.ndarray)
 
     Returns:
-        rms value
+        float.  RMS of the array
     '''
     non_nan = np.isfinite(array)
     return np.sqrt(np.mean(np.square(array[non_nan])))
@@ -107,10 +123,10 @@ def guarantee_array(variable):
     '''Guarantees that a varaible is a numpy ndarray and supports -, *, +, and other operators
 
     Args:
-        variable (float or numpy.ndarray): variable to coalesce
+        variable (number or numpy.ndarray): variable to coalesce
 
     Returns:
-        numpy ndarray equivalent
+        (type).  Which supports * / and other operations with arrays
     '''
     if type(variable) in [float, np.ndarray, np.int32, np.int64, np.float32, np.float64]:
         return variable
