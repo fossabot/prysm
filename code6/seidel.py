@@ -2,6 +2,7 @@
 A repository of seidel aberration descriptions used to model pupils of
 optical systems.
 '''
+
 import numpy as np
 from numpy import arctan2, exp, cos, sin, pi, sqrt, nan
 from numpy import power as npow
@@ -9,14 +10,37 @@ from numpy import power as npow
 from code6.pupil import Pupil
 
 class Seidel(Pupil):
-    '''
-    A pupil described by a set of Seidel coefficients
+    '''Seidel pupil description
+
+    Properties:
+        Inherited from Pupil, please see that class.
+
+    Instance Methods:
+        build: computes the phase and wavefunction for the pupil.  This method
+            is automatically called by the constructor, and does not regularly
+            need to be changed by the user.
+
+    Private Instance Methods:
+        none
+
+    Static Methods:
+        none
     '''
 
     def __init__(self, *args, **kwargs):
-        '''
-        kwargs: pass a named set of Seidel terms. e.g. Seidel(W040=1, W020=-0.5)
-                Terms of arbitrary order can be used.
+        '''Initializes a new Seidel Pupil
+
+        Args:
+            samples (int): number of samples across pupil diameter
+            wavelength (float): wavelength of light, in um
+            epd: (float): diameter of the pupil, in mm
+            opd_unit (string): unit OPD is expressed in.  One of:
+                ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers)
+            Wxyz (float): W coefficient with x=H, y=rho, z=phi dependencies
+                ex: W020 - defocus, W040 - spherical, W131 - coma.
+
+        Returns:
+            Seidel.  A new Seidel pupil instance. 
         '''
 
         self.eqns = []
@@ -36,7 +60,16 @@ class Seidel(Pupil):
         super().__init__(**pass_args)
 
     def build(self):
-        # construct an equation for the phase of the pupil
+        '''Uses the wavefront coefficients stored in this class instance to
+            build a wavefront model.
+
+        Args:
+            none
+
+        Returns:
+            (numpy.ndarray, numpy.ndarray) arrays containing the phase, and the
+                wavefunction for the pupil.
+        '''
         mathexpr = 'np.zeros((self.samples, self.samples))'
         for term, coef in zip(self.eqns, self.coefs):
             mathexpr += '+' + str(coef) + '*(' + term + ')'
@@ -53,6 +86,15 @@ class Seidel(Pupil):
         return self.phase, self.fcn
 
 def wexpr_to_opd_expr(Wxxx):
+    '''Converts a W notation to a string with numpy code to evaluate for pupil
+        phase.
+
+    Args:
+        Wxxx (string): A string of the form "W000," "W131", etc.
+
+    Returns:
+        string.  Contains typed numpy expressions to be evaluated to return phase
+    '''
     # pop the W off and separate the characters
     _ = list(Wxxx[1:])
     H, rho, phi = _[0], _[1], _[2]

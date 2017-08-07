@@ -141,22 +141,54 @@ _normalizations = [
 ]
 
 class FringeZernike(Pupil):
-    '''
-    A pupil described by a set of fringe zernike polynomials
+    '''Fringe Zernike pupil description
+
+    Properties:
+        Inherited from Pupil, please see that class.
+
+    Instance Methods:
+        build: computes the phase and wavefunction for the pupil.  This method
+            is automatically called by the constructor, and does not regularly
+            need to be changed by the user.
+
+    Private Instance Methods:
+        none
+
+    Static Methods:
+        none
     '''
     def __init__(self, *args, **kwargs):
-        '''
-        Supports multiple syntaxes:
-            - args: pass coefficients as a list, including terms up to the highest given Z-index.
-                    e.g. passing [1,2,3] will be interpreted as Z0=1, Z1=2, Z3=3.
-            - kwargs: pass a named set of zernike terms.
-                      e.g. FringeZernike(Z0=1, Z1=2, Z2=3)
+        '''Creates a FringeZernike Pupil object
 
-        Supports normalization and unit conversion, can pass kwargs:
-            - rms_norm=True: coefficients have unit rms value
-            -
+        Args:
+            samples (int): number of samples across pupil diameter
 
-        The kwargs syntax overrides the args syntax.
+            wavelength (float): wavelength of light, in um
+
+            epd: (float): diameter of the pupil, in mm
+
+            opd_unit (string): unit OPD is expressed in.  One of:
+                ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers)
+
+            Zx (float): xth fringe zernike coefficient, in range [0,35], 0-base.
+
+        Returns:
+            FringeZernike.  A new FringeZernike pupil instance.
+
+        Notes:
+            Supports multiple syntaxes:
+                - args: pass coefficients as a list, including terms up to the highest given Z-index.
+                        e.g. passing [1,2,3] will be interpreted as Z0=1, Z1=2, Z3=3.
+
+                - kwargs: pass a named set of zernike terms.
+                          e.g. FringeZernike(Z0=1, Z1=2, Z2=3)
+
+            Supports normalization and unit conversion, can pass kwargs:
+                - rms_norm=True: coefficients have unit rms value
+                
+                - opd_unit='nm': coefficients are expressed in units of nm
+
+            The kwargs syntax overrides the args syntax.
         '''
 
         if args is not None:
@@ -182,7 +214,16 @@ class FringeZernike(Pupil):
         super().__init__(**pass_args)
 
     def build(self):
-        # construct an equation for the phase of the pupil
+        '''Uses the wavefront coefficients stored in this class instance to
+            build a wavefront model.
+
+        Args:
+            none
+
+        Returns:
+            (numpy.ndarray, numpy.ndarray) arrays containing the phase, and the
+                wavefunction for the pupil.
+        '''
         mathexpr = 'np.zeros((self.samples, self.samples))'
         if self.normalize is True:
             for term, coef, norm in zip(list(range(0,36)), self.coefs, _normalizations):
@@ -207,6 +248,8 @@ class FringeZernike(Pupil):
         return self.phase, self.fcn
 
     def __repr__(self):
+        '''Pretty-print pupil desc. to console
+        '''
         if self.normalize is True:
             header = 'rms normalized Fringe Zernike description with:\n\t'
         else:
@@ -222,10 +265,16 @@ class FringeZernike(Pupil):
         return f'{header}{body}{footer}'
 
 def fit(data, num_terms=36, normalize=False):
-    '''
-    fits a number of zernike coefficients to provided data by minimizing the root sum square
-    between each coefficient and the given data.  The data should be uniformly
-    sampled in an x,y grid
+    '''Fits a number of zernike coefficients to provided data by minimizing 
+    the root sum square between each coefficient and the given data.  The data
+    should be uniformly sampled in an x,y grid
+
+    Args:
+        num_terms (int): number of terms to fit, fits terms 0~num_terms
+        normalize (bool): if true, normalize coefficients to unit RMS value
+
+    Returns:
+        numpy.ndarray.  An array of coefficients matching the input data.
     '''
     if num_terms > len(_eqns):
         raise ValueError(f'number of terms must be less than {len(_eqns)}')
@@ -245,4 +294,10 @@ def fit(data, num_terms=36, normalize=False):
         cm = sum(sum(data*term_component))*4/sze[0]/sze[1]/pi
         coefficients.append(cm)
 
-    return coefficients
+    if normalize:
+        norms_raw = _normalizations[0:num_terms]
+        norms = np.asarray([eval(norm) for norm in norms_raw])
+        coefficients = np.asarray(coefficients)
+        return norms * coefficients
+    else:
+        return np.asarray(coefficients)
