@@ -12,7 +12,7 @@ def pad2d(array, factor=1, value=0):
         value (number): value with which to pad the array
 
     Returns
-        Array.  Padded array.
+        numpy.ndarray.  Padded array.
     '''
     x, y = array.shape
     pad_shape = ((int(x*factor), int(x*factor)), (int(y*factor), int(y*factor)))

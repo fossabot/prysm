@@ -113,7 +113,8 @@ class PSF(object):
 
     # plotting -----------------------------------------------------------------
 
-    def plot2d(self, log=False, axlim=25, interp_method='bicubic', fig=None, ax=None):
+    def plot2d(self, log=False, axlim=25, interp_method='bicubic',
+               pix_grid=None, fig=None, ax=None):
         '''Creates a 2D plot of the PSF
 
         Args:
@@ -122,6 +123,9 @@ class PSF(object):
                 xlim=(-axlim,axlim), ylim=(-axlim, axlim).
             interp_method (string): method used to interpolate the image between
                 samples of the PSF
+            pix_grid (float): if not None, overlays gridlines with spacing equal
+                to pix_grid.  Intended to show the collection into camera pixels
+                while still in the oversampled domain.
             fig (pyplot.figure): figure to plot in
             ax (pyplot.axis): axis to plot in
 
@@ -152,6 +156,17 @@ class PSF(object):
                ylabel=r'Image Plane Y [$\mu m$]',
                xlim=(-axlim, axlim),
                ylim=(-axlim, axlim))
+
+        if pix_grid is not None:
+            # if pixel grid is desired, add it
+            mult = np.floor(axlim / pix_grid)
+            gmin, gmax = -mult * pix_grid, mult*pix_grid
+            pts = np.arange(gmin, gmax, pix_grid)
+            ax.set_yticks(pts, minor=True)
+            ax.set_xticks(pts, minor=True)
+            ax.yaxis.grid(True, which='minor')
+            ax.xaxis.grid(True, which='minor')
+        
         return fig, ax
 
     def plot_slice_xy(self, log=False, axlim=20, fig=None, ax=None):
