@@ -6,12 +6,40 @@ import numpy as np
 from code6.pupil import Pupil
 
 class SurfaceFinish(Pupil):
-    '''random, normally distributed phase errors in a pupil
+    '''A class for adding OPD to a pupil to represent surface finish errors
+
+    Properties:
+        Inherited from Pupil, please see that class.
+
+    Instance Methods:
+        build: computes the phase and wavefunction for the pupil.  This method
+            is automatically called by the constructor, and does not regularly
+            need to be changed by the user.
+
+    Private Instance Methods:
+        none
+
+    Static Methods:
+        none
     '''
 
     def __init__(self, *args, **kwargs):
-        '''
-        Takes only normal Pupil arguments, and an "amplitude" keyword for scale
+        '''Creates a new SurfaceFinish instance
+
+        Args:
+            samples (int): number of samples across pupil diameter
+
+            wavelength (float): wavelength of light, in um
+
+            epd: (float): diameter of the pupil, in mm
+
+            opd_unit (string): unit OPD is expressed in.  One of:
+                ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers)
+
+            amplitude (float): Peak-to-Valley amplitude of the OPD
+
+        Returns:
+            SurfaceFinish.  A new SurfaceFinish instance
         '''
         self.normalize = False
         pass_args = {}
@@ -27,7 +55,16 @@ class SurfaceFinish(Pupil):
         super().__init__(**pass_args)
 
     def build(self):
-        # generate the coordinate grid so we conform to pupil spec
+        '''Uses the wavefront coefficients stored in this class instance to
+            build a wavefront model.
+
+        Args:
+            none
+
+        Returns:
+            (numpy.ndarray, numpy.ndarray) arrays containing the phase, and the
+                wavefunction for the pupil.
+        '''
         self._gengrid()
 
         # fill the phase with random, normally distributed values, 
