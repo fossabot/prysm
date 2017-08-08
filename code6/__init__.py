@@ -1,3 +1,6 @@
+'''code6 -- a python optics module
+'''
+
 from code6.extras import plot_fourier_chain
 from code6.detector import Detector, OLPF, PixelAperture
 from code6.pupil import Pupil

@@ -233,7 +233,7 @@ class FringeZernike(Pupil):
                 if coef is 0:
                     pass
                 else:
-                    mathexpr += '+' + str(coef) + '*' + str(norm) + '*(' + _eqns[term] + ')'
+                    mathexpr += '+' + str(coef) + '*' + norm + '*(' + _eqns[term] + ')'
         else:
             for term, coef in enumerate(self.coefs):
                 if coef is 0:
