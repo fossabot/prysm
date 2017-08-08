@@ -9,6 +9,7 @@ def is_odd(int):
 
     Returns:
         bool.  True if odd, False if even
+
     '''
     return int & 0x1
 
@@ -24,6 +25,7 @@ def is_power_of_2(value):
     Notes:
         c++ inspired implementation, see SO:
         https://stackoverflow.com/questions/29480680/finding-if-a-number-is-a-power-of-2-using-recursion
+
     '''
     return bool(value and not value&(value-1))
 
@@ -39,6 +41,7 @@ def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
 
     Returns:
         float.  The sample spacing in the PSF plane.
+
     '''
     return (wavelength * efl * 1e3) / (pupil_sample * num_samples)
 
@@ -47,12 +50,16 @@ def psf_sample_to_pupil_sample(psf_sample, num_samples, wavelength, efl):
 
     Args:
         psf_sample (float): sample spacing in the PSF plane
+
         num_samples (int): number of samples present in both planes (must be equal)
+
         wavelength (float): wavelength of light, in microns
+
         efl (float): effective focal length of the optical system in mm
 
     Returns:
         float.  The sample spacing in the pupil plane.
+
     '''
     return (psf_sample * num_samples) / (wavelength * efl * 1e3)
 
@@ -61,10 +68,12 @@ def correct_gamma(img, encoding=2.2):
 
     Args:
         img (numpy.ndarray): array of image data, floats avoid quantization error
+
         encoding (float): gamma the data is encoded in (1.0 is linear)
 
     Returns:
         numpy.ndarray.  Array of corrected data.
+
     '''
     return np.power(img, (1/float(encoding)))
 
@@ -76,6 +85,7 @@ def fold_array(array):
 
     Returns
         numpy.ndarray.  new array
+
     '''
     xs, ys = array.shape
     xh = int(np.floor(xs/2))
@@ -91,12 +101,16 @@ def share_fig_ax(fig=None, ax=None, numax=1):
 
     Args:
         fig (pyplot.figure): figure
+
         ax (pyplot.axis): axis or array of axes
+
         numax (int): number of axes in the desired figure.  1 for most plots, 3 for plot_fourier_chain
 
     Returns:
         pyplot.figure.  A figure object.
+
         pyplot.axis.  An axis object
+
     '''
     if fig is None and ax is None:
         fig, ax = plt.subplots(nrows=1, ncols=numax, dpi=100)
@@ -115,6 +129,7 @@ def rms(array):
 
     Returns:
         float.  RMS of the array
+
     '''
     non_nan = np.isfinite(array)
     return np.sqrt(np.mean(np.square(array[non_nan])))
@@ -127,6 +142,7 @@ def guarantee_array(variable):
 
     Returns:
         (type).  Which supports * / and other operations with arrays
+    
     '''
     if type(variable) in [float, np.ndarray, np.int32, np.int64, np.float32, np.float64]:
         return variable

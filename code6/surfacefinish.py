@@ -21,6 +21,7 @@ class SurfaceFinish(Pupil):
 
     Static Methods:
         none
+
     '''
 
     def __init__(self, *args, **kwargs):
@@ -40,6 +41,7 @@ class SurfaceFinish(Pupil):
 
         Returns:
             SurfaceFinish.  A new SurfaceFinish instance
+
         '''
         self.normalize = False
         pass_args = {}
@@ -64,10 +66,11 @@ class SurfaceFinish(Pupil):
         Returns:
             (numpy.ndarray, numpy.ndarray) arrays containing the phase, and the
                 wavefunction for the pupil.
+
         '''
         self._gengrid()
 
-        # fill the phase with random, normally distributed values, 
+        # fill the phase with random, normally distributed values,
         # normalize to unit PV, and scale to appropriate amplitude
         self.phase = np.random.randn(self.samples, self.samples)
         self.phase /= ((self.phase.max() - self.phase.min()) / self.amplitude)

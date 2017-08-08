@@ -13,6 +13,7 @@ def pad2d(array, factor=1, value=0):
 
     Returns
         numpy.ndarray.  Padded array.
+
     '''
     x, y = array.shape
     pad_shape = ((int(x*factor), int(x*factor)), (int(y*factor), int(y*factor)))
@@ -27,6 +28,7 @@ def forward_ft_unit(sample_spacing, samples):
 
     Returns:
         numpy.ndarray.  array of sample frequencies in the output
+    
     '''
     f_s = int(np.floor(samples / 2))
     return np.arange(-f_s, f_s) / (sample_spacing / 1e3) / samples

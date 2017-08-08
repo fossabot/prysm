@@ -61,6 +61,7 @@ class Pupil(object):
     Notes:
         subclasses should implement a build() function and their own way of
             expressing OPD.
+
     '''
     def __init__(self, samples=128, epd=1, wavelength=0.55, opd_unit='$\lambda$'):
         '''Creates a new Pupil instance
@@ -77,9 +78,11 @@ class Pupil(object):
 
         Returns:
             Pupil.  A new Pupil instance
+
         '''
 
         self.samples          = samples
+        self.epd              = epd
         self.wavelength       = wavelength
         self.opd_unit         = opd_unit
         self.phase = self.fcn = empty((samples, samples))
@@ -123,13 +126,13 @@ class Pupil(object):
         ''' Returns the peak-to-valley wavefront error
         '''
         non_nan = isfinite(self.phase)
-        return self.phase[non_nan].max() - self.phase[non_nan].min()
+        return convert_phase((self.phase[non_nan].max() - self.phase[non_nan].min()), self)
 
     @property
     def rms(self):
-        ''' Returns the RMS wavefront error
+        ''' Returns the RMS wavefront error in the given OPD units
         '''
-        return rms(self.phase)
+        return  convert_phase(rms(self.phase), self)
 
     # quick-access slices, properties ------------------------------------------
 
@@ -144,7 +147,10 @@ class Pupil(object):
 
         Returns:
             (pyplot.figure, pyplot.axis): Figure and axis containing the plot
+
         '''
+        epd = self.epd
+
         fig, ax = share_fig_ax(fig, ax)
         im = ax.imshow(convert_phase(self.phase, self),
                        extent=[-epd/2, epd/2, -epd/2, epd/2],
@@ -164,6 +170,7 @@ class Pupil(object):
 
         Returns:
             (pyplot.figure, pyplot.axis): Figure and axis containing the plot
+
         '''
         u, x = self.slice_x
         _, y = self.slice_y
@@ -181,17 +188,26 @@ class Pupil(object):
         return fig, ax
 
     def interferogram(self, visibility=1, passes=2, fig=None, ax=None):
-        ''' Creates an interferogram of the pupil.
+        ''' Creates an interferogram of the :class:`Pupil~.
 
         Args:
-            visibility (float): Visibility of the interferogram
-            passes (float): number of passes (double-pass, quadra-pass, etc.)
+            visibility (`float`): Visibility of the interferogram
+
+            passes (`float`): number of passes (double-pass, quadra-pass, etc.)
+
             fig (pyplot.figure): Figure to draw plot in
+
             ax (pyplot.axis): Axis to draw plot in
 
         Returns:
-            (pyplot.figure, pyplot.axis): Figure and axis containing the plot
+            `tuple` containing:
+                :class:`~matplotlib.pyplot.figure`: Figure containing the plot
+
+                :class:`~matplotlib.pyplot.axis`: Axis containing the plot
+
         '''
+        epd = self.epd
+
         fig, ax = share_fig_ax(fig, ax)
         plotdata = (visibility * sin(2 * pi * passes * self.phase))
         im = ax.imshow(plotdata,
@@ -207,7 +223,7 @@ class Pupil(object):
     # meat 'n potatoes ---------------------------------------------------------
 
     def build(self):
-        ''' Constructs a numerical model of a pupil.  The method should be overloaded by all
+        ''' Constructs a numerical model of a :class:`Pupil`.  The method should be overloaded by all
         subclasses to impart their unique mathematical models to the simulation.
         '''
 
@@ -232,10 +248,11 @@ class Pupil(object):
         ''' Merges this pupil with another
 
         Args:
-            pupil2 (Pupil): pupil with same sampling and OPD units as this one
+            pupil2 (:class:`Pupil`): pupil with same sampling and OPD units as this one
 
         Returns:
-            Pupil.  A new pupil with the OPD of both pupils combined
+            :class:`Pupil`:  A new pupil with the OPD of both pupils combined
+
         '''
         return merge_pupils(self, pupil2)
 
@@ -255,17 +272,20 @@ class Pupil(object):
         elif self._opd_unit == 'nanometers':
             self.phase *= waves_to_nanometers(self.wavelength)
         return self
+
     # meat 'n potatoes ---------------------------------------------------------
 
 def convert_phase(array, pupil):
     '''Converts an OPD/phase map to have the same unit of expression as a pupil
 
     Args:
-        array (numpy.ndarray): array of phase data
-        pupil (code6.Pupil): a pupil to match the phase units to
+        array (:class:`~numpy.ndarray` or `float`): array of phase data
+
+        pupil (:class:`Pupil`): a pupil to match the phase units to
 
     Returns:
-        numpy.ndarray.  phase-corrected array.
+        :class:`~numpy.ndarray`:  phase-corrected array.
+
     '''
     if pupil._opd_unit == 'microns':
         return array * microns_to_waves(pupil.wavelength)
@@ -275,14 +295,16 @@ def convert_phase(array, pupil):
         return array
 
 def merge_pupils(pupil1, pupil2):
-    '''Merges the phase from two pupils and returns a new Pupil instance
+    '''Merges the phase from two pupils and returns a new :class:`Pupil` instance
 
     Args:
-        pupil1 (Pupil): first pupil
-        pupil2 (Pupil): second pupil
+        pupil1 (:class:`Pupil`): first pupil
+
+        pupil2 (:class:`Pupil`): second pupil
 
     Returns
-        Pupil.  New pupil with merged phase
+        :class:`Pupil`:  New pupil with merged phase
+
     '''
     if pupil1.sample_spacing != pupil2.sample_spacing or pupil1.samples != pupil2.samples:
         raise ValueError('Pupils must be identically sampled')

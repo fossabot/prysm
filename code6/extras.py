@@ -4,19 +4,27 @@ Base meta-class for aberration simulations that provides wavefront, PSF, and MTF
 from code6.util import share_fig_ax
 
 def plot_fourier_chain(pupil, psf, mtf, fig=None, axs=None, sizex=12, sizey=6):
-    '''Plots a pupil, PSF, and MTF demonstrating the process of fourier optics simulation
+    '''Plots a :class:`Pupil`, :class:`PSF`, and :class:`MTF`
+        demonstrating the process of fourier optics simulation
 
     Args:
         pupil (code6.Pupil): The pupil of an optical system
+
         psf (code6.PSF): The psf of an optical system
+
         mtf (code6.MTF): The MTF of an optical system
+
         fig (pyplot.figure): A figure object
+
         axs (list of pyplot.axes): axes to place the plots in
+
         sizex (number): size of the figure in x
+
         sizey (number): size of the figure in y
 
     Returns:
         fig, axs.  A figure and axes containing the plot.
+    
     '''
 
     fig, axs = share_fig_ax(fig, axs, numax=3)

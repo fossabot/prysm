@@ -13,7 +13,7 @@ class Seidel(Pupil):
     '''Seidel pupil description
 
     Properties:
-        Inherited from Pupil, please see that class.
+        Inherited from :class:`Pupil`, please see that class.
 
     Instance Methods:
         build: computes the phase and wavefunction for the pupil.  This method
@@ -25,22 +25,28 @@ class Seidel(Pupil):
 
     Static Methods:
         none
+
     '''
 
     def __init__(self, *args, **kwargs):
-        '''Initializes a new Seidel Pupil
+        '''Initializes a new :class:`Seidel` :class:`Pupil`
 
         Args:
-            samples (int): number of samples across pupil diameter
-            wavelength (float): wavelength of light, in um
-            epd: (float): diameter of the pupil, in mm
-            opd_unit (string): unit OPD is expressed in.  One of:
+            samples (`int`): number of samples across pupil diameter
+
+            wavelength (`float`): wavelength of light, in um
+
+            epd: (`float`): diameter of the pupil, in mm
+
+            opd_unit (`string`): unit OPD is expressed in.  One of:
                 ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers)
-            Wxyz (float): W coefficient with x=H, y=rho, z=phi dependencies
+
+            Wxyz (`float`): W coefficient with x=H, y=rho, z=phi dependencies
                 ex: W020 - defocus, W040 - spherical, W131 - coma.
 
         Returns:
-            Seidel.  A new Seidel pupil instance. 
+            Seidel:  A new :class:`Seidel` pupil instance.
+
         '''
 
         self.eqns = []
@@ -67,8 +73,11 @@ class Seidel(Pupil):
             none
 
         Returns:
-            (numpy.ndarray, numpy.ndarray) arrays containing the phase, and the
-                wavefunction for the pupil.
+            tuple containing:
+                :class:`~numpy.ndarray` containing the phase
+
+                :class:`~numpy.ndarray` wavefunction for the pupil
+
         '''
         mathexpr = 'np.zeros((self.samples, self.samples))'
         for term, coef in zip(self.eqns, self.coefs):
@@ -90,10 +99,11 @@ def wexpr_to_opd_expr(Wxxx):
         phase.
 
     Args:
-        Wxxx (string): A string of the form "W000," "W131", etc.
+        Wxxx (`string`): A string of the form "W000," "W131", etc.
 
     Returns:
-        string.  Contains typed numpy expressions to be evaluated to return phase
+        `string`:  Contains typed numpy expressions to be evaluated to return phase
+
     '''
     # pop the W off and separate the characters
     _ = list(Wxxx[1:])

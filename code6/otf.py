@@ -15,6 +15,35 @@ from code6.util import correct_gamma, share_fig_ax, guarantee_array
 from code6.coordinates import polar_to_cart
 
 class MTF(object):
+    '''Modulation Transfer Function
+
+    Properties:
+        tan: slice along the X axis of the MTF object.
+
+        sag: slice along the Y axis of the MTF object.
+
+    Instance Methods:
+        exact_polar: returns the exact MTF at a given set of frequency, azimuth
+            pairs.  A list of frequencies can be given to evaluate along the X
+            axis only.
+
+        exact_xy: returns the exact MTF at a given X,Y frequency pair.  Returns
+            a list of MTF values.
+
+        plot2d: Makes a 2D plot of the MTF.  Returns (fig, ax)
+
+        plot_tan_sag: Makes a plot of the tan/sag (x/y) MTF.  Returns (fig, ax)
+
+    Private Instance Methods:
+        _make_interp_function: generates an interpolation function for the MTF,
+            and stores it in the class instance.
+
+    Static Methods:
+        from_psf: Generates an MTF object from a PSF.
+
+        from_pupil: Generates an intermediate PSF object, and MTF from that PSF.
+
+    '''
     def __init__(self, data, unit):
         # dump inputs into class instance
         self.data = data
@@ -45,6 +74,7 @@ class MTF(object):
 
         Returns:
             list: MTF at the given points
+
         '''
         self._make_interp_function()
 
@@ -76,6 +106,7 @@ class MTF(object):
 
         Returns:
             list: MTF at the given points
+
         '''
         self._make_interp_function()
 

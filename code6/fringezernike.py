@@ -144,7 +144,7 @@ class FringeZernike(Pupil):
     '''Fringe Zernike pupil description
 
     Properties:
-        Inherited from Pupil, please see that class.
+        Inherited from :class:`Pupil`, please see that class.
 
     Instance Methods:
         build: computes the phase and wavefunction for the pupil.  This method
@@ -156,6 +156,7 @@ class FringeZernike(Pupil):
 
     Static Methods:
         none
+
     '''
     def __init__(self, *args, **kwargs):
         '''Creates a FringeZernike Pupil object
@@ -173,7 +174,7 @@ class FringeZernike(Pupil):
             Zx (float): xth fringe zernike coefficient, in range [0,35], 0-base.
 
         Returns:
-            FringeZernike.  A new FringeZernike pupil instance.
+            FringeZernike.  A new :class:`FringeZernike` pupil instance.
 
         Notes:
             Supports multiple syntaxes:
@@ -189,6 +190,7 @@ class FringeZernike(Pupil):
                 - opd_unit='nm': coefficients are expressed in units of nm
 
             The kwargs syntax overrides the args syntax.
+
         '''
 
         if args is not None:
@@ -223,6 +225,7 @@ class FringeZernike(Pupil):
         Returns:
             (numpy.ndarray, numpy.ndarray) arrays containing the phase, and the
                 wavefunction for the pupil.
+
         '''
         mathexpr = 'np.zeros((self.samples, self.samples))'
         if self.normalize is True:
@@ -275,6 +278,7 @@ def fit(data, num_terms=36, normalize=False):
 
     Returns:
         numpy.ndarray.  An array of coefficients matching the input data.
+    
     '''
     if num_terms > len(_eqns):
         raise ValueError(f'number of terms must be less than {len(_eqns)}')

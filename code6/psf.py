@@ -46,6 +46,7 @@ class PSF(object):
     Notes:
         Subclasses must implement an analyic_ft method with signature
             a_ft(unit_x, unit_y)
+
     '''
     def __init__(self, data, samples, sample_spacing):
         '''Creates a PSF object
@@ -59,6 +60,7 @@ class PSF(object):
 
         Returns:
             PSF.  A new PSF instance.
+
         '''
         self.data = data
         self.samples = samples
@@ -93,8 +95,8 @@ class PSF(object):
 
         Returns:
             np.ndarray, np.ndarray.  Unit, encircled energy.
-        '''
 
+        '''
         rho, phi, interp_dat = uniform_cart_to_polar(self.unit, self.unit, self.data)
         avg_fold = fold_array(interp_dat)
 
@@ -131,8 +133,8 @@ class PSF(object):
 
         Returns:
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot
-        '''
 
+        '''
         if log:
             fcn = 20 * np.log10(1e-100 + self.data)
             label_str = 'Normalized Intensity [dB]'
@@ -180,6 +182,7 @@ class PSF(object):
 
         Returns:
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot
+
         '''
         u, x = self.slice_x
         _, y = self.slice_y
@@ -216,6 +219,7 @@ class PSF(object):
 
         Returns:
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot
+
         '''
         unit, data = self.encircled_energy(azimuth)
 
@@ -242,6 +246,7 @@ class PSF(object):
         Notes:
             output PSF has equal sampling to whichever PSF has a lower nyquist
                 frequency.
+
         '''
         if issubclass(psf2.__class__, PSF):
             # subclasses have analytic fourier transforms and we can exploit this for high speed,
@@ -275,6 +280,7 @@ class PSF(object):
 
         Returns:
             PSF.  A new PSF instance.
+
         '''
         # padded pupil contains 1 pupil width on each side for a width of 3
         psf_samples = (pupil.samples * padding) * 2 + pupil.samples
@@ -303,6 +309,7 @@ def convpsf(psf1, psf2):
             output.  The PSF with a higher nyquist will be truncated in
             the frequency domain (without aliasing) and projected onto the
             sampling grid of the PSF with a lower nyquist.
+
     '''
     if psf2.samples == psf1.samples and psf2.sample_spacing == psf1.sample_spacing:
         # no need to interpolate, use FFTs to convolve
@@ -329,6 +336,7 @@ def _unequal_spacing_conv_core(psf1, psf2):
 
     Returns:
         PSF.  A new PSF that is the convolution of psf1 and psf2.
+    
     '''
     ft1 = fft2(psf1.data)
     unit1 = forward_ft_unit(psf1.sample_spacing, psf1.samples)

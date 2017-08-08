@@ -14,6 +14,7 @@ def cart_to_polar(x, y):
     Returns:
         float.  radial coordinate
         float.  azimuthal coordinate
+
     '''
     rho = np.sqrt(x**2 + y**2)
     phi = np.arctan2(x, y)
@@ -29,6 +30,7 @@ def polar_to_cart(rho, phi):
     Returns:
         float.  x coordinate
         float.  y coordinate
+
     '''
     x = rho * np.cos(phi)
     y = rho * np.sin(phi)
@@ -46,6 +48,7 @@ def uniform_cart_to_polar(x, y, data):
         numpy.array.  Rho samples for interpolated values
         numpy.array.  Phi samples for interpolated values
         numpy.array.  Data uniformly sampled in (rho,phi).
+
     '''
     # create a set of polar coordinates to interpolate onto
     xmin, xmax = x[0], x[-1]
@@ -73,6 +76,7 @@ def resample_2d(array, sample_pts, query_pts):
 
     Returns:
         numpy.ndarray.  array resampled onto query_pts via bivariate spline
+
     '''
     xq, yq = np.meshgrid(*query_pts)
     interpf = interpolate.RectBivariateSpline(*sample_pts, array)
@@ -90,6 +94,7 @@ def resample_2d_complex(array, sample_pts, query_pts):
 
     Returns:
         numpy.ndarray array resampled onto query_pts via bivariate spline
+    
     '''
     xq, yq = np.meshgrid(*query_pts)
     mag = np.absolute(array)

@@ -8,7 +8,8 @@ def waves_to_microns(wavelength):
         wavelength (float): wavelength of light, expressed in microns
 
     Returns:
-        conversion factor from waves to microns
+        float. conversion factor from waves to microns
+
     '''
     return 1/wavelength
 
@@ -19,7 +20,8 @@ def waves_to_nanometers(wavelength):
         wavelength (float): wavelength of light, expressed in microns
 
     Returns:
-        conversion factor from waves to nanometers
+        float. conversion factor from waves to nanometers
+
     '''
     return 1/(wavelength*1e3)
 
@@ -30,7 +32,8 @@ def microns_to_waves(wavelength):
         wavelength (float): wavelength of light, expressed in microns
 
     Returns:
-        conversion factor from microns to waves
+        float. conversion factor from microns to waves
+    
     '''
     return wavelength
 
@@ -41,6 +44,7 @@ def nanometers_to_waves(wavelength):
         wavelength (float): wavelength of light, expressed in microns
 
     Returns:
-        conversion factor from nanometers to waves
+        float. conversion factor from nanometers to waves
+
     '''
     return wavelength*1e3

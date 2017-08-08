@@ -21,8 +21,8 @@ class Detector(object):
             PSF.  A new PSF object, as it would be sampled by the detector
 
         Notes:
-            inspired by
-            https://stackoverflow.com/questions/14916545/numpy-rebinning-a-2d-array
+            inspired by https://stackoverflow.com/questions/14916545/numpy-rebinning-a-2d-array
+
         '''
 
         # we assume the pixels are bigger than the samples in the PSF
@@ -67,6 +67,7 @@ class OLPF(PSF):
 
         Returns:
             OLPF.  an OLPF object.
+
         '''
 
         # compute relevant spacings
@@ -93,12 +94,13 @@ class OLPF(PSF):
     def analytic_ft(self, unit_x, unit_y):
         '''Analytic fourier transform of a pixel aperture
             
-            Args:
-                unit_x (numpy.ndarray): sample points in x axis
-                unit_y (numpy.ndarray): sample points in y axis
+        Args:
+            unit_x (numpy.ndarray): sample points in x axis
+            unit_y (numpy.ndarray): sample points in y axis
 
-            Returns:
-                numpy.ndarray.  2D numpy array containing the analytic fourier transform
+        Returns:
+            numpy.ndarray.  2D numpy array containing the analytic fourier transform
+
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
         return (np.cos(2*xq*self.width_x/1e3)*np.cos(2*yq*self.width_y/1e3)).astype(np.complex128)
@@ -125,6 +127,7 @@ class PixelAperture(PSF):
 
         Returns:
             numpy.ndarray.  2D numpy array containing the analytic fourier transform
+        
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
         return (np.sinc(xq*self.size/1e3)*np.sinc(yq*self.size/1e3)).astype(np.complex128)
