@@ -8,6 +8,7 @@ from numpy.fft import fft2, fftshift, ifftshift, ifft2
 
 from matplotlib import pyplot as plt
 
+from code6.conf import precision
 from code6.fttools import pad2d, forward_ft_unit
 from code6.coordinates import uniform_cart_to_polar, resample_2d_complex
 from code6.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax, fold_array
@@ -69,7 +70,7 @@ class PSF(object):
 
         # compute ordinate axis
         ext = self.sample_spacing * samples / 2
-        self.unit = np.linspace(-ext, ext-sample_spacing, samples)
+        self.unit = np.linspace(-ext, ext-sample_spacing, samples, dtype=precision())
 
     # quick-access slices ------------------------------------------------------
 
@@ -102,12 +103,12 @@ class PSF(object):
 
         if azimuth is None:
             # take average of all azimuths as input data
-            dat = np.average(avg_fold, axis=0)
+            dat = np.average(avg_fold, axis=0, dtype=precision())
         else:
-            index = np.searchsorted(phi, np.radians(azimuth))
+            index = np.searchsorted(phi, np.radians(azimuth, dtype=precision()))
             dat = avg_fold[index, :]
 
-        enc_eng = np.cumsum(dat)
+        enc_eng = np.cumsum(dat, dtype=precision())
         enc_eng /= enc_eng[-1]
         return self.unit[self.center:], enc_eng
 
@@ -254,7 +255,7 @@ class PSF(object):
             psf_ft = fft2(self.data)
             psf_unit = forward_ft_unit(self.sample_spacing, self.samples)
             psf2_ft = fftshift(psf2.analytic_ft(psf_unit, psf_unit))
-            psf3 = PSF(data=np.absolute(ifft2(psf_ft * psf2_ft)),
+            psf3 = PSF(data=np.absolute(ifft2(psf_ft * psf2_ft), dtype=precision()),
                        samples=self.samples,
                        sample_spacing=self.sample_spacing)
             return psf3._renorm()
@@ -290,7 +291,7 @@ class PSF(object):
                                                     efl=efl)
         padded_wavefront = pad2d(pupil.fcn, padding)
         impulse_response = ifftshift(fft2(fftshift(padded_wavefront)))
-        psf = npow(abs(impulse_response), 2)
+        psf = npow(np.absolute(impulse_response, dtype=precision()), 2)
         return PSF(psf / np.max(psf), psf_samples, sample_spacing)
 
 
@@ -313,7 +314,7 @@ def convpsf(psf1, psf2):
     '''
     if psf2.samples == psf1.samples and psf2.sample_spacing == psf1.sample_spacing:
         # no need to interpolate, use FFTs to convolve
-        psf3 = PSF(data=np.absolute(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data)))),
+        psf3 = PSF(data=np.absolute(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data))), dtype=precision()),
                    samples=psf1.samples,
                    sample_spacing=psf1.sample_spacing)
         return psf3._renorm()
@@ -343,7 +344,7 @@ def _unequal_spacing_conv_core(psf1, psf2):
     ft2 = fft2(psf2.data)
     unit2 = forward_ft_unit(psf2.sample_spacing, psf2.samples)
     ft3 = resample_2d_complex(ft2, (unit2, unit2), (unit1, unit1[::-1]))
-    psf3 = PSF(data=np.absolute(ifftshift(ifft2(ft1 * ft3))),
+    psf3 = PSF(data=np.absolute(ifftshift(ifft2(ft1 * ft3)), dtype=precision()),
                samples=psf1.samples,
                sample_spacing=psf2.sample_spacing)
     return psf3._renorm()

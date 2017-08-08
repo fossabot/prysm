@@ -14,6 +14,7 @@ from matplotlib import pyplot as plt
 
 from copy import deepcopy
 
+from code6.conf import precision
 from code6.util import share_fig_ax, rms
 from code6.coordinates import cart_to_polar
 from code6.units import (
@@ -85,11 +86,11 @@ class Pupil(object):
         self.epd              = epd
         self.wavelength       = wavelength
         self.opd_unit         = opd_unit
-        self.phase = self.fcn = empty((samples, samples))
-        self.unit             = linspace(-epd/2, epd/2, samples)
-        self.unit_norm        = linspace(-1, 1, samples)
+        self.phase = self.fcn = empty((samples, samples), dtype=precision())
+        self.unit             = linspace(-epd/2, epd/2, samples, dtype=precision())
+        self.unit_norm        = linspace(-1, 1, samples, dtype=precision())
         self.sample_spacing   = self.unit[-1] - self.unit[-2]
-        self.rho  = self.phi  = empty((samples, samples))
+        self.rho  = self.phi  = empty((samples, samples), dtype=precision())
         self.center           = int(floor(samples/2))
 
         if self.opd_unit in ('$\lambda$', 'waves'):
@@ -228,7 +229,7 @@ class Pupil(object):
         '''
 
         # build up the pupil
-        self.phase = ones((self.samples, self.samples))
+        self.phase = ones((self.samples, self.samples), dtype=precision())
         self._correct_phase_units()
         self.fcn   = exp(1j * 2 * pi / self.wavelength * self.phase)
 
@@ -259,7 +260,7 @@ class Pupil(object):
     def _gengrid(self):
         '''Generates a uniform (x,y) grid and maps it to (rho,phi) coordinates for zernike eval
         '''
-        x = y    = linspace(-1, 1, self.samples)
+        x = y    = linspace(-1, 1, self.samples, dtype=precision())
         xv, yv   = meshgrid(x,y)
         self.rho, self.phi = cart_to_polar(xv, yv)
         return self.rho, self.phi

@@ -1,7 +1,8 @@
-'''
-Basic detector interface
+'''Detector-related simulations
 '''
 import numpy as np
+
+from code6.conf import precision
 from code6.psf import PSF
 from code6.util import is_odd
 
@@ -49,7 +50,7 @@ class Detector(object):
         intermediate_view = trimmed_data.reshape(total_samples, samples_per_pixel,
                                                  total_samples, samples_per_pixel)
 
-        output_data = intermediate_view.mean(axis=(1,3))
+        output_data = intermediate_view.mean(axis=(1, 3))
         return PSF(data=output_data, samples=total_samples, sample_spacing=self.pixel_size)
 
 
@@ -93,7 +94,7 @@ class OLPF(PSF):
 
     def analytic_ft(self, unit_x, unit_y):
         '''Analytic fourier transform of a pixel aperture
-            
+
         Args:
             unit_x (numpy.ndarray): sample points in x axis
             unit_y (numpy.ndarray): sample points in y axis
@@ -103,7 +104,8 @@ class OLPF(PSF):
 
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.cos(2*xq*self.width_x/1e3)*np.cos(2*yq*self.width_y/1e3)).astype(np.complex128)
+        return (np.cos(2 * xq * self.width_x / 1e3) * np.cos(2*yq*self.width_y/1e3)\
+               ).astype(precision('c'))
 
 class PixelAperture(PSF):
     '''creates an image plane view of the pixel aperture
@@ -120,17 +122,17 @@ class PixelAperture(PSF):
 
     def analytic_ft(self, unit_x, unit_y):
         '''Analytic fourier transform of a pixel aperture
-        
+
         Args:
             unit_x (numpy.ndarray): sample points in x axis
             unit_y (numpy.ndarray): sample points in y axis
 
         Returns:
             numpy.ndarray.  2D numpy array containing the analytic fourier transform
-        
+
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.sinc(xq*self.size/1e3)*np.sinc(yq*self.size/1e3)).astype(np.complex128)
+        return (np.sinc(xq*self.size/1e3)*np.sinc(yq*self.size/1e3)).astype(precision())
 
 def generate_mtf(pixel_pitch=1, azimuth=0, num_samples=128):
     '''
