@@ -28,7 +28,7 @@ def forward_ft_unit(sample_spacing, samples):
 
     Returns:
         numpy.ndarray.  array of sample frequencies in the output
-    
+
     '''
     f_s = int(np.floor(samples / 2))
     return np.arange(-f_s, f_s) / (sample_spacing / 1e3) / samples

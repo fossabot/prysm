@@ -53,7 +53,6 @@ def uniform_cart_to_polar(x, y, data):
     # create a set of polar coordinates to interpolate onto
     xmin, xmax = x[0], x[-1]
     num_pts = len(x)
-    center = int(np.floor(num_pts/2))
     rho = np.linspace(xmin, xmax, num_pts)
     phi = np.linspace(0, 2*np.pi, num_pts)
     rv, pv = np.meshgrid(rho, phi)
@@ -94,7 +93,7 @@ def resample_2d_complex(array, sample_pts, query_pts):
 
     Returns:
         numpy.ndarray array resampled onto query_pts via bivariate spline
-    
+
     '''
     xq, yq = np.meshgrid(*query_pts)
     mag = np.absolute(array)

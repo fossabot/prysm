@@ -102,12 +102,12 @@ class MTF(object):
         # handle single value case
         if type(freqs) in (int, float):
             x, y = polar_to_cart(freqs, azimuths)
-            return float(self.interpf(x, y))
+            return float(self.interpf((x, y), method='linear'))
 
         outs = []
         for freq, az in zip(freqs, azimuths):
             x, y = polar_to_cart(freq, az)
-            outs.append(float(self.interpf(x, y)))
+            outs.append(float(self.interpf((x, y), method='linear')))
         return outs
 
     def exact_xy(self, x, y=None):
@@ -133,11 +133,11 @@ class MTF(object):
 
         # handle single value case
         if type(x) in (int, float):
-            return float(self.interpf(x, y))
+            return float(self.interpf((x, y), method='linear'))
 
         outs = []
         for x, y in zip(x, y):
-            outs.append(float(self.interpf(x, y)))
+            outs.append(float(self.interpf((x, y), method='linear')))
         return outs
     # quick-access slices ------------------------------------------------------
 
