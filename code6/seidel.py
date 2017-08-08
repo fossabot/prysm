@@ -7,6 +7,7 @@ import numpy as np
 from numpy import arctan2, exp, cos, sin, pi, sqrt, nan
 from numpy import power as npow
 
+from code6.conf import config
 from code6.pupil import Pupil
 
 class Seidel(Pupil):
@@ -89,9 +90,9 @@ class Seidel(Pupil):
         rho, phi = self.rho, self.phi
 
         # compute the pupil phase and wave function
-        self.phase = eval(mathexpr)
+        self.phase = eval(mathexpr).astype(config.precision)
         self._correct_phase_units()
-        self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase)
+        self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase, dtype=config.precision_complex)
         return self.phase, self.fcn
 
 def wexpr_to_opd_expr(Wxxx):

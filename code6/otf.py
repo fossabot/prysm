@@ -9,7 +9,7 @@ from scipy import interpolate
 
 from matplotlib import pyplot as plt
 
-from code6.conf import precision
+from code6.conf import config
 from code6.psf import PSF
 from code6.fttools import forward_ft_unit
 from code6.util import correct_gamma, share_fig_ax, guarantee_array
@@ -195,7 +195,7 @@ class MTF(object):
 
     @staticmethod
     def from_psf(psf):
-        dat = np.absolute(fftshift(fft2(psf.data)), dtype=precision())
+        dat = np.absolute(fftshift(fft2(psf.data)), dtype=config.precision)
         unit = forward_ft_unit(psf.sample_spacing, psf.samples)
         return MTF(dat / dat[psf.center, psf.center], unit)
 

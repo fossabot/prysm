@@ -2,7 +2,7 @@
 '''
 import numpy as np
 
-from code6.conf import precision
+from code6.conf import config
 from code6.psf import PSF
 from code6.util import is_odd
 
@@ -105,7 +105,7 @@ class OLPF(PSF):
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
         return (np.cos(2 * xq * self.width_x / 1e3) * np.cos(2*yq*self.width_y/1e3)\
-               ).astype(precision('c'))
+               ).astype(config.precision)
 
 class PixelAperture(PSF):
     '''creates an image plane view of the pixel aperture
@@ -132,7 +132,7 @@ class PixelAperture(PSF):
 
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.sinc(xq*self.size/1e3)*np.sinc(yq*self.size/1e3)).astype(precision())
+        return (np.sinc(xq*self.size/1e3)*np.sinc(yq*self.size/1e3)).astype(config.precision)
 
 def generate_mtf(pixel_pitch=1, azimuth=0, num_samples=128):
     '''
