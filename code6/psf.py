@@ -6,6 +6,8 @@ from numpy import floor
 from numpy import power as npow
 from numpy.fft import fft2, fftshift, ifftshift, ifft2
 
+from scipy import interpolate
+
 from matplotlib import pyplot as plt
 
 from code6.conf import config
@@ -294,6 +296,45 @@ class PSF(object):
         psf = npow(np.absolute(impulse_response, dtype=config.precision), 2)
         return PSF(psf / np.max(psf), psf_samples, sample_spacing)
 
+class MultispectralPSF(PSF):
+    ''' A PSF which includes multiple wavelength components
+    '''
+    def __init__(self, psfs, weights):
+        ''' Creates a new :class:`MultispectralPSF` instance.
+
+        Args:
+            psfs (iterable): iterable of PSFs
+            weights (iterable): iterable of weights associated with each PSF
+        
+        Returns:
+            MultispectralPSF.  A new MultispectralPSF.
+
+        '''
+
+        # find the most densely sampled PSF
+        min_spacing = 1e99
+        ref_idx = None
+        ref_unit = None
+        ref_samples = None
+        for idx, psf in enumerate(psfs):
+            if psf.sample_spacing < min_spacing:
+                min_spacing = psf.sample_spacing
+                ref_idx = idx
+                ref_unit = psf.unit
+                ref_samples = psf.samples
+        
+        merge_data = np.zeros((ref_samples, ref_samples, len(psfs)))
+        for idx, psf in enumerate(psfs):
+            # don't do anything to our reference PSF
+            if idx is ref_idx:
+                merge_data[:, :, idx] = psf.data * weights[idx]
+            else:
+                xv, yv = np.meshgrid(ref_unit, ref_unit)
+                interpf = interpolate.RegularGridInterpolator((psf.unit, psf.unit), psf.data)
+                merge_data[:, :, idx] = interpf((xv, yv), method='linear') * weights[idx]
+        
+        self.weights = weights
+        super().__init__(merge_data.sum(axis=2), ref_samples, min_spacing)
 
 def convpsf(psf1, psf2):
     '''Convolves two PSFs.
