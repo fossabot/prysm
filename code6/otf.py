@@ -144,6 +144,25 @@ class MTF(object):
     # plotting -----------------------------------------------------------------
 
     def plot2d(self, log=False, max_freq=200, fig=None, ax=None):
+        ''' Creates a 2D plot of the MTF.
+
+        Args:
+            log (`bool`): If true, plots on log scale.
+
+            max_freq (`float`): Maximum frequency to plot to.  Axis limits will
+                be ((-max_freq, max_freq), (-max_freq, max_freq)).
+
+            fig (:class:`~matplotlib.pyplot.figure`): Figure to plot in.
+
+            ax (:class:`~matplotlib.pyplot.axis`): Axis to plot in.
+
+        Returns:
+            `tuple` containing:
+                fig (:class:`~matplotlib.pyplot.figure`): Figure containing the plot
+
+                ax (:class:`~matplotlib.pyplot.axis`): Axis containing the plot.
+
+        '''
         if log:
             fcn = 20 * np.log10(1e-24 + self.data)
             label_str = 'MTF [dB]'
@@ -170,6 +189,25 @@ class MTF(object):
         return fig, ax
 
     def plot_tan_sag(self, max_freq=200, fig=None, ax=None, labels=('Tangential', 'Sagittal')):
+        ''' Creates a plot of the tangential and sagittal MTF.
+
+        Args:
+            max_freq (`float`): Maximum frequency to plot to.  Axis limits will
+                be ((-max_freq, max_freq), (-max_freq, max_freq)).
+
+            fig (:class:`~matplotlib.pyplot.figure`): Figure to plot in.
+
+            ax (:class:`~matplotlib.pyplot.axis`): Axis to plot in.
+
+            labels (`iterable`): set of labels for the two lines that will be plotted.
+
+        Returns:
+            `tuple` containing:
+                fig (:class:`~matplotlib.pyplot.figure`): Figure containing the plot.
+
+                ax (:class:`~matplotlib.pyplot.axis`): Axis containing the plot.
+
+        '''
         u, tan = self.tan
         _, sag = self.sag
 
@@ -188,6 +226,16 @@ class MTF(object):
     # helpers ------------------------------------------------------------------
 
     def _make_interp_function(self):
+        '''Generates an interpolation function for this instance of MTF, used to
+            procure MTF at exact frequencies.`
+
+        Args:
+            none
+
+        Returns:
+            :class:`MTF`, this instance of an MTF object.
+
+        '''
         if not hasattr(self, 'interpf'):
             self.interpf = interpolate.RegularGridInterpolator((self.unit, self.unit), self.data)
 
@@ -195,12 +243,34 @@ class MTF(object):
 
     @staticmethod
     def from_psf(psf):
+        ''' Generates an MTF from a PSF.
+
+        Args:
+            psf (:class:`PSF`): PSF to compute an MTF from.
+
+        Returns:
+            :class:`MTF`: A new MTF instance.
+
+        '''
         dat = np.absolute(fftshift(fft2(psf.data)), dtype=config.precision)
         unit = forward_ft_unit(psf.sample_spacing, psf.samples)
         return MTF(dat / dat[psf.center, psf.center], unit)
 
     @staticmethod
     def from_pupil(pupil, efl, padding=1):
+        ''' Generates an MTF from a pupil, given a focal length (propagation distance).
+
+        Args:
+            pupil (:class:`Pupil`): A pupil to propagate to a PSF, and convert to an MTF.
+
+            efl (`float`): Effective focal length or propagation distance of the wavefunction.
+
+            padding (`number`): Number of pupil widths to pad with on each side.
+
+        Returns:
+            :class:`MTF`: A new MTF instance.
+
+        '''
         psf = PSF.from_pupil(pupil, efl=efl, padding=padding)
         return MTF.from_psf(psf)
 
