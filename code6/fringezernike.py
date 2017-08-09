@@ -1,6 +1,4 @@
-'''
-A repository of fringe zernike aberration descriptions used to model pupils of
-optical systems.
+'''A repository of fringe zernike aberration descriptions used to model pupils of optical systems.
 '''
 import numpy as np
 from numpy import arctan2, exp, cos, sin, pi, sqrt, nan
@@ -54,51 +52,51 @@ _names = [
 # multiple times, and we are guaranteed safety since we have typed the equations properly and
 # using properties to protect exposure
 _eqns =  [
-    'np.zeros((self.samples, self.samples))',                                           # Z0
-    'rho * cos(phi)',                                                                   # Z1
-    'rho * sin(phi)',                                                                   # Z2
-    '2 * npow(rho,2) - 1',                                                              # Z3
-    'npow(rho,2) * cos(2*phi)',                                                         # Z4
-    'npow(rho,2) * sin(2*phi)',                                                         # Z5
-    'rho * (-2 + 3 * npow(rho,2)) * cos(phi)',                                          # Z6
-    'rho * (-2 + 3 * npow(rho,2)) * sin(phi)',                                          # Z7
-    '-6 * npow(rho,2) + 6 * npow(rho,4) + 1',                                           # Z8
-    'npow(rho,3) * cos(3*phi)',                                                         # Z9
-    'npow(rho,3) * sin(3*phi)',                                                         #Z10
-    'npow(rho,2) * (-3 + 4 * npow(rho,2)) * cos(2*phi)',                                #Z11
-    'npow(rho,2) * (-3 + 4 * npow(rho,2)) * sin(2*phi)',                                #Z12
-    'rho * (3 - 12 * npow(rho,2) + 10 * npow(rho,4)) * cos(phi)',                       #Z13
-    'rho * (3 - 12 * npow(rho,2) + 10 * npow(rho,4)) * sin(phi)',                       #Z14
-    '12 * npow(rho,2) - 30 * npow(rho,4) + 20 * npow(rho,6) - 1',                       #Z15
-    'npow(rho,4) * cos(4*phi)',                                                         #Z16
-    'npow(rho,4) * sin(4*phi)',                                                         #Z17
-    'npow(rho,3) * (-4 + 5 * npow(rho,2)) * cos(3*phi)',                                #Z18
-    'npow(rho,3) * (-4 + 5 * npow(rho,2)) * sin(3*phi)',                                #Z19
-    'npow(rho,2) * (6 - 20 * npow(rho,2) + 15 * npow(rho,4)) * cos(2*phi)',             #Z20
-    'npow(rho,2) * (6 - 20 * npow(rho,2) + 15 * npow(rho,4)) * sin(2*phi)',             #Z21
-    'rho * (-4 + 30 * npow(rho,2) - 60 * npow(rho,4) + 35 * npow(rho, 6)) * cos(phi)',  #Z22
-    'rho * (-4 + 30 * npow(rho,2) - 60 * npow(rho,4) + 35 * npow(rho, 6)) * sin(phi)',  #Z23
-    '-20 * npow(rho,2) + 90 * npow(rho,4) - 140 * npow(rho,6) + 70 * npow(rho,8) + 1',  #Z24
-    'npow(rho,5) * cos(5*phi)',                                                         #Z25
-    'npow(rho,5) * sin(5*phi)',                                                         #Z26
-    'npow(rho,4) * (-5 + 6 * npow(rho,2) * cos(4*phi))',                                #Z27
-    'npow(rho,4) * (-5 + 6 * npow(rho,2) * sin(4*phi))',                                #Z28
-    'npow(rho,3) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * cos(3*phi)',            #Z29
-    'npow(rho,3) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * sin(3*phi)',            #Z30
-    'npow(rho,2) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * cos(2*phi)',            #Z31
-    'npow(rho,2) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * sin(2*phi)',            #Z32
+    'np.zeros((self.samples, self.samples))',                                                                       # Z0
+    'rho * cos(phi)',                                                                                               # Z1
+    'rho * sin(phi)',                                                                                               # Z2
+    '2 * npow(rho,2) - 1',                                                                                          # Z3
+    'npow(rho,2) * cos(2*phi)',                                                                                     # Z4
+    'npow(rho,2) * sin(2*phi)',                                                                                     # Z5
+    'rho * (-2 + 3 * npow(rho,2)) * cos(phi)',                                                                      # Z6
+    'rho * (-2 + 3 * npow(rho,2)) * sin(phi)',                                                                      # Z7
+    '-6 * npow(rho,2) + 6 * npow(rho,4) + 1',                                                                       # Z8
+    'npow(rho,3) * cos(3*phi)',                                                                                     # Z9
+    'npow(rho,3) * sin(3*phi)',                                                                                     #Z10
+    'npow(rho,2) * (-3 + 4 * npow(rho,2)) * cos(2*phi)',                                                            #Z11
+    'npow(rho,2) * (-3 + 4 * npow(rho,2)) * sin(2*phi)',                                                            #Z12
+    'rho * (3 - 12 * npow(rho,2) + 10 * npow(rho,4)) * cos(phi)',                                                   #Z13
+    'rho * (3 - 12 * npow(rho,2) + 10 * npow(rho,4)) * sin(phi)',                                                   #Z14
+    '12 * npow(rho,2) - 30 * npow(rho,4) + 20 * npow(rho,6) - 1',                                                   #Z15
+    'npow(rho,4) * cos(4*phi)',                                                                                     #Z16
+    'npow(rho,4) * sin(4*phi)',                                                                                     #Z17
+    'npow(rho,3) * (-4 + 5 * npow(rho,2)) * cos(3*phi)',                                                            #Z18
+    'npow(rho,3) * (-4 + 5 * npow(rho,2)) * sin(3*phi)',                                                            #Z19
+    'npow(rho,2) * (6 - 20 * npow(rho,2) + 15 * npow(rho,4)) * cos(2*phi)',                                         #Z20
+    'npow(rho,2) * (6 - 20 * npow(rho,2) + 15 * npow(rho,4)) * sin(2*phi)',                                         #Z21
+    'rho * (-4 + 30 * npow(rho,2) - 60 * npow(rho,4) + 35 * npow(rho, 6)) * cos(phi)',                              #Z22
+    'rho * (-4 + 30 * npow(rho,2) - 60 * npow(rho,4) + 35 * npow(rho, 6)) * sin(phi)',                              #Z23
+    '-20 * npow(rho,2) + 90 * npow(rho,4) - 140 * npow(rho,6) + 70 * npow(rho,8) + 1',                              #Z24
+    'npow(rho,5) * cos(5*phi)',                                                                                     #Z25
+    'npow(rho,5) * sin(5*phi)',                                                                                     #Z26
+    'npow(rho,4) * (-5 + 6 * npow(rho,2) * cos(4*phi))',                                                            #Z27
+    'npow(rho,4) * (-5 + 6 * npow(rho,2) * sin(4*phi))',                                                            #Z28
+    'npow(rho,3) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * cos(3*phi)',                                        #Z29
+    'npow(rho,3) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * sin(3*phi)',                                        #Z30
+    'npow(rho,2) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * cos(2*phi)',                                        #Z31
+    'npow(rho,2) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * sin(2*phi)',                                        #Z32
     ''' rho *
         (5 - 60 * npow(rho,2) + 210 * npow(rho,4) - 280 * npow(rho,6) + 126 * npow(rho,8))
-        * cos(phi)''',                                                                  #Z33
+        * cos(phi)''',                                                                                              #Z33
     ''' rho *
         (5 - 60 * npow(rho,2) + 210 * npow(rho,4) - 280 * npow(rho,6) + 126 * npow(rho,8))
-        * sin(phi) ''',                                                                 #Z34
+        * sin(phi) ''',                                                                                             #Z34
     ''' 30 * npow(rho,2)
         - 210 * npow(rho,4)
         + 560 * npow(rho,6)
         - 630 * npow(rho,8)
         + 252 * npow(rho,10)
-        - 1 ''',                                                                        #Z35
+        - 1 ''',                                                                                                    #Z35
 ]
 
 # See JCW - http://wp.optics.arizona.edu/jcwyant/wp-content/uploads/sites/13/2016/08/ZernikePolynomialsForTheWeb.pdf
@@ -196,11 +194,11 @@ class FringeZernike(Pupil):
 
         if args is not None:
             if len(args) is 0:
-                self.coefs = [0] * 36
+                self.coefs = [0] * len(_eqns)
             else:
                 self.coefs = [*args[0]]
         else:
-            self.coefs = [0] * 36
+            self.coefs = [0] * len(_eqns)
 
         self.normalize = False
         pass_args = {}
@@ -252,7 +250,7 @@ class FringeZernike(Pupil):
         return self.phase, self.fcn
 
     def __repr__(self):
-        '''Pretty-print pupil desc. to console
+        '''Pretty-print pupil description
         '''
         if self.normalize is True:
             header = 'rms normalized Fringe Zernike description with:\n\t'
