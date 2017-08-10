@@ -119,7 +119,7 @@ class PSF(object):
 
     # plotting -----------------------------------------------------------------
 
-    def plot2d(self, log=False, axlim=25, interp_method='bicubic',
+    def plot2d(self, log=False, axlim=25, interp_method='lanczos',
                pix_grid=None, fig=None, ax=None):
         '''Creates a 2D plot of the PSF
 
@@ -156,7 +156,8 @@ class PSF(object):
                        extent=[left, right, left, right],
                        cmap='Greys_r',
                        interpolation=interp_method,
-                       clim=lims)
+                       clim=lims,
+                       origin='lower')
         fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         ax.set(xlabel=r'Image Plane X [$\mu m$]',
                ylabel=r'Image Plane Y [$\mu m$]',
@@ -172,7 +173,7 @@ class PSF(object):
             ax.set_xticks(pts, minor=True)
             ax.yaxis.grid(True, which='minor')
             ax.xaxis.grid(True, which='minor')
-        
+
         return fig, ax
 
     def plot_slice_xy(self, log=False, axlim=20, fig=None, ax=None):
@@ -306,7 +307,7 @@ class MultispectralPSF(PSF):
         Args:
             psfs (iterable): iterable of PSFs
             weights (iterable): iterable of weights associated with each PSF
-        
+
         Returns:
             MultispectralPSF.  A new MultispectralPSF.
 
@@ -323,7 +324,7 @@ class MultispectralPSF(PSF):
                 ref_idx = idx
                 ref_unit = psf.unit
                 ref_samples = psf.samples
-        
+
         merge_data = np.zeros((ref_samples, ref_samples, len(psfs)))
         for idx, psf in enumerate(psfs):
             # don't do anything to our reference PSF
@@ -333,7 +334,7 @@ class MultispectralPSF(PSF):
                 xv, yv = np.meshgrid(ref_unit, ref_unit)
                 interpf = interpolate.RegularGridInterpolator((psf.unit, psf.unit), psf.data)
                 merge_data[:, :, idx] = interpf((xv, yv), method='linear') * weights[idx]
-        
+
         self.weights = weights
         super().__init__(merge_data.sum(axis=2), ref_samples, min_spacing)
 
@@ -347,7 +348,7 @@ class RGBPSF(object):
             r_psf (`PSF`): PSF for the red channel
             g_psf (`PSF`): PSF for the green channel
             b_psf (`PSF`): PSF for the blue channel
-        
+
         Returns:
             RGBPSF: A new `RGBPSF` instance.
 
@@ -367,13 +368,13 @@ class RGBPSF(object):
             interpf_g = interpolate.RegularGridInterpolator((g_psf.unit, g_psf.unit), g_psf.data)
             self.R = interpf_r((xv, yv), method='linear')
             self.G = interpf_g((xv, yv), method='linear')
-        
+
         self.sample_spacing = b_psf.sample_spacing
         self.samples = b_psf.samples
         self.unit = b_psf.unit
         self.center = b_psf.center
-    
-    def plot2d(self, log=False, axlim=25, interp_method='bicubic',
+
+    def plot2d(self, log=False, axlim=25, interp_method='lanczos',
                pix_grid=None, fig=None, ax=None):
         '''Creates a 2D color plot of the PSF
 
@@ -391,16 +392,16 @@ class RGBPSF(object):
 
         Returns:
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot
-        
+
         Notes:
             Largely a copy-paste of plot2d() from the PSF class.  Some  refactoring
                 could be done to make the code more succinct and unified.
 
         '''
         dat = np.empty((self.samples, self.samples, 3))
-        dat[:,:,0] = self.R
-        dat[:,:,1] = self.G
-        dat[:,:,2] = self.B
+        dat[:, :, 0] = self.R
+        dat[:, :, 1] = self.G
+        dat[:, :, 2] = self.B
 
         if log:
             fcn = 20 * np.log10(1e-100 + dat)
@@ -417,7 +418,8 @@ class RGBPSF(object):
 
         im = ax.imshow(fcn,
                        extent=[left, right, left, right],
-                       interpolation=interp_method)
+                       interpolation=interp_method,
+                       origin='lower')
         ax.set(xlabel=r'Image Plane X [$\mu m$]',
                ylabel=r'Image Plane Y [$\mu m$]',
                xlim=(-axlim, axlim),
@@ -432,10 +434,10 @@ class RGBPSF(object):
             ax.set_xticks(pts, minor=True)
             ax.yaxis.grid(True, which='minor')
             ax.xaxis.grid(True, which='minor')
-        
+
         return fig, ax
 
-    def plot2d_rgbgrid(self, axlim=25, interp_method='bicubic',
+    def plot2d_rgbgrid(self, axlim=25, interp_method='lanczos',
                        pix_grid=None, fig=None, ax=None):
         '''Creates a 2D color plot of the PSF and components
 
@@ -452,7 +454,7 @@ class RGBPSF(object):
 
         Returns:
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot
-        
+
         Notes:
             Need to refine inernal workings at some point
 
@@ -463,12 +465,12 @@ class RGBPSF(object):
         datr = np.zeros((self.samples, self.samples, 3))
         datg = np.zeros((self.samples, self.samples, 3))
         datb = np.zeros((self.samples, self.samples, 3))
-        dat[:,:,0] = self.R
-        dat[:,:,1] = self.G
-        dat[:,:,2] = self.B
-        datr[:,:,0] = self.R
-        datg[:,:,1] = self.G
-        datb[:,:,2] = self.B
+        dat[:, :, 0] = self.R
+        dat[:, :, 1] = self.G
+        dat[:, :, 2] = self.B
+        datr[:, :, 0] = self.R
+        datg[:, :, 1] = self.G
+        datb[:, :, 2] = self.B
 
         left, right = self.unit[0], self.unit[-1]
 
@@ -478,20 +480,24 @@ class RGBPSF(object):
 
         ax.imshow(dat,
                   extent=[left, right, left, right],
-                  interpolation=interp_method)
-        
+                  interpolation=interp_method,
+                  origin='lower')
+
         axr.imshow(datr,
                    extent=[left, right, left, right],
-                   interpolation=interp_method)
+                   interpolation=interp_method,
+                   origin='lower')
         axg.imshow(datg,
                    extent=[left, right, left, right],
-                   interpolation=interp_method)
+                   interpolation=interp_method,
+                   origin='lower')
         axb.imshow(datb,
                    extent=[left, right, left, right],
-                   interpolation=interp_method)
-        
+                   interpolation=interp_method,
+                   origin='lower')
+
         for axs in (ax, axr, axg, axb):
-            ax.set(xlim=(-axlim,axlim), ylim=(-axlim,axlim))
+            ax.set(xlim=(-axlim, axlim), ylim=(-axlim, axlim))
             if pix_grid is not None:
                 # if pixel grid is desired, add it
                 mult = np.floor(axlim / pix_grid)

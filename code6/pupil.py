@@ -156,7 +156,7 @@ class Pupil(object):
         im = ax.imshow(convert_phase(self.phase, self),
                        extent=[-epd/2, epd/2, -epd/2, epd/2],
                        cmap='Spectral',
-                       interpolation='bicubic')
+                       interpolation='lanczos')
         fig.colorbar(im, label=f'OPD [{self._opd_str}]', ax=ax, fraction=0.046)
         ax.set(xlabel='Pupil X [mm]',
                ylabel='Pupil Y [mm]')
@@ -214,7 +214,7 @@ class Pupil(object):
         im = ax.imshow(plotdata,
                   extent=[-epd/2, epd/2, -epd/2, epd/2],
                   cmap='Greys_r',
-                  interpolation='bicubic',
+                  interpolation='lanczos',
                   clim=(-1,1))
         fig.colorbar(im, label=r'Wrapped Phase [$\lambda$]')
         ax.set(xlabel='Pupil X [mm]',

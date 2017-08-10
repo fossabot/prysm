@@ -179,7 +179,7 @@ class MTF(object):
         im = ax.imshow(fcn,
                        extent=[left, right, left, right],
                        cmap='Greys_r',
-                       interpolation='bicubic',
+                       interpolation='lanczos',
                        clim=lims)
         fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         ax.set(xlabel='Spatial Frequency X [cy/mm]',
