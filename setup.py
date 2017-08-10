@@ -1,10 +1,20 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
-    name='code6',
-    version='0.0.1',
+    name='prysm',
+    version='0.1.0',
+    description='A python optics module',
+    long_description='Uses geometric and fourier optics to model optical systems',
+    license='MIT',
     author='Brandon Dube',
     author_email='brandondube@gmail.com',
-    url='https://github.com/brandondube/code6',
-    packages=['code6'],
-    install_requires=['numpy', 'matplotlib'])
+    url='https://github.com/brandondube/prysm',
+    packages=['prysm'],
+    install_requires=['numpy', 'matplotlib, scipy'],
+    classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Scientists',
+        'License :: MIT License',
+        'Programming Language :: Python :: 3.6',
+    ]
+)

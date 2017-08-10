@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# code6 documentation build configuration file, created by
+# prysm documentation build configuration file, created by
 # sphinx-quickstart on Mon Aug  7 19:16:41 2017.
 #
 # This file is execfile()d with the current directory set to its
@@ -52,7 +52,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'code6'
+project = 'prysm'
 copyright = '2017, Brandon Dube'
 author = 'Brandon Dube'
 
@@ -97,7 +97,7 @@ html_theme = 'alabaster'
 #
 html_theme_options = {
 	'github_user': 'brandondube',
-	'github_repo': 'code6',
+	'github_repo': 'prysm',
 	'github_banner': False,
 	'github_button': True,
 	'codecov_button': True,
@@ -114,7 +114,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'code6doc'
+htmlhelp_basename = 'prysmdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -141,7 +141,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'code6.tex', 'code6 Documentation',
+    (master_doc, 'prysm.tex', 'prysm Documentation',
      'Brandon Dube', 'manual'),
 ]
 
@@ -151,7 +151,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'code6', 'code6 Documentation',
+    (master_doc, 'prysm', 'prysm Documentation',
      [author], 1)
 ]
 
@@ -162,8 +162,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'code6', 'code6 Documentation',
-     author, 'code6', 'One line description of project.',
+    (master_doc, 'prysm', 'prysm Documentation',
+     author, 'prysm', 'One line description of project.',
      'Miscellaneous'),
 ]
 
