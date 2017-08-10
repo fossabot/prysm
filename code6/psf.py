@@ -9,6 +9,7 @@ from numpy.fft import fft2, fftshift, ifftshift, ifft2
 from scipy import interpolate
 
 from matplotlib import pyplot as plt
+from mpl_toolkits.axes_grid1.axes_rgb import make_rgb_axes, RGBAxes
 
 from code6.conf import config
 from code6.fttools import pad2d, forward_ft_unit
@@ -335,6 +336,177 @@ class MultispectralPSF(PSF):
         
         self.weights = weights
         super().__init__(merge_data.sum(axis=2), ref_samples, min_spacing)
+
+class RGBPSF(object):
+    '''Trichromatic PSF, intended to show chromatic aberrations
+    '''
+    def __init__(self, r_psf, g_psf, b_psf):
+        '''Creates a new `RGBPSF` instance.
+
+        Args:
+            r_psf (`PSF`): PSF for the red channel
+            g_psf (`PSF`): PSF for the green channel
+            b_psf (`PSF`): PSF for the blue channel
+        
+        Returns:
+            RGBPSF: A new `RGBPSF` instance.
+
+        '''
+        if np.array_equal(r_psf.unit, g_psf.unit) and np.array_equal(g_psf.unit, g_psf.unit):
+            # do not need to interpolate the arrays
+            self.R = r_psf.data
+            self.G = g_psf.data
+            self.B = b_psf.data
+        else:
+            # need to interpolate the arrays.  Blue tends to be most densely
+            # sampled, use it to define our grid
+            self.B = b_psf.data
+
+            xv, yv = np.meshgrid(b_psf.unit, b_psf._unit)
+            interpf_r = interpolate.RegularGridInterpolator((r_psf.unit, r_psf.unit), r_psf.data)
+            interpf_g = interpolate.RegularGridInterpolator((g_psf.unit, g_psf.unit), g_psf.data)
+            self.R = interpf_r((xv, yv), method='linear')
+            self.G = interpf_g((xv, yv), method='linear')
+        
+        self.sample_spacing = b_psf.sample_spacing
+        self.samples = b_psf.samples
+        self.unit = b_psf.unit
+        self.center = b_psf.center
+    
+    def plot2d(self, log=False, axlim=25, interp_method='bicubic',
+               pix_grid=None, fig=None, ax=None):
+        '''Creates a 2D color plot of the PSF
+
+        Args:
+            log (bool): if true, plot in log scale.  If false, plot in linear scale
+            axlim (float): limits of axis, symmetric.
+                xlim=(-axlim,axlim), ylim=(-axlim, axlim).
+            interp_method (string): method used to interpolate the image between
+                samples of the PSF
+            pix_grid (float): if not None, overlays gridlines with spacing equal
+                to pix_grid.  Intended to show the collection into camera pixels
+                while still in the oversampled domain.
+            fig (pyplot.figure): figure to plot in
+            ax (pyplot.axis): axis to plot in
+
+        Returns:
+            pyplot.fig, pyplot.axis.  Figure and axis containing the plot
+        
+        Notes:
+            Largely a copy-paste of plot2d() from the PSF class.  Some  refactoring
+                could be done to make the code more succinct and unified.
+
+        '''
+        dat = np.empty((self.samples, self.samples, 3))
+        dat[:,:,0] = self.R
+        dat[:,:,1] = self.G
+        dat[:,:,2] = self.B
+
+        if log:
+            fcn = 20 * np.log10(1e-100 + dat)
+            label_str = 'Normalized Intensity [dB]'
+            lims = (-100, 0) # show first 100dB -- range from (1e-6, 1) in linear scale
+        else:
+            fcn = correct_gamma(dat)
+            label_str = 'Normalized Intensity [a.u.]'
+            lims = (0, 1)
+
+        left, right = self.unit[0], self.unit[-1]
+
+        fig, ax = share_fig_ax(fig, ax)
+
+        im = ax.imshow(fcn,
+                       extent=[left, right, left, right],
+                       interpolation=interp_method)
+        ax.set(xlabel=r'Image Plane X [$\mu m$]',
+               ylabel=r'Image Plane Y [$\mu m$]',
+               xlim=(-axlim, axlim),
+               ylim=(-axlim, axlim))
+
+        if pix_grid is not None:
+            # if pixel grid is desired, add it
+            mult = np.floor(axlim / pix_grid)
+            gmin, gmax = -mult * pix_grid, mult*pix_grid
+            pts = np.arange(gmin, gmax, pix_grid)
+            ax.set_yticks(pts, minor=True)
+            ax.set_xticks(pts, minor=True)
+            ax.yaxis.grid(True, which='minor')
+            ax.xaxis.grid(True, which='minor')
+        
+        return fig, ax
+
+    def plot2d_rgbgrid(self, axlim=25, interp_method='bicubic',
+                       pix_grid=None, fig=None, ax=None):
+        '''Creates a 2D color plot of the PSF and components
+
+        Args:
+            axlim (float): limits of axis, symmetric.
+                xlim=(-axlim,axlim), ylim=(-axlim, axlim).
+            interp_method (string): method used to interpolate the image between
+                samples of the PSF
+            pix_grid (float): if not None, overlays gridlines with spacing equal
+                to pix_grid.  Intended to show the collection into camera pixels
+                while still in the oversampled domain.
+            fig (pyplot.figure): figure to plot in
+            ax (pyplot.axis): axis to plot in
+
+        Returns:
+            pyplot.fig, pyplot.axis.  Figure and axis containing the plot
+        
+        Notes:
+            Need to refine inernal workings at some point
+
+        '''
+
+        # make the arrays for the RGB images
+        dat = np.empty((self.samples, self.samples, 3))
+        datr = np.zeros((self.samples, self.samples, 3))
+        datg = np.zeros((self.samples, self.samples, 3))
+        datb = np.zeros((self.samples, self.samples, 3))
+        dat[:,:,0] = self.R
+        dat[:,:,1] = self.G
+        dat[:,:,2] = self.B
+        datr[:,:,0] = self.R
+        datg[:,:,1] = self.G
+        datb[:,:,2] = self.B
+
+        left, right = self.unit[0], self.unit[-1]
+
+        # generate a figure and axes to plot in
+        fig, ax = share_fig_ax(fig, ax)
+        axr, axg, axb = make_rgb_axes(ax)
+
+        ax.imshow(dat,
+                  extent=[left, right, left, right],
+                  interpolation=interp_method)
+        
+        axr.imshow(datr,
+                   extent=[left, right, left, right],
+                   interpolation=interp_method)
+        axg.imshow(datg,
+                   extent=[left, right, left, right],
+                   interpolation=interp_method)
+        axb.imshow(datb,
+                   extent=[left, right, left, right],
+                   interpolation=interp_method)
+        
+        for axs in (ax, axr, axg, axb):
+            ax.set(xlim=(-axlim,axlim), ylim=(-axlim,axlim))
+            if pix_grid is not None:
+                # if pixel grid is desired, add it
+                mult = np.floor(axlim / pix_grid)
+                gmin, gmax = -mult * pix_grid, mult*pix_grid
+                pts = np.arange(gmin, gmax, pix_grid)
+                ax.set_yticks(pts, minor=True)
+                ax.set_xticks(pts, minor=True)
+                ax.yaxis.grid(True, which='minor')
+                ax.xaxis.grid(True, which='minor')
+        ax.set(xlabel=r'Image Plane X [$\mu m$]', ylabel=r'Image Plane Y [$\mu m$]')
+        axr.set(title='R')
+        axg.set(title='G')
+        axb.set(title='B')
+
+        return fig, ax
 
 def convpsf(psf1, psf2):
     '''Convolves two PSFs.
