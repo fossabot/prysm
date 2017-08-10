@@ -10,7 +10,7 @@ setup(
     author_email='brandondube@gmail.com',
     url='https://github.com/brandondube/prysm',
     packages=['prysm'],
-    install_requires=['numpy', 'matplotlib, scipy'],
+    install_requires=['numpy', 'matplotlib', 'scipy'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Intended Audience :: Scientists',

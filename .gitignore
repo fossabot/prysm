@@ -63,3 +63,4 @@ target/
 # autres
 jpl
 .vscode
+.pypirc
