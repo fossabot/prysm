@@ -1,5 +1,4 @@
-'''
-Supplimental tools for computing fourier transforms
+''' Supplimental tools for computing fourier transforms
 '''
 import numpy as np
 

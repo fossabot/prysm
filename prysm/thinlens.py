@@ -1,5 +1,4 @@
-'''
-A collection of thin lens equations for system modeling
+''' A collection of thin lens equations for system modeling
 '''
 import numpy as np
 from numpy import sin, arctan, absolute, sqrt, pi

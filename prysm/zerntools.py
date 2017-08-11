@@ -1,4 +1,4 @@
-'''Tools for manipulating zernike polynomials
+''' Tools for manipulating zernike polynomials
 '''
 
 '''

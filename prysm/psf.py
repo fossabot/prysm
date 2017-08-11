@@ -1,5 +1,4 @@
-'''
-A base point spread function interface
+''' A base point spread function interface
 '''
 import numpy as np
 from numpy import floor
@@ -17,12 +16,12 @@ from prysm.coordinates import uniform_cart_to_polar, resample_2d_complex
 from prysm.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax, fold_array
 
 class PSF(object):
-    '''Point Spread Function representations
+    ''' Point Spread Function representations.
 
     Properties:
-        slice_x: 1D slice through center of PSF along X axis.  Returns (x,y) data
+        slice_x: 1D slice through center of PSF along X axis.  Returns (x,y) data.
 
-        slice_y: 1D slice through cente rof PSF along y axis.  Returns (x,y) data
+        slice_y: 1D slice through cente rof PSF along y axis.  Returns (x,y) data.
 
     Instance Methods:
         encircled_energy: Computes the encircled energy along the specified
@@ -30,40 +29,42 @@ class PSF(object):
             Returned value is the average of both the negative and positive
             sides of the PSF along the specified azimuth.
 
-        plot2d: Makes a 2D plot of the PSF.  Returns (fig, axis)
+        plot2d: Makes a 2D plot of the PSF.  Returns (fig, axis).
 
         plot_slice_xy: Makes a 1D plot with x and y slices through the center
             of the PSF.  Returns (fig, axis).
 
         plot_encircled_energy: Makes a 1D plot of the encircled energy at the
-            specified azimuth.  Returns (fig, axis)
+            specified azimuth.  Returns (fig, axis).
 
         conv: convolves this PSF with another.  Returns a new PSF object that is
             sampled at the same points as this PSF.
 
     Private Instance Methods:
-        _renorm: renormalizes the PSF to unit peak intensity
+        _renorm: renormalizes the PSF to unit peak intensity.
 
     Static Methods:
         from_pupil: given a pupil and a focal length, returns a PSF.
 
     Notes:
         Subclasses must implement an analyic_ft method with signature
-            a_ft(unit_x, unit_y)
+            a_ft(unit_x, unit_y).
 
     '''
     def __init__(self, data, samples, sample_spacing):
         '''Creates a PSF object
 
         Args:
-            data (numpy.ndarray): intensity data for the PSF
-            samples (int): number of samples along each axis of the PSF.
-                for a 256x256 PSF, samples=256
-            sample_spacing (float): center-to-center spacing of samples,
+            data (numpy.ndarray): intensity data for the PSF.
+
+            samples (`int`): number of samples along each axis of the PSF.
+                for a 256x256 PSF, samples=256.
+
+            sample_spacing (`float`): center-to-center spacing of samples,
                 expressed in microns.
 
         Returns:
-            PSF.  A new PSF instance.
+            PSF: a new `PSF` instance.
 
         '''
         self.data = data
@@ -79,20 +80,20 @@ class PSF(object):
 
     @property
     def slice_x(self):
-        '''Retrieves a slice through the x axis of the PSF
+        ''' Retrieves a slice through the x axis of the PSF
         '''
         return self.unit, self.data[self.center, :]
 
     @property
     def slice_y(self):
-        '''Retrieves a slices through the y axis of the PSF
+        ''' Retrieves a slices through the y axis of the PSF
         '''
         return self.unit, self.data[:, self.center]
 
 
     def encircled_energy(self, azimuth=None):
-        '''returns the encircled energy at the requested azumith.  If azimuth is
-            None, returns the azimuthal average
+        ''' returns the encircled energy at the requested azumith.  If azimuth
+            is None, returns the azimuthal average.
 
         Args:
             azimuth (float): azimuth to retrieve data along, in degrees.
@@ -101,19 +102,19 @@ class PSF(object):
             np.ndarray, np.ndarray.  Unit, encircled energy.
 
         '''
+
+        # interp_dat is shaped with axis0=phi, axis1=rho
         rho, phi, interp_dat = uniform_cart_to_polar(self.unit, self.unit, self.data)
-        avg_fold = fold_array(interp_dat)
 
         if azimuth is None:
             # take average of all azimuths as input data
-            dat = np.average(avg_fold, axis=0, dtype=config.precision)
+            dat = np.average(interp_dat, axis=0)
         else:
-            index = np.searchsorted(phi, np.radians(azimuth, dtype=config.precision))
-            dat = avg_fold[index, :]
+            index = np.searchsorted(phi, np.radians(azimuth))
+            dat = interp_dat[index, :]
 
         enc_eng = np.cumsum(dat, dtype=config.precision)
-        enc_eng /= enc_eng[-1]
-        return self.unit[self.center:], enc_eng
+        return self.unit[self.center:], enc_eng / enc_eng[-1]
 
     # quick-access slices ------------------------------------------------------
 
@@ -121,22 +122,28 @@ class PSF(object):
 
     def plot2d(self, log=False, axlim=25, interp_method='lanczos',
                pix_grid=None, fig=None, ax=None):
-        '''Creates a 2D plot of the PSF
+        ''' Creates a 2D plot of the PSF.
 
         Args:
-            log (bool): if true, plot in log scale.  If false, plot in linear scale
-            axlim (float): limits of axis, symmetric.
+            log (`bool`): if true, plot in log scale.  If false, plot in linear
+                scale.
+
+            axlim (`float`): limits of axis, symmetric.
                 xlim=(-axlim,axlim), ylim=(-axlim, axlim).
+
             interp_method (string): method used to interpolate the image between
-                samples of the PSF
+                samples of the PSF.
+
             pix_grid (float): if not None, overlays gridlines with spacing equal
                 to pix_grid.  Intended to show the collection into camera pixels
                 while still in the oversampled domain.
-            fig (pyplot.figure): figure to plot in
-            ax (pyplot.axis): axis to plot in
+
+            fig (pyplot.figure): figure to plot in.
+
+            ax (pyplot.axis): axis to plot in.
 
         Returns:
-            pyplot.fig, pyplot.axis.  Figure and axis containing the plot
+            pyplot.fig, pyplot.axis.  Figure and axis containing the plot.
 
         '''
         if log:
@@ -177,16 +184,20 @@ class PSF(object):
         return fig, ax
 
     def plot_slice_xy(self, log=False, axlim=20, fig=None, ax=None):
-        '''Makes a 1D plot of X and Y slices through the PSF
+        ''' Makes a 1D plot of X and Y slices through the PSF.
 
         Args:
-            log (bool): if true, plot in log scale.  if false, plot in linear scale
-            axlim (float): limits of axis, Will plot [-axlim, axlim]
-            fig (pyplot.figure): figure to plot in
-            ax (pyplot.axis): axis to plot in
+            log (`bool`): if true, plot in log scale.  if false, plot in linear
+                scale.
+
+            axlim (`float`): limits of axis, will plot [-axlim, axlim].
+
+            fig (pyplot.figure): figure to plot in.
+
+            ax (pyplot.axis): axis to plot in.
 
         Returns:
-            pyplot.fig, pyplot.axis.  Figure and axis containing the plot
+            pyplot.fig, pyplot.axis.  Figure and axis containing the plot.
 
         '''
         u, x = self.slice_x
@@ -214,13 +225,16 @@ class PSF(object):
         return fig, ax
 
     def plot_encircled_energy(self, azimuth=None, axlim=20, fig=None, ax=None):
-        '''Makes a 1D plot of the encircled energy at the given azimuth
+        ''' Makes a 1D plot of the encircled energy at the given azimuth.
 
         Args:
-            azimuth: azimuth to plot at, in degrees.
-            axlim (float): limits of axis, will plot [0, axlim]
-            fig (pyplot.figure): figure to plot in
-            ax (pyplot.axis): axis to plot in
+            azimuth (`float`): azimuth to plot at, in degrees.
+
+            axlim (`float`): limits of axis, will plot [0, axlim].
+
+            fig (pyplot.figure): figure to plot in.
+
+            ax (pyplot.axis): axis to plot in.
 
         Returns:
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot
@@ -243,10 +257,10 @@ class PSF(object):
         '''Convolves this PSF with another
 
         Args:
-            psf2 (prysm.PSF): PSf to convolve with this one
+            psf2 (`PSF`): PSf to convolve with this one.
 
         Returns:
-            PSF.  A new PSF, that is the convolution of these two PSFs.
+            PSF:  A new `PSF` that is the convolution of these two PSFs.
 
         Notes:
             output PSF has equal sampling to whichever PSF has a lower nyquist
@@ -266,7 +280,7 @@ class PSF(object):
         return convpsf(self, psf2)
 
     def _renorm(self):
-        '''Renormalizes the PSF to unit peak intensity
+        ''' Renormalizes the PSF to unit peak intensity.
         '''
         self.data /= self.data.max()
         return self
@@ -275,13 +289,15 @@ class PSF(object):
 
     @staticmethod
     def from_pupil(pupil, efl, padding=1):
-        '''Uses scalar diffraction propogation to generate a PSF from a pupil
+        ''' Uses scalar diffraction propogation to generate a PSF from a pupil.
 
         Args:
             pupil (prysm.Pupil): Pupil, with OPD data and wavefunction.
-            efl (float): effective focal length of the optical system
+
+            efl (float): effective focal length of the optical system.
+
             padding (number): number of pupil widths to pad each side of the
-                pupil with during computation
+                pupil with during computation.
 
         Returns:
             PSF.  A new PSF instance.
@@ -299,17 +315,18 @@ class PSF(object):
         return PSF(psf / np.max(psf), psf_samples, sample_spacing)
 
 class MultispectralPSF(PSF):
-    ''' A PSF which includes multiple wavelength components
+    ''' A PSF which includes multiple wavelength components.
     '''
     def __init__(self, psfs, weights):
         ''' Creates a new :class:`MultispectralPSF` instance.
 
         Args:
-            psfs (iterable): iterable of PSFs
-            weights (iterable): iterable of weights associated with each PSF
+            psfs (iterable): iterable of PSFs.
+
+            weights (iterable): iterable of weights associated with each PSF.
 
         Returns:
-            MultispectralPSF.  A new MultispectralPSF.
+            MultispectralPSF.  A new `MultispectralPSF`.
 
         '''
 
@@ -337,17 +354,20 @@ class MultispectralPSF(PSF):
 
         self.weights = weights
         super().__init__(merge_data.sum(axis=2), ref_samples, min_spacing)
+        self._renorm()
 
 class RGBPSF(object):
-    '''Trichromatic PSF, intended to show chromatic aberrations
+    ''' Trichromatic PSF, intended to show chromatic aberrations.
     '''
     def __init__(self, r_psf, g_psf, b_psf):
-        '''Creates a new `RGBPSF` instance.
+        ''' Creates a new `RGBPSF` instance.
 
         Args:
-            r_psf (`PSF`): PSF for the red channel
-            g_psf (`PSF`): PSF for the green channel
-            b_psf (`PSF`): PSF for the blue channel
+            r_psf (`PSF`): PSF for the red channel.
+
+            g_psf (`PSF`): PSF for the green channel.
+
+            b_psf (`PSF`): PSF for the blue channel.
 
         Returns:
             RGBPSF: A new `RGBPSF` instance.
@@ -363,7 +383,7 @@ class RGBPSF(object):
             # sampled, use it to define our grid
             self.B = b_psf.data
 
-            xv, yv = np.meshgrid(b_psf.unit, b_psf._unit)
+            xv, yv = np.meshgrid(b_psf.unit, b_psf.unit)
             interpf_r = interpolate.RegularGridInterpolator((r_psf.unit, r_psf.unit), r_psf.data)
             interpf_g = interpolate.RegularGridInterpolator((g_psf.unit, g_psf.unit), g_psf.data)
             self.R = interpf_r((xv, yv), method='linear')
@@ -379,16 +399,21 @@ class RGBPSF(object):
         '''Creates a 2D color plot of the PSF
 
         Args:
-            log (bool): if true, plot in log scale.  If false, plot in linear scale
-            axlim (float): limits of axis, symmetric.
+            log (`bool`): if true, plot in log scale.  If false, plot in linear
+                scale.
+            axlim (`float`): limits of axis, symmetric.
                 xlim=(-axlim,axlim), ylim=(-axlim, axlim).
-            interp_method (string): method used to interpolate the image between
-                samples of the PSF
-            pix_grid (float): if not None, overlays gridlines with spacing equal
+
+            interp_method (`string`): method used to interpolate the image between
+                samples of the PSF.
+
+            pix_grid (`float`): if not None, overlays gridlines with spacing equal
                 to pix_grid.  Intended to show the collection into camera pixels
                 while still in the oversampled domain.
-            fig (pyplot.figure): figure to plot in
-            ax (pyplot.axis): axis to plot in
+
+            fig (pyplot.figure): figure to plot in.
+
+            ax (pyplot.axis): axis to plot in.
 
         Returns:
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot
@@ -442,21 +467,25 @@ class RGBPSF(object):
         '''Creates a 2D color plot of the PSF and components
 
         Args:
-            axlim (float): limits of axis, symmetric.
+            axlim (`float`): limits of axis, symmetric.
                 xlim=(-axlim,axlim), ylim=(-axlim, axlim).
+
             interp_method (string): method used to interpolate the image between
-                samples of the PSF
+                samples of the PSF.
+
             pix_grid (float): if not None, overlays gridlines with spacing equal
                 to pix_grid.  Intended to show the collection into camera pixels
                 while still in the oversampled domain.
-            fig (pyplot.figure): figure to plot in
-            ax (pyplot.axis): axis to plot in
+
+            fig (pyplot.figure): figure to plot in.
+
+            ax (pyplot.axis): axis to plot in.
 
         Returns:
-            pyplot.fig, pyplot.axis.  Figure and axis containing the plot
+            pyplot.fig, pyplot.axis.  Figure and axis containing the plot.
 
         Notes:
-            Need to refine inernal workings at some point
+            Need to refine internal workings at some point.
 
         '''
 
@@ -473,25 +502,26 @@ class RGBPSF(object):
         datb[:, :, 2] = self.B
 
         left, right = self.unit[0], self.unit[-1]
+        ax_width = 2 * axlim
 
         # generate a figure and axes to plot in
         fig, ax = share_fig_ax(fig, ax)
         axr, axg, axb = make_rgb_axes(ax)
 
-        ax.imshow(dat,
+        ax.imshow(correct_gamma(dat),
                   extent=[left, right, left, right],
                   interpolation=interp_method,
                   origin='lower')
 
-        axr.imshow(datr,
+        axr.imshow(correct_gamma(datr),
                    extent=[left, right, left, right],
                    interpolation=interp_method,
                    origin='lower')
-        axg.imshow(datg,
+        axg.imshow(correct_gamma(datg),
                    extent=[left, right, left, right],
                    interpolation=interp_method,
                    origin='lower')
-        axb.imshow(datb,
+        axb.imshow(correct_gamma(datb),
                    extent=[left, right, left, right],
                    interpolation=interp_method,
                    origin='lower')
@@ -508,26 +538,26 @@ class RGBPSF(object):
                 ax.yaxis.grid(True, which='minor')
                 ax.xaxis.grid(True, which='minor')
         ax.set(xlabel=r'Image Plane X [$\mu m$]', ylabel=r'Image Plane Y [$\mu m$]')
-        axr.set(title='R')
-        axg.set(title='G')
-        axb.set(title='B')
-
+        axr.text(-axlim+0.1*ax_width, axlim-0.2*ax_width, 'R', color='white')
+        axg.text(-axlim+0.1*ax_width, axlim-0.2*ax_width, 'G', color='white')
+        axb.text(-axlim+0.1*ax_width, axlim-0.2*ax_width, 'B', color='white')
         return fig, ax
 
 def convpsf(psf1, psf2):
     '''Convolves two PSFs.
 
     Args:
-        psf1 (prysm.PSF): first PSF
-        psf2 (prysm.PSF): second PSF
+        psf1 (prysm.PSF): first PSF.
+
+        psf2 (prysm.PSF): second PSF.
 
     Returns:
-        PSF.  A new PSF that is the convolution of psf1 and psf2.
+        PSF: A new `PSF` that is the convolution of psf1 and psf2.
 
     Notes:
         The PSF with the lower nyquist frequency defines the sampling of the
-            output.  The PSF with a higher nyquist will be truncated in
-            the frequency domain (without aliasing) and projected onto the
+            output.  The PSF with a higher nyquist will be truncated in the 
+            frequency domain (without aliasing) and projected onto the
             sampling grid of the PSF with a lower nyquist.
 
     '''
@@ -551,11 +581,12 @@ def _unequal_spacing_conv_core(psf1, psf2):
 
     Args:
         psf1 (prysm.PSF): PSF.  This one defines the sampling of the output.
+
         psf2 (prysm.PSF): PSF.  This one will have its frequency response
             truncated.
 
     Returns:
-        PSF.  A new PSF that is the convolution of psf1 and psf2.
+        PSF: a new `PSF` that is the convolution of psf1 and psf2.
 
     '''
     ft1 = fft2(psf1.data)

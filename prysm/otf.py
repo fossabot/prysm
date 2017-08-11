@@ -1,5 +1,4 @@
-'''
-A base optical transfer function interface
+''' A base optical transfer function interface
 '''
 import numpy as np
 from numpy import floor

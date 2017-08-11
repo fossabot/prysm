@@ -1,4 +1,4 @@
-'''Model surface finish errors of optical systems (low-amplitude, random phase errors)
+''' Model surface finish errors of optical systems (low-amplitude, random phase errors)
 '''
 
 import numpy as np

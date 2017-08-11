@@ -1,4 +1,4 @@
-'''Unit manipulation
+''' Unit manipulation
 '''
 
 def waves_to_microns(wavelength):

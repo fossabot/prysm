@@ -1,5 +1,4 @@
-'''
-A repository of seidel aberration descriptions used to model pupils of
+''' A repository of seidel aberration descriptions used to model pupils of
 optical systems.
 '''
 
@@ -92,7 +91,7 @@ class Seidel(Pupil):
         # compute the pupil phase and wave function
         self.phase = eval(mathexpr).astype(config.precision)
         self._correct_phase_units()
-        self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase, dtype=config.precision_complex)
+        self._phase_to_wavefunction()
         return self.phase, self.fcn
 
 def wexpr_to_opd_expr(Wxxx):
