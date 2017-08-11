@@ -1,5 +1,4 @@
-'''
-A base pupil interface for different aberration models.
+''' A base pupil interface for different aberration models.
 '''
 from numpy import (
     nan, pi,

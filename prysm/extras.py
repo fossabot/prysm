@@ -1,5 +1,4 @@
-'''
-Base meta-class for aberration simulations that provides wavefront, PSF, and MTF simulation methods
+''' Extra functions, used for demos and education
 '''
 from prysm.util import share_fig_ax
 

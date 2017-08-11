@@ -1,5 +1,4 @@
-'''
-A base point spread function interface
+''' A base point spread function interface
 '''
 import numpy as np
 from numpy import floor

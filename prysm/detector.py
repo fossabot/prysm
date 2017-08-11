@@ -1,4 +1,4 @@
-'''Detector-related simulations
+''' Detector-related simulations
 '''
 import numpy as np
 

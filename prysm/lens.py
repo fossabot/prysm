@@ -1,5 +1,4 @@
-'''
-A base Lens class which contains the system's first-order properties
+'''A base Lens class which contains the system's first-order properties
 '''
 
 class Lens(object):

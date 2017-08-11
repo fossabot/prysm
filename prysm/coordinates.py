@@ -1,5 +1,4 @@
-'''
-coordinate conversions
+''' Coordinate conversions
 '''
 import numpy as np
 from scipy import interpolate

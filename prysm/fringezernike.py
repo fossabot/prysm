@@ -1,4 +1,4 @@
-'''A repository of fringe zernike aberration descriptions used to model pupils of optical systems.
+''' A repository of fringe zernike aberration descriptions used to model pupils of optical systems.
 '''
 import numpy as np
 from numpy import arctan2, exp, cos, sin, pi, sqrt, nan

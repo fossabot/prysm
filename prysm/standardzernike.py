@@ -1,4 +1,4 @@
-'''A repository of standard zernike aberration descriptions used to model pupils of
+''' A repository of standard zernike aberration descriptions used to model pupils of
 optical systems.
 '''
 import numpy as np

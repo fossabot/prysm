@@ -1,5 +1,4 @@
-'''
-A repository of seidel aberration descriptions used to model pupils of
+''' A repository of seidel aberration descriptions used to model pupils of
 optical systems.
 '''
 

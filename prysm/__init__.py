@@ -1,4 +1,4 @@
-'''prysm -- a python optics module
+''' prysm -- a python optics module
 '''
 
 from prysm.extras import plot_fourier_chain
