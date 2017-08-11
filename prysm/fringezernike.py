@@ -92,8 +92,8 @@ _eqns =  [
     '-20 * npow(rho,2) + 90 * npow(rho,4) - 140 * npow(rho,6) + 70 * npow(rho,8) + 1',                             # Z24
     'npow(rho,5) * cos(5*phi)',                                                                                    # Z25
     'npow(rho,5) * sin(5*phi)',                                                                                    # Z26
-    'npow(rho,4) * (-5 + 6 * npow(rho,2) * cos(4*phi))',                                                           # Z27
-    'npow(rho,4) * (-5 + 6 * npow(rho,2) * sin(4*phi))',                                                           # Z28
+    '(6 * npow(rho,6) - 5 * npow(rho,4)) * cos(4*phi)',                                                            # Z27
+    '(6 * npow(rho,6) - 5 * npow(rho,4)) * sin(4*phi)',                                                            # Z28
     'npow(rho,3) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * cos(3*phi)',                                       # Z29
     'npow(rho,3) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * sin(3*phi)',                                       # Z30
     'npow(rho,2) * (10 - 30 * npow(rho,2) + 21 * npow(rho,4)) * cos(2*phi)',                                       # Z31
