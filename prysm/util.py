@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 from operator import itemgetter
 
 def is_odd(int):
-    ''' Determines if an interger is odd using binary operations for speed (~150ns/execution)
+    ''' Determines if an interger is odd using binary operations.
 
     Args:
         int: an integer.
@@ -18,7 +18,7 @@ def is_odd(int):
     return int & 0x1
 
 def is_power_of_2(value):
-    ''' Checks if a value is a power of 2 with high speed binary operations
+    ''' Checks if a value is a power of 2 using binary operations.
 
     Args:
         value (number): value to check.
@@ -35,7 +35,7 @@ def is_power_of_2(value):
 
 
 def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
-    ''' Converts pupil sample spacing to PSF sample spacing
+    ''' Converts pupil sample spacing to PSF sample spacing.
 
     Args:
         pupil_sample (float): sample spacing in the pupil plane.
@@ -53,7 +53,7 @@ def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
     return (wavelength * efl * 1e3) / (pupil_sample * num_samples)
 
 def psf_sample_to_pupil_sample(psf_sample, num_samples, wavelength, efl):
-    ''' Converts PSF sample spacing to pupil sample spacing
+    ''' Converts PSF sample spacing to pupil sample spacing.
 
     Args:
         psf_sample (float): sample spacing in the PSF plane.
@@ -71,7 +71,7 @@ def psf_sample_to_pupil_sample(psf_sample, num_samples, wavelength, efl):
     return (psf_sample * num_samples) / (wavelength * efl * 1e3)
 
 def correct_gamma(img, encoding=2.2):
-    ''' Applies an inverse gamma curve to image data that linearizes the given encoding
+    ''' Applies an inverse gamma curve to image data that linearizes the given encoding.
 
     Args:
         img (numpy.ndarray): array of image data, floats avoid quantization error.
@@ -84,23 +84,36 @@ def correct_gamma(img, encoding=2.2):
     '''
     return np.power(img, (1/float(encoding)))
 
-def fold_array(array):
-    ''' Folds an array in half over the given axis and averages
+def fold_array(array, axis=1):
+    ''' Folds an array in half over the given axis and averages.
 
     Args:
         array (numpy.ndarray): 2d array to fold.
+
+        axis (`int`): axis to fold over.
 
     Returns
         numpy.ndarray:  new array.
 
     '''
+
     xs, ys = array.shape
-    xh = int(np.floor(xs/2))
-    left_chunk = array[:, :xh]
-    right_chunk = array[:, xh:]
-    folded_array = np.concatenate((right_chunk[:, :, np.newaxis],
-                                   np.flip(np.flip(left_chunk, axis=1), axis=0)[:, :, np.newaxis]),
-                                  axis=2)
+    if axis is 1:
+        xh = int(np.floor(xs/2))
+        left_chunk = array[:, :xh]
+        right_chunk = array[:, xh:]
+        folded_array = np.concatenate((right_chunk[:, :, np.newaxis],
+                                      np.flip(np.flip(left_chunk, axis=1),
+                                              axis=0)[:, :, np.newaxis]),
+                                      axis=2)
+    else:
+        yh = int(np.floor(ys/2))
+        top_chunk = array[:yh, :]
+        bottom_chunk = array[yh:, :]
+        folded_array = np.concatonate((bottom_chunk[:, :, np.newaxis],
+                                      np.flip(np.flip(top_chunk, axis=1),
+                                              axis=0)[:, :, np.newaxis]),
+                                      axis=2)
     return np.average(folded_array, axis=2)
 
 def share_fig_ax(fig=None, ax=None, numax=1):

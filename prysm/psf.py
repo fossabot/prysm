@@ -100,19 +100,19 @@ class PSF(object):
             np.ndarray, np.ndarray.  Unit, encircled energy.
 
         '''
+
+        # interp_dat is shaped with axis0=phi, axis1=rho
         rho, phi, interp_dat = uniform_cart_to_polar(self.unit, self.unit, self.data)
-        avg_fold = fold_array(interp_dat)
 
         if azimuth is None:
             # take average of all azimuths as input data
-            dat = np.average(avg_fold, axis=0, dtype=config.precision)
+            dat = np.average(interp_dat, axis=0)
         else:
-            index = np.searchsorted(phi, np.radians(azimuth, dtype=config.precision))
-            dat = avg_fold[index, :]
+            index = np.searchsorted(phi, np.radians(azimuth))
+            dat = interp_dat[index, :]
 
         enc_eng = np.cumsum(dat, dtype=config.precision)
-        enc_eng /= enc_eng[-1]
-        return self.unit[self.center:], enc_eng
+        return self.unit[self.center:], enc_eng / enc_eng[-1]
 
     # quick-access slices ------------------------------------------------------
 

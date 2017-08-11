@@ -39,29 +39,31 @@ def uniform_cart_to_polar(x, y, data):
     '''interpolates data uniformly sampled in cartesian coordinates to polar coordinates.
 
     Args:
-        x (numpy.array): *sorted* 1D array of x values
-        y (numpy.array):
-        data (numpy.array): data sampled over the x, y coordinates
+        x (numpy.array): sorted 1D array of x sample pts
+        y (numpy.array): sorted 1D array of y sample pts
+        data (numpy.array): data sampled over the x, y coordinates.
 
     Returns:
-        numpy.array.  Rho samples for interpolated values
-        numpy.array.  Phi samples for interpolated values
+        numpy.array.  Rho samples for interpolated values.
+
+        numpy.array.  Phi samples for interpolated values.
+
         numpy.array.  Data uniformly sampled in (rho,phi).
 
     '''
     # create a set of polar coordinates to interpolate onto
-    xmin, xmax = x[0], x[-1]
+    xmax = x[-1]
     num_pts = len(x)
-    rho = np.linspace(xmin, xmax, num_pts)
+    rho = np.linspace(0, xmax, num_pts/2)
     phi = np.linspace(0, 2*np.pi, num_pts)
     rv, pv = np.meshgrid(rho, phi)
 
     # map points to x, y and make a grid for the original samples
     xv, yv = polar_to_cart(rv, pv)
 
-    # 3 - interpolate the function onto the new points
+    # interpolate the function onto the new points
     f = interpolate.RegularGridInterpolator((x, y), data)
-    return rv, pv, f((xv, yv), method='linear')
+    return rho, phi, f((xv, yv), method='linear')
 
 def resample_2d(array, sample_pts, query_pts):
     '''Resamples 2D array to be sampled along queried points
