@@ -228,14 +228,20 @@ class Pupil(object):
         '''
 
         # build up the pupil
+        self._gengrid()
+        
+        # fill in the phase of the pupil
         self.phase = ones((self.samples, self.samples), dtype=config.precision)
         self._correct_phase_units()
-        self.fcn   = exp(1j * 2 * pi / self.wavelength * self.phase)
-
-        # fill in the phase of the pupil
-        self._gengrid()
+        self._phase_to_wavefunction()
 
         return self.unit, self.phase, self.fcn
+
+    def _phase_to_wavefunction(self):
+        ''' Computes the wavefunction from the phase
+        '''
+        self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase)
+        return self
 
     def clip(self):
         ''' Clips outside the circular boundary of the pupil
@@ -243,6 +249,22 @@ class Pupil(object):
         self.phase[self.rho > 1] = nan
         self.fcn[self.rho > 1] = 0
         return self.phase, self.fcn
+
+    def mask(self, mask):
+        ''' Applies a mask to the pupil.  Used to implement vignetting,
+            chief ray angles, etc.
+
+        Args:
+            mask (`numpy.ndarray`): ndarray of real values of the same shape as
+                the pupil.
+
+        Returns:
+            Pupil: self, the pupil instance.
+
+        '''
+        self.phase *= mask
+        self.fcn *= mask
+        return self
 
     def merge(self, pupil2):
         ''' Merges this pupil with another

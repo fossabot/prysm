@@ -133,17 +133,20 @@ class StandardZernike(Pupil):
 
     '''
     def __init__(self, *args, **kwargs):
-        '''Creates a FringeZernike Pupil object
+        ''' Creates a StandardZernike Pupil object.
 
         Args:
-            samples (int): number of samples across pupil diameter
+            samples (int): number of samples across pupil diameter.
 
-            wavelength (float): wavelength of light, in um
+            wavelength (float): wavelength of light, in um.
 
-            epd: (float): diameter of the pupil, in mm
+            epd: (float): diameter of the pupil, in mm.
 
             opd_unit (string): unit OPD is expressed in.  One of:
-                ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers)
+                ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers).
+
+            base (`int`): 0 or 1, adjusts the base index of the polynomial
+                expansion.
 
             Zx (float): xth standard zernike coefficient, in range [0,47], 0-base.
 
@@ -174,11 +177,24 @@ class StandardZernike(Pupil):
             self.coefs = [0] * len(_eqns)
 
         pass_args = {}
+
+        self.base = 0
+        try:
+            bb = kwargs['base']
+            if bb > 1:
+                raise ValueError('It violates convention to use a base greater than 1.')
+            self.base = bb
+        except KeyError:
+            # user did not specify base
+            pass
+
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key[0].lower() == 'z':
                     idx = int(key[1:]) # strip 'Z' from index
-                    self.coefs[idx] = value
+                    self.coefs[idx-self.base] = value
+                elif key.lower() == 'base':
+                    pass
                 else:
                     pass_args[key] = value
 
@@ -199,7 +215,7 @@ class StandardZernike(Pupil):
         # compute the pupil phase and wave function
         self.phase = eval(mathexpr)
         self._correct_phase_units()
-        self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase)
+        self._phase_to_wavefunction()
         return self.phase, self.fcn
 
     def __repr__(self):

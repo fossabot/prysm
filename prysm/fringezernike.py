@@ -189,7 +189,7 @@ _normalizations = [
 ]
 
 class FringeZernike(Pupil):
-    '''Fringe Zernike pupil description
+    ''' Fringe Zernike pupil description.
 
     Properties:
         Inherited from :class:`Pupil`, please see that class.
@@ -207,17 +207,20 @@ class FringeZernike(Pupil):
 
     '''
     def __init__(self, *args, **kwargs):
-        '''Creates a FringeZernike Pupil object
+        ''' Creates a FringeZernike Pupil object.
 
         Args:
-            samples (int): number of samples across pupil diameter
+            samples (int): number of samples across pupil diameter.
 
-            wavelength (float): wavelength of light, in um
+            wavelength (float): wavelength of light, in um.
 
-            epd: (float): diameter of the pupil, in mm
+            epd: (float): diameter of the pupil, in mm.
 
             opd_unit (string): unit OPD is expressed in.  One of:
-                ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers)
+                ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers).
+
+            base (`int`): 0 or 1, adjusts the base index of the polynomial
+                expansion.
 
             Zx (float): xth fringe zernike coefficient, in range [0,35], 0-base.
 
@@ -251,13 +254,26 @@ class FringeZernike(Pupil):
 
         self.normalize = False
         pass_args = {}
+
+        self.base = 0
+        try:
+            bb = kwargs['base']
+            if bb > 1:
+                raise ValueError('It violates convention to use a base greater than 1.')
+            self.base = bb
+        except KeyError:
+            # user did not specify base
+            pass
+
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key[0].lower() == 'z':
                     idx = int(key[1:]) # strip 'Z' from index
-                    self.coefs[idx] = value
+                    self.coefs[idx-self.base] = value
                 elif key in ('rms_norm'):
                     self.normalize = True
+                elif key.lower() == 'base':
+                    pass
                 else:
                     pass_args[key] = value
 
@@ -295,11 +311,11 @@ class FringeZernike(Pupil):
         # compute the pupil phase and wave function
         self.phase = eval(mathexpr).astype(config.precision)
         self._correct_phase_units()
-        self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase, dtype=config.precision_complex)
+        self._phase_to_wavefunction()
         return self.phase, self.fcn
 
     def __repr__(self):
-        '''Pretty-print pupil description
+        ''' Pretty-print pupil description.
         '''
         if self.normalize is True:
             header = 'rms normalized Fringe Zernike description with:\n\t'
@@ -315,18 +331,19 @@ class FringeZernike(Pupil):
         footer = f'\n\t{self.pv:.3f} PV, {self.rms:.3f} RMS'
         return f'{header}{body}{footer}'
 
-def fit(data, num_terms=36, normalize=False):
-    '''Fits a number of zernike coefficients to provided data by minimizing 
+def fit(data, num_terms=len(_eqns), normalize=False):
+    ''' Fits a number of zernike coefficients to provided data by minimizing 
     the root sum square between each coefficient and the given data.  The data
-    should be uniformly sampled in an x,y grid
+    should be uniformly sampled in an x,y grid.
 
     Args:
-        num_terms (int): number of terms to fit, fits terms 0~num_terms
-        normalize (bool): if true, normalize coefficients to unit RMS value
+        num_terms (int): number of terms to fit, fits terms 0~num_terms.
+
+        normalize (bool): if true, normalize coefficients to unit RMS value.
 
     Returns:
-        numpy.ndarray.  An array of coefficients matching the input data.
-    
+        numpy.ndarray: an array of coefficients matching the input data.
+
     '''
     if num_terms > len(_eqns):
         raise ValueError(f'number of terms must be less than {len(_eqns)}')

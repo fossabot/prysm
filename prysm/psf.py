@@ -547,16 +547,17 @@ def convpsf(psf1, psf2):
     '''Convolves two PSFs.
 
     Args:
-        psf1 (prysm.PSF): first PSF
-        psf2 (prysm.PSF): second PSF
+        psf1 (prysm.PSF): first PSF.
+
+        psf2 (prysm.PSF): second PSF.
 
     Returns:
-        PSF.  A new PSF that is the convolution of psf1 and psf2.
+        PSF: A new `PSF` that is the convolution of psf1 and psf2.
 
     Notes:
         The PSF with the lower nyquist frequency defines the sampling of the
-            output.  The PSF with a higher nyquist will be truncated in
-            the frequency domain (without aliasing) and projected onto the
+            output.  The PSF with a higher nyquist will be truncated in the 
+            frequency domain (without aliasing) and projected onto the
             sampling grid of the PSF with a lower nyquist.
 
     '''
@@ -580,11 +581,12 @@ def _unequal_spacing_conv_core(psf1, psf2):
 
     Args:
         psf1 (prysm.PSF): PSF.  This one defines the sampling of the output.
+
         psf2 (prysm.PSF): PSF.  This one will have its frequency response
             truncated.
 
     Returns:
-        PSF.  A new PSF that is the convolution of psf1 and psf2.
+        PSF: a new `PSF` that is the convolution of psf1 and psf2.
 
     '''
     ft1 = fft2(psf1.data)
