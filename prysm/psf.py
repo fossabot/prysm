@@ -350,7 +350,7 @@ class MultispectralPSF(PSF):
             else:
                 xv, yv = np.meshgrid(ref_unit, ref_unit)
                 interpf = interpolate.RegularGridInterpolator((psf.unit, psf.unit), psf.data)
-                merge_data[:, :, idx] = interpf((xv, yv), method='linear') * weights[idx]
+                merge_data[:, :, idx] = interpf((yv, xv), method='linear') * weights[idx]
 
         self.weights = weights
         super().__init__(merge_data.sum(axis=2), ref_samples, min_spacing)
@@ -386,8 +386,8 @@ class RGBPSF(object):
             xv, yv = np.meshgrid(b_psf.unit, b_psf.unit)
             interpf_r = interpolate.RegularGridInterpolator((r_psf.unit, r_psf.unit), r_psf.data)
             interpf_g = interpolate.RegularGridInterpolator((g_psf.unit, g_psf.unit), g_psf.data)
-            self.R = interpf_r((xv, yv), method='linear')
-            self.G = interpf_g((xv, yv), method='linear')
+            self.R = interpf_r((yv, xv), method='linear')
+            self.G = interpf_g((yv, xv), method='linear')
 
         self.sample_spacing = b_psf.sample_spacing
         self.samples = b_psf.samples
