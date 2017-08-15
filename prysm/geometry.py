@@ -1,7 +1,29 @@
 ''' Contains functions used to generate various geometrical constructs
 '''
 import numpy as np
-from prysm.coordinates import cart_to_polar
+from numpy import power as npow
+
+def gaussian(sigma=0.5, samples=128):
+    ''' Generates a gaussian mask with a given sigma
+
+    Args:
+        sigma (`float`): width parameter of the gaussian, expressed in radii of
+            the output array.
+
+        samples (`int`): number of samples in square array.
+
+    Returns:
+        `numpy.ndarray`: mask with gaussian shape.
+
+    '''
+    s = sigma
+
+    x = np.arange(0, samples, 1, float)
+    y = x[:, np.newaxis]
+
+    # // is floor division in python
+    x0 = y0 = samples // 2
+    return np.exp(-4*np.log(2) * (npow(x-x0,2) + npow(y-y0,2)) / (s*samples)**2)
 
 def rotated_ellipse(width_major, width_minor, major_axis_angle=0, samples=128):
     ''' Generates a binary mask for an ellipse, centered at the origin.  The
@@ -53,57 +75,57 @@ def rotated_ellipse(width_major, width_minor, major_axis_angle=0, samples=128):
     arr[major_axis_term + minor_axis_term > 1] = 0
     return arr
 
-def triangle(samples):
+def triangle(samples=128):
     ''' Creates a triangular mask.
     '''
     return regular_polygon_mask(3, samples)
 
-def square(samples):
+def square(samples=128):
     ''' Creates a square mask.
     '''
     return regular_polygon_mask(4, samples)
 
-def pentagon(samples):
+def pentagon(samples=128):
     ''' Creates a pentagonal mask.
     '''
     return regular_polygon_mask(5, samples)
 
-def hexagon(samples):
+def hexagon(samples=128):
     ''' Creates a hexagonal mask.
     '''
     return regular_polygon_mask(6, samples)
 
-def heptagon(samples):
+def heptagon(samples=128):
     ''' Creates a heptagonal mask.
     '''
     return regular_polygon_mask(7, samples)
 
-def octogon(samples):
+def octagon(samples=128):
     ''' Creates an octagonal mask.
     '''
     return regular_polygon_mask(8, samples)
 
-def nonagon(samples):
+def nonagon(samples=128):
     ''' Creates a nonagonal mask.
     '''
     return regular_polygon_mask(9, samples)
 
-def decagon(samples):
+def decagon(samples=128):
     ''' Creates a decagonal mask.
     '''
     return regular_polygon_mask(10, samples)
 
-def hendecagon(samples):
+def hendecagon(samples=128):
     ''' Creates a hendecagonal mask.
     '''
     return regular_polygon_mask(11, samples)
 
-def dodecagon(samples):
+def dodecagon(samples=128):
     ''' Creates a dodecagonal mask.
     '''
     return regular_polygon_mask(12, samples)
 
-def trisdecagon(samples):
+def trisdecagon(samples=128):
     ''' Creates a trisdecagonal mask.
     '''
     return regular_polygon_mask(13, samples)
@@ -122,7 +144,9 @@ def regular_polygon_mask(num_sides, num_samples):
             radius.
 
     '''
-    verts = generate_vertices(num_sides, num_samples)
+    verts = generate_vertices(num_sides, num_samples/2)
+    verts[:,0] += num_samples/2 # shift y to center
+    verts[:,1] += num_samples/2 # shift x to center
     return generate_mask(verts, num_samples)
 
 def check(p1, p2, base_array):
