@@ -1,6 +1,7 @@
 ''' Coordinate conversions
 '''
 import numpy as np
+from numpy import power as npow
 from scipy import interpolate
 
 def cart_to_polar(x, y):
@@ -15,7 +16,7 @@ def cart_to_polar(x, y):
         float.  azimuthal coordinate
 
     '''
-    rho = np.sqrt(x**2 + y**2)
+    rho = np.sqrt(npow(x,2) + npow(y,2))
     phi = np.arctan2(x, y)
     return rho, phi
 
