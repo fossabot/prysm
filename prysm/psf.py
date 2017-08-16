@@ -274,7 +274,7 @@ class PSF(object):
                 psf_ft = fft2(self.data)
                 psf_unit = forward_ft_unit(self.sample_spacing, self.samples)
                 psf2_ft = fftshift(psf2.analytic_ft(psf_unit, psf_unit))
-                psf3 = PSF(data=np.absolute(ifft2(psf_ft * psf2_ft), dtype=config.precision),
+                psf3 = PSF(data=abs(ifft2(psf_ft * psf2_ft), dtype=config.precision),
                            samples=self.samples,
                            sample_spacing=self.sample_spacing)
                 return psf3._renorm()
@@ -315,7 +315,7 @@ class PSF(object):
                                                     efl=efl)
         padded_wavefront = pad2d(pupil.fcn, padding)
         impulse_response = ifftshift(fft2(fftshift(padded_wavefront)))
-        psf = npow(np.absolute(impulse_response, dtype=config.precision), 2)
+        psf = npow(abs(impulse_response),2)
         return PSF(psf / np.max(psf), psf_samples, sample_spacing)
 
 class MultispectralPSF(PSF):
@@ -567,7 +567,7 @@ def convpsf(psf1, psf2):
     '''
     if psf2.samples == psf1.samples and psf2.sample_spacing == psf1.sample_spacing:
         # no need to interpolate, use FFTs to convolve
-        psf3 = PSF(data=np.absolute(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data))), dtype=config.precision),
+        psf3 = PSF(data=abs(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data))), dtype=config.precision),
                    samples=psf1.samples,
                    sample_spacing=psf1.sample_spacing)
         return psf3._renorm()
@@ -597,8 +597,8 @@ def _unequal_spacing_conv_core(psf1, psf2):
     unit1 = forward_ft_unit(psf1.sample_spacing, psf1.samples)
     ft2 = fft2(fftshift(psf2.data))
     unit2 = forward_ft_unit(psf2.sample_spacing, psf2.samples)
-    ft3 = resample_2d_complex(ft2, (unit2, unit2), (unit1, unit1[::-1]))
-    psf3 = PSF(data=np.absolute(ifftshift(ifft2(ft1 * ft3)), dtype=config.precision),
+    ft3 = ifftshift(resample_2d_complex(fftshift(ft2), (unit2, unit2), (unit1, unit1)))
+    psf3 = PSF(data=abs(ifftshift(ifft2(ft1 * ft3))),
                samples=psf1.samples,
-               sample_spacing=psf2.sample_spacing)
+               sample_spacing=psf1.sample_spacing)
     return psf3._renorm()

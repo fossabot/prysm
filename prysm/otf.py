@@ -251,7 +251,7 @@ class MTF(object):
             :class:`MTF`: A new MTF instance.
 
         '''
-        dat = np.absolute(fftshift(fft2(psf.data)), dtype=config.precision)
+        dat = abs(fftshift(fft2(psf.data)))
         unit = forward_ft_unit(psf.sample_spacing, psf.samples)
         return MTF(dat / dat[psf.center, psf.center], unit)
 
