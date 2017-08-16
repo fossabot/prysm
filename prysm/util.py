@@ -162,7 +162,7 @@ def guarantee_array(variable):
 
     Returns:
         (type).  Which supports * / and other operations with arrays
-    
+
     '''
     if type(variable) in [float, np.ndarray, np.int32, np.int64, np.float32, np.float64]:
         return variable
@@ -178,7 +178,7 @@ def ecdf(x):
 
     Args:
         x (`iterable`): Data.
-    
+
     Returns:
         tuple containing:
             `numpy.ndarray`: sorted data.
@@ -192,18 +192,18 @@ def ecdf(x):
 
 def sort_xy(x, y):
     ''' Sorts a pair of x and y iterables, returning arrays in order of
-        ascending x
-    
+        ascending x.
+
     Args:
         x (`iterable`): a list, numpy ndarray, or other iterable to sort by.
 
-        y (`iterable`): a list, numpy ndarray, or other iterable that is y=f(x)
-    
+        y (`iterable`): a list, numpy ndarray, or other iterable that is y=f(x).
+
     Returns:
         tuple containing:
-            `iterable`: an iterable containing the sorted x elements
+            `iterable`: an iterable containing the sorted x elements.
 
-            `iterable`: an iterable containing the sorted y elements
+            `iterable`: an iterable containing the sorted y elements.
 
     '''
     # zip x and y, sort by the 0th element (x) of each tuple in zip()
@@ -212,16 +212,16 @@ def sort_xy(x, y):
     return sorted_x, sorted_y
 
 def smooth(x, window_len=3, window='flat'):
-    ''' Smooth data
-    
+    ''' Smooth data.
+
     adapted from scipy signal smoothing cookbook,
     http://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
 
     This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal 
+    The signal is prepared by introducing reflected copies of the signal
     (with the window size) in both ends so that transient parts are minimized
     in the begining and end part of the output signal.
-    
+
     Args:
         x (`iterable`): the input signal.
 
@@ -232,7 +232,7 @@ def smooth(x, window_len=3, window='flat'):
 
     Returns:
         `iterable`: The smoothed signal.
- 
+
     NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
 
     '''

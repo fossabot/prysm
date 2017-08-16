@@ -5,15 +5,16 @@ from numpy import power as npow
 from scipy import interpolate
 
 def cart_to_polar(x, y):
-    '''returns the rho, phi coordinates of the x, y input points
+    ''' Returns the rho, phi coordinates of the x, y input points.
 
     Args:
-        x (float): x coordinate
-        y (float): y coordinate
+        x (float): x coordinate.
+        y (float): y coordinate.
 
     Returns:
-        float.  radial coordinate
-        float.  azimuthal coordinate
+        float.  radial coordinate.
+
+        float.  azimuthal coordinate.
 
     '''
     rho = np.sqrt(npow(x,2) + npow(y,2))
@@ -37,11 +38,14 @@ def polar_to_cart(rho, phi):
     return x, y
 
 def uniform_cart_to_polar(x, y, data):
-    '''interpolates data uniformly sampled in cartesian coordinates to polar coordinates.
+    ''' Interpolates data uniformly sampled in cartesian coordinates to polar
+        coordinates.
 
     Args:
-        x (numpy.array): sorted 1D array of x sample pts
-        y (numpy.array): sorted 1D array of y sample pts
+        x (numpy.array): sorted 1D array of x sample pts.
+
+        y (numpy.array): sorted 1D array of y sample pts.
+
         data (numpy.array): data sampled over the x, y coordinates.
 
     Returns:
@@ -67,16 +71,18 @@ def uniform_cart_to_polar(x, y, data):
     return rho, phi, f((xv, yv), method='linear')
 
 def resample_2d(array, sample_pts, query_pts):
-    '''Resamples 2D array to be sampled along queried points
+    ''' Resamples 2D array to be sampled along queried points.
 
     Args:
-        array (numpy.ndarray): 2D array
+        array (numpy.ndarray): 2D array.
+
         sample_pts (tuple): pair of numpy.ndarray objects that contain the x and y sample locations,
-            each array should be 1D
-        query_pts (tuple): points to interpolate onto, also 1D for each array
+            each array should be 1D.
+
+        query_pts (tuple): points to interpolate onto, also 1D for each array.
 
     Returns:
-        numpy.ndarray.  array resampled onto query_pts via bivariate spline
+        numpy.ndarray.  array resampled onto query_pts via bivariate spline.
 
     '''
     xq, yq = np.meshgrid(*query_pts)
@@ -84,14 +90,16 @@ def resample_2d(array, sample_pts, query_pts):
     return interpf.ev(xq, yq)
 
 def resample_2d_complex(array, sample_pts, query_pts):
-    '''Resamples a 2D complex array by interpolating the magnitude and phase independently and
-    merging the results into a complex value
+    ''' Resamples a 2D complex array by interpolating the magnitude and phase
+        independently and merging the results into a complex value.
 
     Args:
-        array (numpy.ndarray): complex 2D array
+        array (numpy.ndarray): complex 2D array.
+
         sample_pts (tuple): pair of numpy.ndarray objects that contain the x and y sample locations,
-            each array should be 1D
-        query_pts (tuple): points to interpolate onto, also 1D for each array
+            each array should be 1D.
+
+        query_pts (tuple): points to interpolate onto, also 1D for each array.
 
     Returns:
         numpy.ndarray array resampled onto query_pts via bivariate spline

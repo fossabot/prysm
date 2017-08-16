@@ -22,38 +22,38 @@ from prysm.units import (
     )
 
 class Pupil(object):
-    '''Pupil of an optical system
+    ''' Pupil of an optical system.
 
     Properties:
         slice_x: slice through the x axis of the pupil.  Returns (x,y)
-                 data where x is the sample coordinate and y is the phase
+                 data where x is the sample coordinate and y is the phase.
 
         slice_y: slice through the y axis of the pupil.  Returns (x,y)
-                 data where x is the sample coordinate and y is the phase
+                 data where x is the sample coordinate and y is the phase.
 
-        pv: Peak-To-Valley wavefront error
+        pv: Peak-To-Valley wavefront error.
 
-        rms: Root Mean Square wavefront error
+        rms: Root Mean Square wavefront error.
 
     Instance Methods:
-        plot2d: Makes a 2D plot of the phase of the pupil.  Returns (fig, ax)
+        plot2d: Makes a 2D plot of the phase of the pupil.  Returns (fig, ax).
 
         plot_slice_xy: Makes a 1D plot of slices through X and Y of the phase
-                       of the pupil.  Returns (fig, ax)
+                       of the pupil.  Returns (fig, ax).
 
         interferogram: Makes an interferogram of the pupil.  Returns (fig, ax)
 
-        build: Computes the phase and wavefunction of the pupil
+        build: Computes the phase and wavefunction of the pupil.
 
-        clip: Clips the pupil to a circular boundary
+        clip: Clips the pupil to a circular boundary.
 
         merge: Merges this pupil with another, combining their OPD.  The two
             must be equally sampled.
 
     Private Instance Methods:
-        _gengrid: generates the (x,y) and (rho,phi)
+        _gengrid: generates the (x,y) and (rho,phi).
 
-        _correct_phase_units: converts opd expressed in a given unit to waves
+        _correct_phase_units: converts opd expressed in a given unit to waves.
 
     Static Methods:
         none
@@ -64,20 +64,20 @@ class Pupil(object):
 
     '''
     def __init__(self, samples=128, epd=1, wavelength=0.55, opd_unit='$\lambda$'):
-        '''Creates a new Pupil instance
+        ''' Creates a new Pupil instance.
 
         Args:
-            samples (int): number of samples across pupil diameter
+            samples (int): number of samples across pupil diameter.
 
-            wavelength (float): wavelength of light, in um
+            wavelength (float): wavelength of light, in um.
 
-            epd: (float): diameter of the pupil, in mm
+            epd: (float): diameter of the pupil, in mm.
 
             opd_unit (string): unit OPD is expressed in.  One of:
-                ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers)
+                ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers).
 
         Returns:
-            Pupil.  A new Pupil instance
+            Pupil: a new Pupil instance.
 
         '''
 
@@ -211,10 +211,10 @@ class Pupil(object):
         fig, ax = share_fig_ax(fig, ax)
         plotdata = (visibility * sin(2 * pi * passes * self.phase))
         im = ax.imshow(plotdata,
-                  extent=[-epd/2, epd/2, -epd/2, epd/2],
-                  cmap='Greys_r',
-                  interpolation='lanczos',
-                  clim=(-1,1))
+                       extent=[-epd/2, epd/2, -epd/2, epd/2],
+                       cmap='Greys_r',
+                       interpolation='lanczos',
+                       clim=(-1,1))
         fig.colorbar(im, label=r'Wrapped Phase [$\lambda$]')
         ax.set(xlabel='Pupil X [mm]',
                ylabel='Pupil Y [mm]')
@@ -229,7 +229,7 @@ class Pupil(object):
 
         # build up the pupil
         self._gengrid()
-        
+
         # fill in the phase of the pupil
         self.phase = ones((self.samples, self.samples), dtype=config.precision)
         self._correct_phase_units()
