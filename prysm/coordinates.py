@@ -87,7 +87,7 @@ def resample_2d(array, sample_pts, query_pts):
     '''
     xq, yq = np.meshgrid(*query_pts)
     interpf = interpolate.RectBivariateSpline(*sample_pts, array)
-    return interpf.ev(xq, yq)
+    return interpf.ev(yq, xq)
 
 def resample_2d_complex(array, sample_pts, query_pts):
     ''' Resamples a 2D complex array by interpolating the magnitude and phase
@@ -112,7 +112,7 @@ def resample_2d_complex(array, sample_pts, query_pts):
     magfunc = interpolate.RectBivariateSpline(*sample_pts, mag)
     phasefunc = interpolate.RectBivariateSpline(*sample_pts, phase)
 
-    interp_mag = magfunc.ev(xq, yq)
-    interp_phase = phasefunc.ev(xq, yq)
+    interp_mag = magfunc.ev(yq, xq)
+    interp_phase = phasefunc.ev(yq, xq)
 
     return interp_mag * np.exp(1j * interp_phase)
