@@ -274,7 +274,7 @@ class PSF(object):
                 psf_ft = fft2(self.data)
                 psf_unit = forward_ft_unit(self.sample_spacing, self.samples)
                 psf2_ft = fftshift(psf2.analytic_ft(psf_unit, psf_unit))
-                psf3 = PSF(data=abs(ifft2(psf_ft * psf2_ft), dtype=config.precision),
+                psf3 = PSF(data=abs(ifft2(psf_ft * psf2_ft)),
                            samples=self.samples,
                            sample_spacing=self.sample_spacing)
                 return psf3._renorm()
