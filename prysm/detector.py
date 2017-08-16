@@ -2,8 +2,11 @@
 '''
 import numpy as np
 
+from scipy.misc import imsave
+
 from prysm.conf import config
 from prysm.psf import PSF
+from prysm.objects import Image
 from prysm.util import is_odd
 
 class Detector(object):
@@ -11,6 +14,7 @@ class Detector(object):
         self.pixel_size = pixel_size
         self.resolution = resolution
         self.bit_depth = nbits
+        self.captures = []
 
     def sample_psf(self, psf):
         '''Samples a PSF, mimics capturing a photo of an oversampled representation of an image
@@ -51,8 +55,47 @@ class Detector(object):
                                                  total_samples, samples_per_pixel)
 
         output_data = intermediate_view.mean(axis=(1, 3))
-        return PSF(data=output_data, samples=total_samples, sample_spacing=self.pixel_size)
 
+        self.captures.append(PSF(data=output_data,
+                                 samples=total_samples,
+                                 sample_spacing=self.pixel_size))
+        return self.captures[-1]
+
+    def sample_image(self, image):
+        ''' Samples an image.
+
+        Args:
+            image (`Image`): an Image object.
+
+        Returns:
+            `Image`: a new, sampled image.
+
+        '''
+        intermediate_psf = self.sample_psf(image.as_psf())
+        self.captures.append(Image(data=intermediate_psf.data,
+                                   sample_spacing=intermediate_psf.sample_spacing))
+        return self.captures[-1]
+
+    def save_image(self, path, which='last'):
+        ''' Saves an image captured by the detector
+
+        Args:
+            path (`string`): path to save the image to
+
+            which (`string` or `int`): if string, "first" or "last", otherwise
+                index into the capture buffer of the camera.
+
+        Returns:
+            null: no return.
+
+        '''
+        if which.lower() == 'last':
+            self.captures[-1].save(path, self.bit_depth)
+        elif type(which) is int:
+            self.captures[which].save(path, self.bit_depth)
+        else:
+            raise ValueError('invalid "which" provided')
+        
 
 class OLPF(PSF):
     '''Optical Low Pass Filter.

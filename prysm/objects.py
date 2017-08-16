@@ -2,7 +2,11 @@
 '''
 import numpy as np
 from numpy.fft import fft2, ifft2, fftshift, ifftshift
+
+from scipy.misc import imsave
+
 from matplotlib import pyplot as plt
+
 from prysm.util import correct_gamma
 from prysm.fttools import forward_ft_unit
 from prysm.psf import PSF, _unequal_spacing_conv_core
@@ -29,19 +33,24 @@ class Image(object):
         self.ext_x = sample_spacing * self.center_x
         self.ext_y = sample_spacing * self.center_y
 
-    def show(self, interp_method='lanczos'):
+    def show(self, interp_method=None):
         ''' Displays the image.
         '''
         ex, ey = self.ext_x, self.ext_y
         lims = (0,1)
         fig, ax = plt.subplots()
-        ax.imshow(correct_gamma(self.data),
-                  extent=[-ex, ex, -ey, ey],
+        ax.imshow(self.data,#correct_gamma(self.data),
+                  #extent=[-ex, ex, -ey, ey],
                   cmap='Greys_r',
                   interpolation=interp_method,
                   clim=lims,
                   origin='lower')
         return fig, ax
+
+    def as_psf(self):
+        ''' Converts this image to a PSF object.
+        '''
+        return PSF(self.data, self.samples_x, self.sample_spacing)
 
     def convpsf(self, psf):
         ''' Convolves with a PSF for image simulation
@@ -53,17 +62,26 @@ class Image(object):
             `Image`: A new, blurred image.
 
         '''
-        __img_psf = PSF(self.data, self.samples_x, self.sample_spacing)
-        conved_image = _unequal_spacing_conv_core(__img_psf, psf)
+        img_psf = self.as_psf()
+        conved_image = _unequal_spacing_conv_core(img_psf, psf)
         #return conved_image
         return Image(data=conved_image.data,
                      sample_spacing=self.sample_spacing)
 
-        #img_ft = fft2(self.data)
-        #img_unit = forward_ft_unit(self.sample_spacing, self.samples_x)
+    def save(self, path, nbits=8):
+        ''' Write the image to a png, jpg, tiff, etc.
 
-        #psf_ft = fft2(psf.data)
-        #psf_unit = forward_ft_unit(psf.sample_spacing, psf.samples)
+        Args:
+            path (`string`): path to write the image to.
+
+            nbits (`int`): number of bits in the output image.
+
+        Returns:
+            null: no return
+
+        '''
+        dat = (self.data * 255).astype(np.uint8)
+        imsave(path, dat)
 
 
 class Slit(Image):
