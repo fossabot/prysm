@@ -1,6 +1,7 @@
 ''' A repository of seidel aberration descriptions used to model pupils of
 optical systems.
 '''
+from functools import lru_cache
 
 import numpy as np
 from numpy import arctan2, exp, cos, sin, pi, sqrt, nan
@@ -94,6 +95,7 @@ class Seidel(Pupil):
         self._phase_to_wavefunction()
         return self.phase, self.fcn
 
+@lru_cache()
 def wexpr_to_opd_expr(Wxxx):
     '''Converts a W notation to a string with numpy code to evaluate for pupil
         phase.
@@ -109,4 +111,4 @@ def wexpr_to_opd_expr(Wxxx):
     _ = list(Wxxx[1:])
     H, rho, phi = _[0], _[1], _[2]
     # .format converts to bytecode, f-strings do not.  Micro-optimization here
-    return 'npow(H,{0}) * npow(rho,{1}) * npow(cos(phi),{2})'.format(H, rho, phi)
+    return 'H**{0} * rho**{1} * cos(phi)**{2}'.format(H, rho, phi)
