@@ -109,10 +109,15 @@ def resample_2d_complex(array, sample_pts, query_pts):
     mag = abs(array)
     phase = np.angle(array)
 
-    magfunc = interpolate.RectBivariateSpline(*sample_pts, mag)
-    phasefunc = interpolate.RectBivariateSpline(*sample_pts, phase)
+    #magfunc = interpolate.RectBivariateSpline(*sample_pts, mag)
+    #phasefunc = interpolate.RectBivariateSpline(*sample_pts, phase)
+    magfunc = interpolate.RegularGridInterpolator(sample_pts, mag)
+    phasefunc = interpolate.RegularGridInterpolator(sample_pts, phase)
 
-    interp_mag = magfunc.ev(yq, xq)
-    interp_phase = phasefunc.ev(yq, xq)
+    interp_mag = magfunc((yq, xq))
+    interp_phase = phasefunc((yq, xq))
+
+    #interp_mag = magfunc.ev(yq, xq)
+    #interp_phase = phasefunc.ev(yq, xq)
 
     return interp_mag * np.exp(1j * interp_phase)
