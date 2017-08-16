@@ -1,5 +1,7 @@
 ''' A base pupil interface for different aberration models.
 '''
+from copy import deepcopy
+
 from numpy import (
     nan, pi,
     arctan2, cos, sin,
@@ -8,10 +10,9 @@ from numpy import (
     linspace, meshgrid,
     floor, isfinite,
     )
-from numpy import power as npow
+
 from matplotlib import pyplot as plt
 
-from copy import deepcopy
 
 from prysm.conf import config
 from prysm.util import share_fig_ax, rms
@@ -63,7 +64,7 @@ class Pupil(object):
             expressing OPD.
 
     '''
-    def __init__(self, samples=128, epd=1, wavelength=0.55, opd_unit='$\lambda$'):
+    def __init__(self, samples=128, epd=1, wavelength=0.55, opd_unit=r'$\lambda$'):
         ''' Creates a new Pupil instance.
 
         Args:
@@ -92,13 +93,13 @@ class Pupil(object):
         self.rho  = self.phi  = empty((samples, samples), dtype=config.precision)
         self.center           = int(floor(samples/2))
 
-        if self.opd_unit in ('$\lambda$', 'waves'):
+        if opd_unit.lower() in ('$\lambda$', 'waves'):
             self._opd_unit = 'waves'
             self._opd_str = '$\lambda$'
-        elif self.opd_unit in ('$\mu m$', 'microns', 'um'):
+        elif opd_unit.lower() in ('$\mu m$', 'microns', 'um'):
             self._opd_unit = 'microns'
             self._opd_str = '$\mu m$'
-        elif self.opd_unit in ('nm', 'nanometers'):
+        elif opd_unit.lower() in ('nm', 'nanometers'):
             self._opd_unit = 'nanometers'
             self._opd_str = 'nm'
         else:
