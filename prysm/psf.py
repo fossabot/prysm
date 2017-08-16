@@ -270,14 +270,18 @@ class PSF(object):
         if issubclass(psf2.__class__, PSF):
             # subclasses have analytic fourier transforms and we can exploit this for high speed,
             # aliasing-free convolution
-            psf_ft = fft2(self.data)
-            psf_unit = forward_ft_unit(self.sample_spacing, self.samples)
-            psf2_ft = fftshift(psf2.analytic_ft(psf_unit, psf_unit))
-            psf3 = PSF(data=np.absolute(ifft2(psf_ft * psf2_ft), dtype=config.precision),
-                       samples=self.samples,
-                       sample_spacing=self.sample_spacing)
-            return psf3._renorm()
-        return convpsf(self, psf2)
+            try:
+                psf_ft = fft2(self.data)
+                psf_unit = forward_ft_unit(self.sample_spacing, self.samples)
+                psf2_ft = fftshift(psf2.analytic_ft(psf_unit, psf_unit))
+                psf3 = PSF(data=np.absolute(ifft2(psf_ft * psf2_ft), dtype=config.precision),
+                           samples=self.samples,
+                           sample_spacing=self.sample_spacing)
+                return psf3._renorm()
+            except AttributeError: # no analytic FT on the PSF/subclass
+                return convpsf(self, psf2)
+        else:
+            return convpsf(self, psf2)
 
     def _renorm(self):
         ''' Renormalizes the PSF to unit peak intensity.
@@ -589,9 +593,9 @@ def _unequal_spacing_conv_core(psf1, psf2):
         PSF: a new `PSF` that is the convolution of psf1 and psf2.
 
     '''
-    ft1 = fft2(psf1.data)
+    ft1 = fft2(fftshift(psf1.data))
     unit1 = forward_ft_unit(psf1.sample_spacing, psf1.samples)
-    ft2 = fft2(psf2.data)
+    ft2 = fft2(fftshift(psf2.data))
     unit2 = forward_ft_unit(psf2.sample_spacing, psf2.samples)
     ft3 = resample_2d_complex(ft2, (unit2, unit2), (unit1, unit1[::-1]))
     psf3 = PSF(data=np.absolute(ifftshift(ifft2(ft1 * ft3)), dtype=config.precision),
