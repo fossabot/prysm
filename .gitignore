@@ -64,3 +64,4 @@ target/
 jpl
 .vscode
 .pypirc
+.idea
