@@ -93,7 +93,7 @@ class Slit(Image):
         Args:
             width (`float`): the width of the slit.
 
-            orientation (`string`): the orientation of the slit, H or V.
+            orientation (`string`): the orientation of the slit, Horizontal, Vertical, or Crossed / Both
 
             sample_spacing (`float`): spacing of samples in the synthetic image.
 
@@ -117,6 +117,10 @@ class Slit(Image):
             arr[:, abs(x)<w] = 1
         elif orientation.lower() in ('h', 'horiz', 'horizontal'):
             arr[abs(y)<w, :] = 1
+        elif orientation.lower() in ('b', 'both', 'c', 'crossed'):
+            arr[abs(y)<w, :] = 1
+            arr[:, abs(x)<w] = 1
+
         super().__init__(data=arr, sample_spacing=sample_spacing)
 
 class Pinhole(Image):

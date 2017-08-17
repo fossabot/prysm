@@ -52,10 +52,10 @@ class PSF(object):
 
     '''
     def __init__(self, data, samples, sample_spacing):
-        '''Creates a PSF object
+        ''' Creates a PSF object.
 
         Args:
-            data (numpy.ndarray): intensity data for the PSF.
+            data (`numpy.ndarray`): intensity data for the PSF.
 
             samples (`int`): number of samples along each axis of the PSF.
                 for a 256x256 PSF, samples=256.
@@ -64,7 +64,7 @@ class PSF(object):
                 expressed in microns.
 
         Returns:
-            PSF: a new `PSF` instance.
+            `PSF`: a new PSF instance.
 
         '''
         self.data = data
@@ -92,11 +92,11 @@ class PSF(object):
 
 
     def encircled_energy(self, azimuth=None):
-        ''' returns the encircled energy at the requested azumith.  If azimuth
+        ''' Returns the encircled energy at the requested azumith.  If azimuth
             is None, returns the azimuthal average.
 
         Args:
-            azimuth (float): azimuth to retrieve data along, in degrees.
+            azimuth (`float`): azimuth to retrieve data along, in degrees.
 
         Returns:
             np.ndarray, np.ndarray.  Unit, encircled energy.
@@ -400,11 +400,12 @@ class RGBPSF(object):
 
     def plot2d(self, log=False, axlim=25, interp_method='lanczos',
                pix_grid=None, fig=None, ax=None):
-        '''Creates a 2D color plot of the PSF
+        ''' Creates a 2D color plot of the PSF.
 
         Args:
             log (`bool`): if true, plot in log scale.  If false, plot in linear
                 scale.
+
             axlim (`float`): limits of axis, symmetric.
                 xlim=(-axlim,axlim), ylim=(-axlim, axlim).
 
@@ -420,7 +421,7 @@ class RGBPSF(object):
             ax (pyplot.axis): axis to plot in.
 
         Returns:
-            pyplot.fig, pyplot.axis.  Figure and axis containing the plot
+            pyplot.fig, pyplot.axis.  Figure and axis containing the plot.
 
         Notes:
             Largely a copy-paste of plot2d() from the PSF class.  Some  refactoring
@@ -560,14 +561,14 @@ def convpsf(psf1, psf2):
 
     Notes:
         The PSF with the lower nyquist frequency defines the sampling of the
-            output.  The PSF with a higher nyquist will be truncated in the 
+            output.  The PSF with a higher nyquist will be truncated in the
             frequency domain (without aliasing) and projected onto the
             sampling grid of the PSF with a lower nyquist.
 
     '''
     if psf2.samples == psf1.samples and psf2.sample_spacing == psf1.sample_spacing:
         # no need to interpolate, use FFTs to convolve
-        psf3 = PSF(data=abs(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data))), dtype=config.precision),
+        psf3 = PSF(data=abs(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data)))),
                    samples=psf1.samples,
                    sample_spacing=psf1.sample_spacing)
         return psf3._renorm()

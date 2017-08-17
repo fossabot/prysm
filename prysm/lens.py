@@ -73,6 +73,6 @@ class Lens(object):
 
     def __repr__(self):
         return (f'Lens with properties:\n\t'
-            f'efl: {self.efl}\n\t'
-            f'f/#: {self.fno}\n\t'
-            f'pupil mag: {self.pupil_magnification}')
+                f'efl: {self.efl}\n\t'
+                f'f/#: {self.fno}\n\t'
+                f'pupil mag: {self.pupil_magnification}')
