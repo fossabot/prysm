@@ -176,11 +176,7 @@ class SiemensStar(Image):
         # generate the siemen's star as a (rho,phi) polynomial
         arr = np.cos(num_spokes*pv)
 
-        # if the consumer doesn't want
         if not sinusoidal:
-            # reset to range of (-1,1)
-            arr = arr*2 - 1
-
             #make binary
             arr[arr<0] = -1
             arr[arr>0] = 1
