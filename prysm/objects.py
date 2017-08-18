@@ -7,9 +7,10 @@ from scipy.misc import imsave
 
 from matplotlib import pyplot as plt
 
-from prysm.util import correct_gamma
-from prysm.fttools import forward_ft_unit
+from prysm.coordinates import cart_to_polar
 from prysm.psf import PSF, _unequal_spacing_conv_core
+from prysm.fttools import forward_ft_unit
+from prysm.util import correct_gamma
 
 class Image(object):
     ''' Images of an object
@@ -174,7 +175,7 @@ class SiemensStar(Image):
         rv, pv = cart_to_polar(xx, yy)
 
         # generate the siemen's star as a (rho,phi) polynomial
-        arr = np.cos(num_spokes*pv)
+        arr = np.cos(num_spokes/2*pv)
 
         if not sinusoidal:
             #make binary
