@@ -5,16 +5,19 @@ from numpy import power as npow
 from scipy import interpolate
 
 def cart_to_polar(x, y):
-    ''' Returns the rho, phi coordinates of the x, y input points.
+    ''' Returns the (rho,phi) coordinates of the (x,y) input points.
 
     Args:
         x (float): x coordinate.
+
         y (float): y coordinate.
 
     Returns:
-        float.  radial coordinate.
+        `tuple` containing:
 
-        float.  azimuthal coordinate.
+            `float` or `numpy.ndarray`: radial coordinate.
+
+            `float` or `numpy.ndarray`: azimuthal coordinate.
 
     '''
     rho = np.sqrt(npow(x,2) + npow(y,2))
@@ -22,15 +25,19 @@ def cart_to_polar(x, y):
     return rho, phi
 
 def polar_to_cart(rho, phi):
-    '''returns the x, y coordinates of the rho, phi input points
+    ''' Returns the (x,y) coordinates of the (rho,phi) input points.
 
     Args:
-        rho (float): radial coordinate
-        phi (float): azimuthal cordinate
+        rho (`float` or `numpy.ndarray`): radial coordinate.
+
+        phi (`float` or `numpy.ndarray`): azimuthal cordinate.
 
     Returns:
-        float.  x coordinate
-        float.  y coordinate
+        `tuple` containing:
+
+            `float` or `numpy.ndarray`: x coordinate.
+
+            `float` or `numpy.ndarray`: y coordinate.
 
     '''
     x = rho * np.cos(phi)
@@ -42,18 +49,19 @@ def uniform_cart_to_polar(x, y, data):
         coordinates.
 
     Args:
-        x (numpy.array): sorted 1D array of x sample pts.
+        x (`numpy.ndarray`): sorted 1D array of x sample pts.
 
-        y (numpy.array): sorted 1D array of y sample pts.
+        y (`numpy.ndarray`): sorted 1D array of y sample pts.
 
-        data (numpy.array): data sampled over the x, y coordinates.
+        data (`numpy.ndarray`): data sampled over the (x,y) coordinates.
 
     Returns:
-        numpy.array.  Rho samples for interpolated values.
+        `tuple` containing:
+            `numpy.ndarray`: rho samples for interpolated values.
 
-        numpy.array.  Phi samples for interpolated values.
+            `numpy.ndarray`: phi samples for interpolated values.
 
-        numpy.array.  Data uniformly sampled in (rho,phi).
+            `numpy.ndarray`: data uniformly sampled in (rho,phi).
 
     '''
     # create a set of polar coordinates to interpolate onto

@@ -22,9 +22,6 @@ class Image(object):
 
             sample-spacing (`float`): pixel pitch of the data.
 
-        Returns:
-            `Image`: new Image object.
-
         '''
         self.data = data
         self.sample_spacing = sample_spacing
@@ -99,10 +96,8 @@ class Slit(Image):
 
             samples (`int`): number of samples per dimension in the synthetic image.
 
-        Returns:
-            `numpy.ndarray`: array containing the synthetic slit.
-
         '''
+        self.width = width
 
         # produce coordinate arrays
         ext = samples / 2 * sample_spacing
@@ -115,11 +110,14 @@ class Slit(Image):
         # paint in the slit
         if orientation.lower() in ('v', 'vert', 'vertical'):
             arr[:, abs(x)<w] = 1
+            self.orientation = 'Vertical'
         elif orientation.lower() in ('h', 'horiz', 'horizontal'):
             arr[abs(y)<w, :] = 1
+            self.orientation = 'Horizontal'
         elif orientation.lower() in ('b', 'both', 'c', 'crossed'):
             arr[abs(y)<w, :] = 1
             arr[:, abs(x)<w] = 1
+            self.orientation = 'Crossed'
 
         super().__init__(data=arr, sample_spacing=sample_spacing)
 
@@ -136,10 +134,8 @@ class Pinhole(Image):
 
             samples (`int`): number of samples per dimension in the synthetic image.
 
-        Returns:
-            `numpy.ndarray`: array containing the synthetic pinhole.
-
         '''
+        self.width = width
 
         # produce coordinate arrays
         ext = samples / 2 * sample_spacing
@@ -150,4 +146,46 @@ class Pinhole(Image):
         # produce the background
         arr = np.zeros((samples, samples))
         arr[np.sqrt(xv**2 + yv**2) < w] = 1
+        super().__init__(data=arr, sample_spacing=sample_spacing)
+
+class SiemensStar(Image):
+    ''' Representation of a Siemen's star object.
+    '''
+    def __init__(self, num_spokes, sinusoidal=True, sample_spacing=2, samples=384):
+        ''' Produces a Siemen's Star.
+
+        Args:
+            num_spokes (`int`): number of spokes in the star.
+
+            sinusoidal (`bool`): if True, generates a sinusoidal Siemen' star.
+                If false, generates a bar/block siemen's star.
+
+            sample_spacing (`float`): Spacing of samples, in microns.
+
+            samples (`int`): number of samples per dimension in the synthetic image.
+
+        '''
+        self.num_spokes = num_spokes
+
+        # generate a coordinate grid
+        x = np.linspace(-1, 1, samples)
+        y = np.linspace(-1, 1, samples)
+        xx, yy = np.meshgrid(x,y)
+        rv, pv = cart_to_polar(xx, yy)
+
+        # generate the siemen's star as a (rho,phi) polynomial
+        arr = np.cos(num_spokes*pv)
+
+        # if the consumer doesn't want
+        if not sinusoidal:
+            # reset to range of (-1,1)
+            arr = arr*2 - 1
+
+            #make binary
+            arr[arr<0] = -1
+            arr[arr>0] = 1
+
+        # scale to (0,1) and clip into a disk
+        arr = (arr+1)/2
+        arr[rv>0.9] = 0
         super().__init__(data=arr, sample_spacing=sample_spacing)
