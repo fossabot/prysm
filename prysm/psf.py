@@ -161,10 +161,10 @@ class PSF(object):
 
         im = ax.imshow(fcn,
                        extent=[left, right, left, right],
+                       origin='lower',
                        cmap='Greys_r',
                        interpolation=interp_method,
-                       clim=lims,
-                       origin='lower')
+                       clim=lims)
         fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         ax.set(xlabel=r'Image Plane X [$\mu m$]',
                ylabel=r'Image Plane Y [$\mu m$]',

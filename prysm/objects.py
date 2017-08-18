@@ -10,7 +10,7 @@ from matplotlib import pyplot as plt
 from prysm.coordinates import cart_to_polar
 from prysm.psf import PSF, _unequal_spacing_conv_core
 from prysm.fttools import forward_ft_unit
-from prysm.util import correct_gamma
+from prysm.util import correct_gamma, share_fig_ax
 
 class Image(object):
     ''' Images of an object
@@ -31,14 +31,28 @@ class Image(object):
         self.ext_x = sample_spacing * self.center_x
         self.ext_y = sample_spacing * self.center_y
 
-    def show(self, interp_method=None):
+    def show(self, interp_method=None, fig=None, ax=None):
         ''' Displays the image.
+
+        Args:
+            interp_method (`string`): interpolation technique used in display.
+
+            fig (`matplotlib.figure`): figure to display in.
+
+            ax (`matplotlib.axis`): axis to display in.
+
+        Returns:
+            `tuple` containing:
+
+                `matplotlib.figure`: figure containing the plot.
+
+                `matplotlib.axis`: axis containing the plot.
+
         '''
         ex, ey = self.ext_x, self.ext_y
         lims = (0,1)
-        fig, ax = plt.subplots()
-        ax.imshow(self.data,#correct_gamma(self.data),
-                  #extent=[-ex, ex, -ey, ey],
+        fig, ax = share_fig_ax(fig, ax)
+        ax.imshow(self.data,
                   cmap='Greys_r',
                   interpolation=interp_method,
                   clim=lims,

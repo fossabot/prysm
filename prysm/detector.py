@@ -7,7 +7,7 @@ from scipy.misc import imsave
 from prysm.conf import config
 from prysm.psf import PSF
 from prysm.objects import Image
-from prysm.util import is_odd
+from prysm.util import is_odd, share_fig_ax
 
 class Detector(object):
     def __init__(self, pixel_size, resolution=(1024,1024), nbits=14):
@@ -95,7 +95,32 @@ class Detector(object):
             self.captures[which].save(path, self.bit_depth)
         else:
             raise ValueError('invalid "which" provided')
-        
+
+    def show_image(self, which='last', fig=None, ax=None):
+        ''' Shows an image captured by the detector
+
+        Args:
+            which (`string` or `int`): if string, "first" or "last", otherwise
+                index into the capture buffer of the camera.
+
+            fig (`matplotlib.figure`): Figure to display in.
+
+            ax (`maxplotlib.axis`): Axis to display in.
+
+        Returns:
+            `tuple` containing:
+
+                `matplotlib.figure`: Figure containing the image.
+
+                `matplotlib.axis`: Axis contianing the image.
+
+        '''
+
+        if which.lower() == 'last':
+            fig, ax = self.captures[-1].show(fig=fig, ax=ax)
+        elif type(which) is int:
+            fig, ax = self.captures[which].show(fig=fig, ax=ax)
+        return fig, ax
 
 class OLPF(PSF):
     '''Optical Low Pass Filter.

@@ -177,6 +177,7 @@ class MTF(object):
 
         im = ax.imshow(fcn,
                        extent=[left, right, left, right],
+                       origin='lower',
                        cmap='Greys_r',
                        interpolation='lanczos',
                        clim=lims)
