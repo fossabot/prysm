@@ -315,7 +315,7 @@ class PSF(object):
                                                     efl=efl)
         padded_wavefront = pad2d(pupil.fcn, padding)
         impulse_response = ifftshift(fft2(fftshift(padded_wavefront)))
-        psf = npow(abs(impulse_response),2)
+        psf = abs(impulse_response)**2
         return PSF(psf / np.max(psf), psf_samples, sample_spacing)
 
 class MultispectralPSF(PSF):
@@ -397,6 +397,18 @@ class RGBPSF(object):
         self.samples = b_psf.samples
         self.unit = b_psf.unit
         self.center = b_psf.center
+
+    @property
+    def r_psf(self):
+        return PSF(self.R, self.samples, self.sample_spacing)
+
+    @property
+    def g_psf(self):
+        return PSF(self.G, self.samples, self.sample_spacing)
+
+    @property
+    def b_psf(self):
+        return PSF(self.B, self.samples, self.sample_spacing)
 
     def plot2d(self, log=False, axlim=25, interp_method='lanczos',
                pix_grid=None, fig=None, ax=None):
