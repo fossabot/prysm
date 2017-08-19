@@ -51,30 +51,33 @@ class PSF(object):
             a_ft(unit_x, unit_y).
 
     '''
-    def __init__(self, data, samples, sample_spacing):
+    def __init__(self, data, sample_spacing, samples_x, samples_y=None):
         ''' Creates a PSF object.
 
         Args:
             data (`numpy.ndarray`): intensity data for the PSF.
 
-            samples (`int`): number of samples along each axis of the PSF.
-                for a 256x256 PSF, samples=256.
-
             sample_spacing (`float`): center-to-center spacing of samples,
                 expressed in microns.
+
+            samples_x (`int`): number of samples along the x axis of the psf.
+
+            samples_y (`int`): number of samples along the y axis of the psf.
+                Defaults to None, for equal sampling in x,y.
 
         Returns:
             `PSF`: a new PSF instance.
 
         '''
         self.data = data
-        self.samples = samples
+        self.samples_x = samples_x
+        self.samples_y = samples_y
         self.sample_spacing = sample_spacing
-        self.center = int(floor(samples/2))
+        self.center = samples_x // 2
 
         # compute ordinate axis
-        ext = self.sample_spacing * samples / 2
-        self.unit = np.linspace(-ext, ext-sample_spacing, samples, dtype=config.precision)
+        ext = self.sample_spacing * samples_x / 2
+        self.unit = np.linspace(-ext, ext-sample_spacing, samples_x, dtype=config.precision)
 
     # quick-access slices ------------------------------------------------------
 
@@ -316,7 +319,7 @@ class PSF(object):
         padded_wavefront = pad2d(pupil.fcn, padding)
         impulse_response = ifftshift(fft2(fftshift(padded_wavefront)))
         psf = abs(impulse_response)**2
-        return PSF(psf / np.max(psf), psf_samples, sample_spacing)
+        return PSF(psf / np.max(psf), sample_spacing, psf_samples)
 
 class MultispectralPSF(PSF):
     ''' A PSF which includes multiple wavelength components.
@@ -344,7 +347,7 @@ class MultispectralPSF(PSF):
                 min_spacing = psf.sample_spacing
                 ref_idx = idx
                 ref_unit = psf.unit
-                ref_samples = psf.samples
+                ref_samples = psf.samples_x
 
         merge_data = np.zeros((ref_samples, ref_samples, len(psfs)))
         for idx, psf in enumerate(psfs):
@@ -394,21 +397,22 @@ class RGBPSF(object):
             self.G = interpf_g((yv, xv), method='linear')
 
         self.sample_spacing = b_psf.sample_spacing
-        self.samples = b_psf.samples
+        self.samples_x = b_psf.samples_x
+        self.samples_y = b_psf.samples_y
         self.unit = b_psf.unit
         self.center = b_psf.center
 
     @property
     def r_psf(self):
-        return PSF(self.R, self.samples, self.sample_spacing)
+        return PSF(self.R, self.sample_spacing, self.samples_x, self.samples_y)
 
     @property
     def g_psf(self):
-        return PSF(self.G, self.samples, self.sample_spacing)
+        return PSF(self.G, self.sample_spacing, self.samples_x, self.samples_y)
 
     @property
     def b_psf(self):
-        return PSF(self.B, self.samples, self.sample_spacing)
+        return PSF(self.B, self.sample_spacing, self.samples_x, self.samples_y)
 
     def plot2d(self, log=False, axlim=25, interp_method='lanczos',
                pix_grid=None, fig=None, ax=None):
@@ -607,11 +611,12 @@ def _unequal_spacing_conv_core(psf1, psf2):
 
     '''
     ft1 = fft2(fftshift(psf1.data))
-    unit1 = forward_ft_unit(psf1.sample_spacing, psf1.samples)
+    unit11, unit12 = forward_ft_unit(psf1.sample_spacing, psf1.samples_x, psf1.samples_y)
     ft2 = fft2(fftshift(psf2.data))
-    unit2 = forward_ft_unit(psf2.sample_spacing, psf2.samples)
-    ft3 = ifftshift(resample_2d_complex(fftshift(ft2), (unit2, unit2), (unit1, unit1)))
+    unit21, unit22 = forward_ft_unit(psf2.sample_spacing, psf2.samples_x, psf2.samples_y)
+    ft3 = ifftshift(resample_2d_complex(fftshift(ft2), (unit22, unit21), (unit12, unit11)))
     psf3 = PSF(data=abs(ifftshift(ifft2(ft1 * ft3))),
-               samples=psf1.samples,
-               sample_spacing=psf1.sample_spacing)
+               sample_spacing=psf1.sample_spacing,
+               samples_x=psf1.samples_x,
+               samples_y=psf1.samples_y)
     return psf3._renorm()

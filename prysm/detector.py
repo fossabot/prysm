@@ -34,31 +34,37 @@ class Detector(object):
         samples_per_pixel = int(np.ceil(self.pixel_size / psf.sample_spacing))
 
         # determine amount we need to trim the psf
-        psf_width = 2 * psf.unit[-1]
-        total_samples = int(np.floor(psf.samples / samples_per_pixel))
-        output_extent = total_samples * self.pixel_size
-        final_idx = total_samples * samples_per_pixel
+        total_samples_x = psf.samples_x // samples_per_pixel
+        total_samples_y = psf.samples_y // samples_per_pixel
+        final_idx_x = total_samples_x * samples_per_pixel
+        final_idx_y = total_samples_y * samples_per_pixel
 
-        residual = int(psf.samples - final_idx)
-        if not is_odd(residual):
-            samples_to_trim = int(residual / 2)
-            trimmed_data = psf.data[samples_to_trim:final_idx+samples_to_trim,
-                                    samples_to_trim:final_idx+samples_to_trim]
+        residual_x = int(psf.samples_x - final_idx_x)
+        residual_y = int(psf.samples_y - final_idx_y)
+        if not is_odd(residual_x):
+            samples_to_trim_x = residual_x // 2
+            samples_to_trim_y = residual_y // 2
+            trimmed_data = psf.data[samples_to_trim_x:final_idx_x+samples_to_trim_x,
+                                    samples_to_trim_y:final_idx_y+samples_to_trim_y]
         else:
-            samples_tmp = float(residual) / 2
-            samples_left = int(np.ceil(samples_tmp))
-            samples_right = int(np.floor(samples_tmp))
-            trimmed_data = psf.data[samples_left:final_idx+samples_right,
-                                    samples_left:final_idx+samples_right]
+            samples_tmp_x = float(residual_x) / 2
+            samples_tmp_y = float(residual_y) / 2
+            samples_top = int(np.ceil(samples_tmp_y))
+            samples_bottom = int(np.ceil(samples_tmp_y))
+            samples_left = int(np.ceil(samples_tmp_x))
+            samples_right = int(np.floor(samples_tmp_x))
+            trimmed_data = psf.data[samples_left:final_idx_x+samples_right,
+                                    samples_bottom:final_idx_y+samples_top]
 
-        intermediate_view = trimmed_data.reshape(total_samples, samples_per_pixel,
-                                                 total_samples, samples_per_pixel)
+        intermediate_view = trimmed_data.reshape(total_samples_x, samples_per_pixel,
+                                                 total_samples_y, samples_per_pixel)
 
         output_data = intermediate_view.mean(axis=(1, 3))
 
         self.captures.append(PSF(data=output_data,
-                                 samples=total_samples,
-                                 sample_spacing=self.pixel_size))
+                                 sample_spacing=self.pixel_size,
+                                 samples_x=total_samples_x,
+                                 samples_y=total_samples_y))
         return self.captures[-1]
 
     def sample_image(self, image):

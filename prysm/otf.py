@@ -253,7 +253,7 @@ class MTF(object):
 
         '''
         dat = abs(fftshift(fft2(psf.data)))
-        unit = forward_ft_unit(psf.sample_spacing, psf.samples)
+        unit, _ = forward_ft_unit(psf.sample_spacing, psf.samples_x)
         return MTF(dat / dat[psf.center, psf.center], unit)
 
     @staticmethod

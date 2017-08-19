@@ -14,7 +14,7 @@ from prysm.conf import config
 from prysm.coordinates import cart_to_polar
 from prysm.psf import PSF, _unequal_spacing_conv_core
 from prysm.fttools import forward_ft_unit
-from prysm.util import correct_gamma, share_fig_ax
+from prysm.util import correct_gamma, share_fig_ax, is_odd
 
 class Image(object):
     ''' Images of an object
@@ -67,7 +67,7 @@ class Image(object):
     def as_psf(self):
         ''' Converts this image to a PSF object.
         '''
-        return PSF(self.data, self.samples_x, self.sample_spacing)
+        return PSF(self.data, self.sample_spacing, self.samples_x, self.samples_y)
 
     def convpsf(self, psf):
         ''' Convolves with a PSF for image simulation
@@ -183,8 +183,6 @@ class RGBImage(object):
         fig, ax = share_fig_ax(fig, ax)
 
         dat = rgbimage_to_datacube(self)
-        if self.synthetic is not True:
-            dat = np.flip(dat, axis=0)
         ax.imshow(dat,
                   interpolation=interp_method,
                   origin='lower')
@@ -209,7 +207,7 @@ class RGBImage(object):
         else:
             raise ValueError('invalid color selected')
 
-        return PSF(dat, self.samples_x, self.sample_spacing)
+        return PSF(dat, self.sample_spacing, self.samples_x, self.samples_y)
 
     def save(self, path, nbits=8):
         ''' Write the image to a png, jpg, tiff, etc.
@@ -228,7 +226,6 @@ class RGBImage(object):
         if self.synthetic is not True:
             # was a real image, need to flip vertically.
             dat = np.flip(dat, axis=0)
-            pass
 
         imsave(path, dat)
 
@@ -246,7 +243,6 @@ class RGBImage(object):
         psfg = self.as_psf('g')
         psfb = self.as_psf('b')
 
-        psfb.plot2d()
         rconv = _unequal_spacing_conv_core(psfr, rgbpsf.r_psf)
         gconv = _unequal_spacing_conv_core(psfg, rgbpsf.g_psf)
         bconv = _unequal_spacing_conv_core(psfb, rgbpsf.b_psf)
@@ -273,6 +269,14 @@ class RGBImage(object):
         img = imread(path).astype(config.precision()) / 255
 
         img = np.flip(img, axis=0)
+
+        # crop the image if it has an odd dimension.
+        # TODO: change this an understand why it is an issue
+        ## fftshift vs ifftshift?
+        if is_odd(img.shape[0]):
+            img = img[0:-1,:,:]
+        if is_odd(img.shape[1]):
+            img = img[:,0:-1,:]
         return RGBImage(r=img[:,:,0], g=img[:,:,1], b=img[:,:,2],
                         sample_spacing=scale, synthetic=False)
 
