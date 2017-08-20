@@ -20,24 +20,20 @@ def pad2d(array, factor=1, value=0):
     pad_shape = ((int(x*factor), int(x*factor)), (int(y*factor), int(y*factor)))
     return np.pad(array, pad_width=pad_shape, mode='constant', constant_values=value)
 
-def forward_ft_unit(sample_spacing, samples_x, samples_y=None):
+def forward_ft_unit(sample_spacing, samples):
     ''' Computes the units resulting from a fourier transform.
 
     Args:
-        sample_spacing (float): center-to-center spacing of samples in an array.
-        samples _x(int): number of samples
+        sample_spacing (`float`): center-to-center spacing of samples in an array.
+
+        samples (`int`): number of samples in the data.
 
     Returns:
-        numpy.ndarray.  array of sample frequencies in the output
+        `numpy.ndarray`: array of sample frequencies in the output of an fft.
 
     '''
-    if samples_y is None:
-        samples_y = samples_x
-    f_s_x = samples_x // 2
-    f_s_y = samples_y // 2
-    ux = np.arange(-f_s_x, f_s_x) / (sample_spacing / 1e3) / samples_x
-    uy = np.arange(-f_s_y, f_s_y) / (sample_spacing / 1e3) / samples_y
-    return ux, uy
+    f_s = samples // 2
+    return np.arange(-f_s, f_s) / (sample_spacing / 1e3) / samples
 
 def matrix_dft(f, alpha, npix, shift=None, unitary=False):
     '''

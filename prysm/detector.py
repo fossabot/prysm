@@ -62,9 +62,7 @@ class Detector(object):
         output_data = intermediate_view.mean(axis=(1, 3))
 
         self.captures.append(PSF(data=output_data,
-                                 sample_spacing=self.pixel_size,
-                                 samples_x=total_samples_x,
-                                 samples_y=total_samples_y))
+                                 sample_spacing=self.pixel_size))
         return self.captures[-1]
 
     def sample_image(self, image):
@@ -129,91 +127,143 @@ class Detector(object):
         return fig, ax
 
 class OLPF(PSF):
-    '''Optical Low Pass Filter.
-    applies blur to an image to suppress high frequency MTF and aliasing
+    ''' Optical Low Pass Filter.
+        applies blur to an image to suppress high frequency MTF and aliasing
+        when combined with a PixelAperture.
     '''
-    def __init__(self, width_x, width_y=None, sample_spacing=0.1, samples=384):
-        '''...
+    def __init__(self, width_x, width_y=None, sample_spacing=0.1, samples_x=384, samples_y=None):
+        ''' Creates a new OLPF object.
 
         Args:
-            width_x (float): blur width in the x direction, expressed in microns
-            width_y (float): blur width in the y direction, expressed in microns
+            width_x (`float`): blur width in the x direction, expressed in microns.
+
+            width_y (`float`): blur width in the y direction, expressed in microns.
+
             samples (int): number of samples in the image plane to evaluate with
 
         Returns:
-            OLPF.  an OLPF object.
+            `OLPF`: an OLPF object.
 
         '''
 
         # compute relevant spacings
         if width_y is None:
             width_y = width_x
+        if samples_y is None:
+            samples_y = samples_x
 
         self.width_x = width_x
         self.width_y = width_y
 
         space_x = width_x / 2
         space_y = width_y / 2
-        shift_x = int(np.floor(space_x / sample_spacing))
-        shift_y = int(np.floor(space_y / sample_spacing))
-        center  = int(np.floor(samples/2))
+        shift_x = int(space_x // sample_spacing)
+        shift_y = int(space_y // sample_spacing)
+        center_x  = samples_x // 2
+        center_y = samples_y // 2
 
-        data = np.zeros((samples, samples))
+        data = np.zeros((samples_x, samples_y))
 
-        data[center-shift_x, center-shift_y] = 1
-        data[center-shift_x, center+shift_y] = 1
-        data[center+shift_x, center-shift_y] = 1
-        data[center+shift_x, center+shift_y] = 1
-        super().__init__(data=data, samples=samples, sample_spacing=sample_spacing)
+        data[center_y-shift_y, center_x-shift_x] = 1
+        data[center_y-shift_y, center_x+shift_x] = 1
+        data[center_y+shift_y, center_x-shift_x] = 1
+        data[center_y+shift_y, center_x+shift_x] = 1
+        super().__init__(data=data, sample_spacing=sample_spacing)
 
     def analytic_ft(self, unit_x, unit_y):
-        '''Analytic fourier transform of a pixel aperture
+        ''' Analytic fourier transform of a pixel aperture
 
         Args:
-            unit_x (numpy.ndarray): sample points in x axis
-            unit_y (numpy.ndarray): sample points in y axis
+            unit_x (numpy.ndarray): sample points in x axis.
+
+            unit_y (numpy.ndarray): sample points in y axis.
 
         Returns:
-            numpy.ndarray.  2D numpy array containing the analytic fourier transform
+            `numpy.ndarray`: 2D numpy array containing the analytic fourier transform.
 
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.cos(2 * xq * self.width_x / 1e3) * np.cos(2*yq*self.width_y/1e3)\
-               ).astype(config.precision)
+        return (np.cos(2 * xq * self.width_x / 1e3) * \
+                np.cos(2 * yq * self.width_y / 1e3)).astype(config.precision)
 
 class PixelAperture(PSF):
-    '''creates an image plane view of the pixel aperture
+    ''' The aperture of a pixel.
     '''
-    def __init__(self, size, sample_spacing=0.1, samples=384):
-        self.size = size
-
-        center = int(np.floor(samples/2))
-        half_width = size / 2
-        steps = int(np.floor(half_width / sample_spacing))
-        pixel_aperture = np.zeros((samples, samples))
-        pixel_aperture[center-steps:center+steps, center-steps:center+steps] = 1
-        super().__init__(data=pixel_aperture, sample_spacing=sample_spacing, samples=samples)
-
-    def analytic_ft(self, unit_x, unit_y):
-        '''Analytic fourier transform of a pixel aperture
+    def __init__(self, size_x, size_y=None, sample_spacing=0.1, samples_x=384, samples_y=None):
+        ''' Creates a new PixelAperture object.
 
         Args:
-            unit_x (numpy.ndarray): sample points in x axis
-            unit_y (numpy.ndarray): sample points in y axis
+            size_x (`float`): size of the aperture in the x dimension, in microns.
+
+            size_y (`float`): siez of the aperture in teh y dimension, in microns.
+
+            sample_spacing (`float`): spacing of samples, in microns.
+
+            samples_x (`int`): number of samples in the x dimension.
+
+            samples_y (`int`): number of samples in the y dimension.
 
         Returns:
-            numpy.ndarray.  2D numpy array containing the analytic fourier transform
+            `PixelAperture`: a new PixelAperture object.
+
+        '''
+        if size_y is None:
+            size_y = size_x
+        if samples_y is None:
+            samples_y = samples_x
+
+        self.size_x = size_x
+        self.size_y = size_y
+        self.center_x = samples_x // 2
+        self.center_y = samples_y // 2
+
+        half_width = size_x / 2
+        half_height = size_y / 2
+        steps_x = int(half_width // sample_spacing)
+        steps_y = int(half_height // sample_spacing)
+
+        pixel_aperture = np.zeros((samples_x, samples_y))
+        pixel_aperture[self.center_y-steps_y:self.center_y+steps_y,
+                       self.center_x-steps_x:self.center_x+steps_x] = 1
+        super().__init__(data=pixel_aperture, sample_spacing=sample_spacing)
+
+    def analytic_ft(self, unit_x, unit_y):
+        ''' Analytic fourier transform of a pixel aperture.
+
+        Args:
+            unit_x (`numpy.ndarray`): sample points in x axis.
+
+            unit_y (`numpy.ndarray`): sample points in y axis.
+
+        Returns:
+            `numpy.ndarray`: 2D numpy array containing the analytic fourier transform.
 
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.sinc(xq*self.size/1e3)*np.sinc(yq*self.size/1e3)).astype(config.precision)
+        return (np.sinc(xq*self.size_x/1e3) * \
+                np.sinc(yq*self.size_y/1e3)).astype(config.precision)
 
-def generate_mtf(pixel_pitch=1, azimuth=0, num_samples=128):
+def generate_mtf(pixel_aperture=1, azimuth=0, num_samples=128):
+    ''' generates the 1D diffraction-limited MTF for a given pixel size and azimuth.
+
+    Args:
+        pixel_aperture (`float`): aperture of the pixel, in microns.  Pixel is
+            assumed to be square.
+
+        azimuth (`float`): azimuth to retrieve the MTF at, in degrees.
+
+        num_samples (`int`): number of samples in the output array.
+
+    Returns:
+        `tuple` containing:
+            `numpy.ndarray`: array of units, in cy/mm.
+
+            `numpy.ndarray`: array of MTF values (rel. 1.0).
+
+    Notes:
+        Azimuth is not actually implemented yet.
     '''
-    generates the diffraction-limited MTF for a given pixel size and azimuth w.r.t. the pixel grid
-    pixel pitch in units of microns, azimuth in units of degrees
-    '''
-    pitch_unit = pixel_pitch / 1000
+    pitch_unit = pixel_aperture / 1e3
     normalized_frequencies = np.linspace(0, 2, num_samples)
     otf = np.sinc(normalized_frequencies)
     mtf = np.abs(otf)

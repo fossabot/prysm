@@ -44,48 +44,59 @@ class MTF(object):
         from_pupil: Generates an intermediate PSF object, and MTF from that PSF.
 
     '''
-    def __init__(self, data, unit):
+    def __init__(self, data, unit_x, unit_y=None):
         '''Creates an MTF object
 
         Args:
-            data (:class:`numpy.ndarray`): MTF values on 2D grid
-            samples (`int`): number of samples along each axis of the MTF.
-                for a 256x256 MTF, samples=256
-            sample_spacing (`float`): center-to-center spacing of samples,
-                in frequency units.
+            data (:class:`numpy.ndarray`): MTF values on 2D grid.
+
+            unit_x ()
 
         Returns:
-            MTF:  A new :class:`MTF` instance.
+            `MTF`: a new :class:`MTF` instance.
 
         '''
+        if unit_y is None:
+            unit_y = unit_x
         self.data = data
-        self.unit = unit
-        self.samples = len(unit)
-        self.center = int(floor(self.samples/2))
+        self.unit_x = unit_x
+        self.unit_y = unit_y
+        self.samples_x, self.samples_y = data.shape
+        self.center_x = self.samples_x // 2
+        self.center_y = self.samples_y // 2
 
     # quick-access slices ------------------------------------------------------
 
     @property
     def tan(self):
-        '''Retrieves the tangential MTF
+        ''' Retrieves the tangential MTF.
+
+        Notes:
+            Assumes the object is extended in y.  If the object is extended along a different
+            azimuth, this will not return the tangential MTF.
         '''
-        return self.unit[self.center:-1], self.data[self.center, self.center:-1]
+        return self.unit_x[self.center_x:], self.data[self.center_y, self.center_x:]
 
     @property
     def sag(self):
-        '''Retrieves the sagittal MTF
+        ''' Retrieves the sagittal MTF.
+
+        Notes:
+            Assumes the object is extended in y.  If the object is extended along a different
+            azimuth, this will not return the sagittal MTF.
         '''
-        return self.unit[self.center:-1], self.data[self.center:-1, self.center]
+        return self.unit_y[self.center_y:], self.data[self.center_y:, self.center_x]
 
     def exact_polar(self, freqs, azimuths=None):
         '''Retrieves the MTF at the specified frequency-azimuth pairs
         
         Args:
-            freqs (iterable): radial frequencies to retrieve MTF for
-            azimuths (iterable): corresponding azimuths to retrieve MTF for
+            freqs (`iterable`): radial frequencies to retrieve MTF for.
+
+            azimuths (`iterable`): corresponding azimuths to retrieve MTF for.
 
         Returns:
-            list: MTF at the given points
+            list: MTF at the given points.
 
         '''
         self._make_interp_function()
@@ -171,12 +182,13 @@ class MTF(object):
             label_str = 'MTF [Rel 1.0]'
             lims = (0, 1)
 
-        left, right = self.unit[0], self.unit[-1]
+        left, right = self.unit_x[0], self.unit_x[-1]
+        bottom, top = self.unit_y[0], self.unit_y[-1]
 
         fig, ax = share_fig_ax(fig, ax)
 
         im = ax.imshow(fcn,
-                       extent=[left, right, left, right],
+                       extent=[left, right, bottom, top],
                        origin='lower',
                        cmap='Greys_r',
                        interpolation='lanczos',
@@ -208,12 +220,12 @@ class MTF(object):
                 ax (:class:`~matplotlib.pyplot.axis`): Axis containing the plot.
 
         '''
-        u, tan = self.tan
-        _, sag = self.sag
+        ut, tan = self.tan
+        us, sag = self.sag
 
         fig, ax = share_fig_ax(fig, ax)
-        ax.plot(u, tan, label=labels[0], linestyle='-', lw=3)
-        ax.plot(u, sag, label=labels[1], linestyle='--', lw=3)
+        ax.plot(ut, tan, label=labels[0], linestyle='-', lw=3)
+        ax.plot(us, sag, label=labels[1], linestyle='--', lw=3)
         ax.set(xlabel='Spatial Frequency [cy/mm]',
                ylabel='MTF [Rel 1.0]',
                xlim=(0, max_freq),
@@ -253,8 +265,9 @@ class MTF(object):
 
         '''
         dat = abs(fftshift(fft2(psf.data)))
-        unit, _ = forward_ft_unit(psf.sample_spacing, psf.samples_x)
-        return MTF(dat / dat[psf.center, psf.center], unit)
+        unit_x = forward_ft_unit(psf.sample_spacing, psf.samples_x)
+        unit_y = forward_ft_unit(psf.sample_spacing, psf.samples_y)
+        return MTF(dat / dat[psf.center_y, psf.center_x], unit_x, unit_y)
 
     @staticmethod
     def from_pupil(pupil, efl, padding=1):
@@ -274,12 +287,26 @@ class MTF(object):
         psf = PSF.from_pupil(pupil, efl=efl, padding=padding)
         return MTF.from_psf(psf)
 
-def diffraction_limited_mtf(fno=1, wavelength=0.5, num_pts=128):
-    '''
-    Gives the diffraction limited MTF for a circular pupil and the given parameters.
-    f/# is unitless, wavelength is in microns, num_pts is length of the output array
+def diffraction_limited_mtf(fno, wavelength=0.55, num_pts=128):
+    ''' Gives the diffraction limited MTF for a circular pupil and the given parameters.
+
+    Args:
+        fno (`float`): f/# of the lens.
+
+        wavelength (`float`): wavelength of light, in microns.
+
+        num_pts (`int`): number of points in the output array.
+
+    Returns:
+        `tuple` containing:
+
+            `numpy.ndarray`: unit array, in cy/mm.
+
+            `numpy.ndarray`: mtf array (rel. 1.0).
     '''
     normalized_frequency = np.linspace(0, 1, num_pts)
     extinction = 1/(wavelength/1000*fno)
-    mtf = (2/np.pi)*(np.arccos(normalized_frequency) - normalized_frequency * np.sqrt(1 - normalized_frequency**2))
-    return normalized_frequency*extinction, mtf
+    mtf = (2 / np.pi) * \
+          (np.arccos(normalized_frequency) - normalized_frequency * \
+           np.sqrt(1 - normalized_frequency ** 2))
+    return normalized_frequency * extinction, mtf

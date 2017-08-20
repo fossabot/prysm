@@ -51,7 +51,7 @@ class PSF(object):
             a_ft(unit_x, unit_y).
 
     '''
-    def __init__(self, data, sample_spacing, samples_x, samples_y=None):
+    def __init__(self, data, sample_spacing):
         ''' Creates a PSF object.
 
         Args:
@@ -60,38 +60,38 @@ class PSF(object):
             sample_spacing (`float`): center-to-center spacing of samples,
                 expressed in microns.
 
-            samples_x (`int`): number of samples along the x axis of the psf.
-
-            samples_y (`int`): number of samples along the y axis of the psf.
-                Defaults to None, for equal sampling in x,y.
-
         Returns:
             `PSF`: a new PSF instance.
 
         '''
+
         self.data = data
-        self.samples_x = samples_x
-        self.samples_y = samples_y
         self.sample_spacing = sample_spacing
-        self.center = samples_x // 2
+        self.samples_x, self.samples_y = data.shape
+        self.center_x = self.samples_x // 2
+        self.center_y = self.samples_y // 2
 
         # compute ordinate axis
-        ext = self.sample_spacing * samples_x / 2
-        self.unit = np.linspace(-ext, ext-sample_spacing, samples_x, dtype=config.precision)
+        ext_x = self.sample_spacing * self.samples_x / 2
+        ext_y = self.sample_spacing * self.samples_y / 2
+        self.unit_x = np.linspace(-ext_x, ext_x-sample_spacing,
+                                  self.samples_x, dtype=config.precision)
+        self.unit_y = np.linspace(-ext_y, ext_y-sample_spacing,
+                                  self.samples_y, dtype=config.precision)
 
     # quick-access slices ------------------------------------------------------
 
     @property
     def slice_x(self):
-        ''' Retrieves a slice through the x axis of the PSF
+        ''' Retrieves a slice through the x axis of the PSF.
         '''
-        return self.unit, self.data[self.center, :]
+        return self.unit_x, self.data[self.center_x, :]
 
     @property
     def slice_y(self):
-        ''' Retrieves a slices through the y axis of the PSF
+        ''' Retrieves a slices through the y axis of the PSF.
         '''
-        return self.unit, self.data[:, self.center]
+        return self.unit_y, self.data[:, self.center_y]
 
 
     def encircled_energy(self, azimuth=None):
@@ -107,7 +107,7 @@ class PSF(object):
         '''
 
         # interp_dat is shaped with axis0=phi, axis1=rho
-        rho, phi, interp_dat = uniform_cart_to_polar(self.unit, self.unit, self.data)
+        rho, phi, interp_dat = uniform_cart_to_polar(self.unit_y, self.unit_x, self.data)
 
         if azimuth is None:
             # take average of all azimuths as input data
@@ -117,7 +117,7 @@ class PSF(object):
             dat = interp_dat[index, :]
 
         enc_eng = np.cumsum(dat, dtype=config.precision)
-        return self.unit[self.center:], enc_eng / enc_eng[-1]
+        return self.unit_x[self.center_x:], enc_eng / enc_eng[-1]
 
     # quick-access slices ------------------------------------------------------
 
@@ -158,12 +158,14 @@ class PSF(object):
             label_str = 'Normalized Intensity [a.u.]'
             lims = (0, 1)
 
-        left, right = self.unit[0], self.unit[-1]
+        left, right = self.unit_x[0], self.unit_x[-1]
+        bottom, top = self.unit_y[0], self.unit_y[-1]
 
         fig, ax = share_fig_ax(fig, ax)
 
+        # TODO: check bottom/top
         im = ax.imshow(fcn,
-                       extent=[left, right, left, right],
+                       extent=[left, right, bottom, top],
                        origin='lower',
                        cmap='Greys_r',
                        interpolation=interp_method,
@@ -203,8 +205,8 @@ class PSF(object):
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot.
 
         '''
-        u, x = self.slice_x
-        _, y = self.slice_y
+        ux, x = self.slice_x
+        uy, y = self.slice_y
         if log:
             fcn_x = 20 * np.log10(1e-100 + x)
             fcn_y = 20 * np.log10(1e-100 + y)
@@ -218,8 +220,8 @@ class PSF(object):
 
         fig, ax = share_fig_ax(fig, ax)
 
-        ax.plot(u, fcn_x, label='Slice X', lw=3)
-        ax.plot(u, fcn_y, label='Slice Y', lw=3)
+        ax.plot(ux, fcn_x, label='Slice X', lw=3)
+        ax.plot(uy, fcn_y, label='Slice Y', lw=3)
         ax.set(xlabel=r'Image Plane X [$\mu m$]',
                ylabel=label_str,
                xlim=(-axlim, axlim),
@@ -270,20 +272,16 @@ class PSF(object):
                 frequency.
 
         '''
-        if issubclass(psf2.__class__, PSF):
-            # subclasses have analytic fourier transforms and we can exploit this for high speed,
-            # aliasing-free convolution
-            try:
-                psf_ft = fft2(self.data)
-                psf_unit = forward_ft_unit(self.sample_spacing, self.samples)
-                psf2_ft = fftshift(psf2.analytic_ft(psf_unit, psf_unit))
-                psf3 = PSF(data=abs(ifft2(psf_ft * psf2_ft)),
-                           samples=self.samples,
-                           sample_spacing=self.sample_spacing)
-                return psf3._renorm()
-            except AttributeError: # no analytic FT on the PSF/subclass
-                return convpsf(self, psf2)
-        else:
+        try:
+            psf_ft = fftshift(fft2(self.data))
+            psf_unit_x = forward_ft_unit(self.sample_spacing, self.samples_x)
+            psf_unit_y = forward_ft_unit(self.sample_spacing, self.samples_y)
+            psf2_ft = psf2.analytic_ft(psf_unit_x, psf_unit_y)
+            psf3 = PSF(data=abs(ifft2(psf_ft * psf2_ft)),
+                       sample_spacing=self.sample_spacing)
+            return psf3._renorm()
+        except AttributeError: # no analytic FT on the PSF/subclass
+            print('attrerr')
             return convpsf(self, psf2)
 
     def _renorm(self):
@@ -319,7 +317,7 @@ class PSF(object):
         padded_wavefront = pad2d(pupil.fcn, padding)
         impulse_response = ifftshift(fft2(fftshift(padded_wavefront)))
         psf = abs(impulse_response)**2
-        return PSF(psf / np.max(psf), sample_spacing, psf_samples)
+        return PSF(psf / np.max(psf), sample_spacing)
 
 class MultispectralPSF(PSF):
     ''' A PSF which includes multiple wavelength components.
@@ -582,10 +580,13 @@ def convpsf(psf1, psf2):
             sampling grid of the PSF with a lower nyquist.
 
     '''
-    if psf2.samples == psf1.samples and psf2.sample_spacing == psf1.sample_spacing:
+    if ( psf2.samples_x == psf1.samples_x and
+         psf2.samples_y == psf1.samples_y and 
+         psf2.sample_spacing == psf1.sample_spacing ):
         # no need to interpolate, use FFTs to convolve
         psf3 = PSF(data=abs(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data)))),
-                   samples=psf1.samples,
+                   samples_x=psf1.samples_x,
+                   samples_y=psf1.samples_y,
                    sample_spacing=psf1.sample_spacing)
         return psf3._renorm()
     else:
@@ -610,13 +611,15 @@ def _unequal_spacing_conv_core(psf1, psf2):
         PSF: a new `PSF` that is the convolution of psf1 and psf2.
 
     '''
+    # map psf1 into the fourier domain
     ft1 = fft2(fftshift(psf1.data))
-    unit11, unit12 = forward_ft_unit(psf1.sample_spacing, psf1.samples_x, psf1.samples_y)
+    unit1x = forward_ft_unit(psf1.sample_spacing, psf1.samples_x)
+    unit1y = forward_ft_unit(psf1.sample_spacing, psf1.samples_y)
+    # map psf2 into the fourier domain
     ft2 = fft2(fftshift(psf2.data))
-    unit21, unit22 = forward_ft_unit(psf2.sample_spacing, psf2.samples_x, psf2.samples_y)
-    ft3 = ifftshift(resample_2d_complex(fftshift(ft2), (unit22, unit21), (unit12, unit11)))
+    unit2x = forward_ft_unit(psf2.sample_spacing, psf2.samples_x)
+    unit2y = forward_ft_unit(psf2.sample_spacing, psf2.samples_y)
+    ft3 = ifftshift(resample_2d_complex(fftshift(ft2), (unit2y, unit2x), (unit1y, unit1x)))
     psf3 = PSF(data=abs(ifftshift(ifft2(ft1 * ft3))),
-               sample_spacing=psf1.sample_spacing,
-               samples_x=psf1.samples_x,
-               samples_y=psf1.samples_y)
+               sample_spacing=psf1.sample_spacing)
     return psf3._renorm()
