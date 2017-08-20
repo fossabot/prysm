@@ -378,7 +378,10 @@ class RGBPSF(object):
             RGBPSF: A new `RGBPSF` instance.
 
         '''
-        if np.array_equal(r_psf.unit, g_psf.unit) and np.array_equal(g_psf.unit, g_psf.unit):
+        if ( np.array_equal(r_psf.unit_x, g_psf.unit_x) and \
+             np.array_equal(g_psf.unit_x, b_psf.unit_x) and \
+             np.array_equal(r_psf.unit_y, g_psf.unit_y) and \
+             np.array_equal(g_psf.unit_y, b_psf.unit_y) ):
             # do not need to interpolate the arrays
             self.R = r_psf.data
             self.G = g_psf.data
@@ -388,29 +391,31 @@ class RGBPSF(object):
             # sampled, use it to define our grid
             self.B = b_psf.data
 
-            xv, yv = np.meshgrid(b_psf.unit, b_psf.unit)
-            interpf_r = interpolate.RegularGridInterpolator((r_psf.unit, r_psf.unit), r_psf.data)
-            interpf_g = interpolate.RegularGridInterpolator((g_psf.unit, g_psf.unit), g_psf.data)
+            xv, yv = np.meshgrid(b_psf.unit_x, b_psf.unit_y)
+            interpf_r = interpolate.RegularGridInterpolator((r_psf.unit_y, r_psf.unit_x), r_psf.data)
+            interpf_g = interpolate.RegularGridInterpolator((g_psf.unit_y, g_psf.unit_x), g_psf.data)
             self.R = interpf_r((yv, xv), method='linear')
             self.G = interpf_g((yv, xv), method='linear')
 
         self.sample_spacing = b_psf.sample_spacing
         self.samples_x = b_psf.samples_x
         self.samples_y = b_psf.samples_y
-        self.unit = b_psf.unit
-        self.center = b_psf.center
+        self.unit_x = b_psf.unit_x
+        self.unit_y = b_psf.unit_y
+        self.center_x = b_psf.center_x
+        self.center_y = b_psf.center_y
 
     @property
     def r_psf(self):
-        return PSF(self.R, self.sample_spacing, self.samples_x, self.samples_y)
+        return PSF(self.R, self.sample_spacing)
 
     @property
     def g_psf(self):
-        return PSF(self.G, self.sample_spacing, self.samples_x, self.samples_y)
+        return PSF(self.G, self.sample_spacing)
 
     @property
     def b_psf(self):
-        return PSF(self.B, self.sample_spacing, self.samples_x, self.samples_y)
+        return PSF(self.B, self.sample_spacing)
 
     def plot2d(self, log=False, axlim=25, interp_method='lanczos',
                pix_grid=None, fig=None, ax=None):
@@ -442,7 +447,7 @@ class RGBPSF(object):
                 could be done to make the code more succinct and unified.
 
         '''
-        dat = np.empty((self.samples, self.samples, 3))
+        dat = np.empty((self.samples_x, self.samples_y, 3))
         dat[:, :, 0] = self.R
         dat[:, :, 1] = self.G
         dat[:, :, 2] = self.B
@@ -456,12 +461,13 @@ class RGBPSF(object):
             label_str = 'Normalized Intensity [a.u.]'
             lims = (0, 1)
 
-        left, right = self.unit[0], self.unit[-1]
+        left, right = self.unit_x[0], self.unit_x[-1]
+        bottom, top = self.unit_y[0], self.unit_y[-1]
 
         fig, ax = share_fig_ax(fig, ax)
 
         im = ax.imshow(fcn,
-                       extent=[left, right, left, right],
+                       extent=[left, right, bottom, top],
                        interpolation=interp_method,
                        origin='lower')
         ax.set(xlabel=r'Image Plane X [$\mu m$]',

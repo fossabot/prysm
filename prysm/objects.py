@@ -67,7 +67,7 @@ class Image(object):
     def as_psf(self):
         ''' Converts this image to a PSF object.
         '''
-        return PSF(self.data, self.sample_spacing, self.samples_x, self.samples_y)
+        return PSF(self.data, self.sample_spacing)
 
     def convpsf(self, psf):
         ''' Convolves with a PSF for image simulation
@@ -153,7 +153,8 @@ class RGBImage(object):
         # load in sampling information
         self.sample_spacing = sample_spacing
         self.samples_x, self.samples_y = r.shape
-        self.center_x, self.center_y = self.samples_x // 2, self.samples_y // 2
+        self.center_x = self.samples_x // 2
+        self.center_y = self.samples_y // 2
         self.ext_x = sample_spacing * self.center_x
         self.ext_y = sample_spacing * self.center_y
 
@@ -207,7 +208,7 @@ class RGBImage(object):
         else:
             raise ValueError('invalid color selected')
 
-        return PSF(dat, self.sample_spacing, self.samples_x, self.samples_y)
+        return PSF(dat, self.sample_spacing)
 
     def save(self, path, nbits=8):
         ''' Write the image to a png, jpg, tiff, etc.
@@ -239,14 +240,26 @@ class RGBImage(object):
             `RGBImage`: A new, blurred image.
 
         '''
-        psfr = self.as_psf('r')
-        psfg = self.as_psf('g')
-        psfb = self.as_psf('b')
+        img_r = self.as_psf('r')
+        img_g = self.as_psf('g')
+        img_b = self.as_psf('b')
 
-        rconv = _unequal_spacing_conv_core(psfr, rgbpsf.r_psf)
-        gconv = _unequal_spacing_conv_core(psfg, rgbpsf.g_psf)
-        bconv = _unequal_spacing_conv_core(psfb, rgbpsf.b_psf)
-        return RGBImage(r=rconv.data, g=gconv.data, b=bconv.data,
+        if config.parallel_rgb:
+            psf_r = rgbpsf.r_psf
+            psf_g = rgbpsf.g_psf
+            psf_b = rgbpsf.b_psf
+
+            imgs = [img_r, img_g, img_b]
+            psfs = [psf_r, psf_g, psf_b]
+            with ThreadPool(3) as Pool:
+                r_conv, g_conv, b_conv = Pool.starmap(_unequal_spacing_conv_core,
+                                                      zip(imgs, psfs))
+        else:
+            r_conv = _unequal_spacing_conv_core(img_r, rgbpsf.r_psf)
+            g_conv = _unequal_spacing_conv_core(img_g, rgbpsf.g_psf)
+            b_conv = _unequal_spacing_conv_core(img_b, rgbpsf.b_psf)
+
+        return RGBImage(r=r_conv.data, g=g_conv.data, b=b_conv.data,
                         sample_spacing=self.sample_spacing,
                         synthetic=self.synthetic)
 
@@ -296,7 +309,7 @@ def rgbimage_to_datacube(rgbimage):
     return dat
 
 class Slit(Image):
-    ''' Representation of a single slit.
+    ''' Representation of a slit or pair of slits.
     '''
     @lru_cache()
     def __init__(self, width, orientation='Vertical', sample_spacing=0.075, samples=384):
@@ -305,7 +318,9 @@ class Slit(Image):
         Args:
             width (`float`): the width of the slit.
 
-            orientation (`string`): the orientation of the slit, Horizontal, Vertical, or Crossed / Both
+            orientation (`string`): the orientation of the slit:
+                Horizontal, Vertical, Crossed, or Both.  Crossed and Both
+                produce the same results.
 
             sample_spacing (`float`): spacing of samples in the synthetic image.
 
@@ -359,7 +374,7 @@ class Pinhole(Image):
         xv, yv = np.meshgrid(x,y)
         w = width / 2
 
-        # produce the background
+        # paint a circle on a black background
         arr = np.zeros((samples, samples))
         arr[np.sqrt(xv**2 + yv**2) < w] = 1
         super().__init__(data=arr, sample_spacing=sample_spacing)
