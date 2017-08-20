@@ -10,6 +10,10 @@ from prysm.seidel import Seidel
 from prysm.surfacefinish import SurfaceFinish
 from prysm.psf import PSF, MultispectralPSF, RGBPSF
 from prysm.otf import MTF
+from prysm.geometry import ( gaussian, rotated_ellipse, triangle, square,
+                             pentagon, hexagon, heptagon, octagon, nonagon,
+                             decagon, hendecagon, dodecagon, trisdecagon )
+from prysm.objects import Image, RGBImage, Slit, Pinhole, SiemensStar
 
 __all__ = [
     'plot_fourier_chain',
@@ -25,4 +29,22 @@ __all__ = [
     'MultispectralPSF',
     'RGBPSF',
     'MTF',
+    'gaussian',
+    'rotated_ellipse',
+    'triangle',
+    'square',
+    'pentagon',
+    'hexagon',
+    'heptagon',
+    'octagon',
+    'nonagon',
+    'decagon',
+    'hendecagon',
+    'dodecagon',
+    'trisdecagon',
+    'Image',
+    'RGBImage',
+    'Slit',
+    'Pinhole',
+    'SiemensStar',
 ]
