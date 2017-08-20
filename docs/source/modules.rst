@@ -1,8 +1,7 @@
-code6
+prysm
 =====
 
 .. toctree::
    :maxdepth: 4
 
-   code6
-   setup
+   prysm

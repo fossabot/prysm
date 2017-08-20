@@ -1,133 +1,133 @@
-code6 package
+prysm package
 =============
 
 Submodules
 ----------
 
-code6\.coordinates module
+prysm\.coordinates module
 -------------------------
 
-.. automodule:: code6.coordinates
+.. automodule:: prysm.coordinates
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.detector module
+prysm\.detector module
 ----------------------
 
-.. automodule:: code6.detector
+.. automodule:: prysm.detector
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.extras module
+prysm\.extras module
 --------------------
 
-.. automodule:: code6.extras
+.. automodule:: prysm.extras
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.fringezernike module
+prysm\.fringezernike module
 ---------------------------
 
-.. automodule:: code6.fringezernike
+.. automodule:: prysm.fringezernike
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.fttools module
+prysm\.fttools module
 ---------------------
 
-.. automodule:: code6.fttools
+.. automodule:: prysm.fttools
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.lens module
+prysm\.lens module
 ------------------
 
-.. automodule:: code6.lens
+.. automodule:: prysm.lens
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.otf module
+prysm\.otf module
 -----------------
 
-.. automodule:: code6.otf
+.. automodule:: prysm.otf
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.psf module
+prysm\.psf module
 -----------------
 
-.. automodule:: code6.psf
+.. automodule:: prysm.psf
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.pupil module
+prysm\.pupil module
 -------------------
 
-.. automodule:: code6.pupil
+.. automodule:: prysm.pupil
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.seidel module
+prysm\.seidel module
 --------------------
 
-.. automodule:: code6.seidel
+.. automodule:: prysm.seidel
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.standardzernike module
+prysm\.standardzernike module
 -----------------------------
 
-.. automodule:: code6.standardzernike
+.. automodule:: prysm.standardzernike
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.surfacefinish module
+prysm\.surfacefinish module
 ---------------------------
 
-.. automodule:: code6.surfacefinish
+.. automodule:: prysm.surfacefinish
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.thinlens module
+prysm\.thinlens module
 ----------------------
 
-.. automodule:: code6.thinlens
+.. automodule:: prysm.thinlens
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.units module
+prysm\.units module
 -------------------
 
-.. automodule:: code6.units
+.. automodule:: prysm.units
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.util module
+prysm\.util module
 ------------------
 
-.. automodule:: code6.util
+.. automodule:: prysm.util
     :members:
     :undoc-members:
     :show-inheritance:
 
-code6\.zerntools module
+prysm\.zerntools module
 -----------------------
 
-.. automodule:: code6.zerntools
+.. automodule:: prysm.zerntools
     :members:
     :undoc-members:
     :show-inheritance:
@@ -136,7 +136,7 @@ code6\.zerntools module
 Module contents
 ---------------
 
-.. automodule:: code6
+.. automodule:: prysm
     :members:
     :undoc-members:
     :show-inheritance:
