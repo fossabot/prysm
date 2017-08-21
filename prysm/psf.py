@@ -284,10 +284,22 @@ class PSF(object):
             print('attrerr')
             return convpsf(self, psf2)
 
-    def _renorm(self):
+    def _renorm(self, to='peak'):
         ''' Renormalizes the PSF to unit peak intensity.
+
+        Args:
+            to (`string`): renormalization target.  Either "peak" or "total",
+                produces a PSF of unit peak or total intensity.
+
+        Returns:
+            `PSF`: a renormalized PSF instance.
+
         '''
-        self.data /= self.data.max()
+        if to.lower() == 'peak':
+            self.data /= self.data.max()
+        elif to.lower() == 'total':
+            ttl = self.data.sum()
+            self.data /= ttl
         return self
 
     # helpers ------------------------------------------------------------------
@@ -404,6 +416,34 @@ class RGBPSF(object):
         self.unit_y = b_psf.unit_y
         self.center_x = b_psf.center_x
         self.center_y = b_psf.center_y
+
+    def _renorm(self, to='peak'):
+        ''' Renormalizes the PSF to unit peak intensity.
+
+        Args:
+            to (`string`): renormalization target.  Either "peak" or "total",
+                produces a PSF of unit peak or total intensity.
+
+        Returns:
+            `PSF`: a renormalized PSF instance.
+
+        '''
+        if to.lower() == 'peak':
+            self.R /= self.R.max()
+            self.G /= self.G.max()
+            self.B /= self.B.max()
+        elif to.lower() == 'total':
+            # scale to energy of the green channel.  First, make all unit peak
+            self.R /= self.R.max()
+            self.G /= self.G.max()
+            self.B /= self.B.max()
+
+            # compute energy of green, scale all to this value
+            ttl = self.G.sum()
+            self.R /= ttl
+            self.G /= ttl
+            self.B /= ttl
+        return self
 
     @property
     def r_psf(self):
