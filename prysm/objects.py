@@ -245,9 +245,9 @@ class RGBImage(object):
         img_b = self.as_psf('b')
 
         if config.parallel_rgb:
-            psf_r = rgbpsf.r_psf
-            psf_g = rgbpsf.g_psf
-            psf_b = rgbpsf.b_psf
+            psf_r = rgbpsf.r_psf._renorm(to='total')
+            psf_g = rgbpsf.g_psf._renorm(to='total')
+            psf_b = rgbpsf.b_psf._renorm(to='total')
 
             imgs = [img_r, img_g, img_b]
             psfs = [psf_r, psf_g, psf_b]
@@ -255,9 +255,9 @@ class RGBImage(object):
                 r_conv, g_conv, b_conv = Pool.starmap(_unequal_spacing_conv_core,
                                                       zip(imgs, psfs))
         else:
-            r_conv = _unequal_spacing_conv_core(img_r, rgbpsf.r_psf)
-            g_conv = _unequal_spacing_conv_core(img_g, rgbpsf.g_psf)
-            b_conv = _unequal_spacing_conv_core(img_b, rgbpsf.b_psf)
+            r_conv = _unequal_spacing_conv_core(img_r, rgbpsf.r_psf._renorm(to='total'))
+            g_conv = _unequal_spacing_conv_core(img_g, rgbpsf.g_psf._renorm(to='total'))
+            b_conv = _unequal_spacing_conv_core(img_b, rgbpsf.b_psf._renorm(to='total'))
 
         return RGBImage(r=r_conv.data, g=g_conv.data, b=b_conv.data,
                         sample_spacing=self.sample_spacing,
