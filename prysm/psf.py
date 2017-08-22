@@ -8,12 +8,12 @@ from numpy.fft import fft2, fftshift, ifftshift, ifft2
 from scipy import interpolate
 
 from matplotlib import pyplot as plt
-from mpl_toolkits.axes_grid1.axes_rgb import make_rgb_axes, RGBAxes
+from mpl_toolkits.axes_grid1.axes_rgb import make_rgb_axes
 
 from prysm.conf import config
 from prysm.fttools import pad2d, forward_ft_unit
 from prysm.coordinates import uniform_cart_to_polar, resample_2d_complex
-from prysm.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax, fold_array
+from prysm.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax
 
 class PSF(object):
     ''' Point Spread Function representations.

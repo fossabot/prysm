@@ -4,7 +4,7 @@ setup(
     name='prysm',
     version='0.2.0',
     description='A python optics module',
-    long_description='Uses geometric and fourier optics to model optical systems',
+    long_description='Uses geometrical and fourier optics to model optical systems',
     license='MIT',
     author='Brandon Dube',
     author_email='brandondube@gmail.com',
