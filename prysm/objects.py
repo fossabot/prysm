@@ -64,6 +64,44 @@ class Image(object):
                   origin='lower')
         return fig, ax
 
+    def show_fourier(self, interp_method='lanczos', fig=None, ax=None):
+        ''' Displays the fourier transform of the image.
+
+        Args:
+            interp_method (`string`): method used to interpolate the data
+                for display.
+
+            fig (`matplotlib.figure`): figure to plot in.
+
+            ax (`matplotlib.axis`): axis to plot in.
+
+        Returns:
+            `tuple` containing:
+
+                `matplotlib.figure`: figure containing the plot.
+
+                `matplotlib.axis`: axis containing the plot.
+
+        '''
+        dat = abs(fftshift(fft2(self.data)))
+        dat /= dat.max()
+        unit_x = forward_ft_unit(self.sample_spacing, self.samples_x)
+        unit_y = forward_ft_unit(self.sample_spacing, self.samples_y)
+        xmin, xmax = unit_x[0], unit_x[-1]
+        ymin, ymax = unit_y[0], unit_y[-1]
+
+        fig, ax = share_fig_ax(fig, ax)
+        im = ax.imshow(dat**0.1,
+                       extent=[xmin, xmax, ymin, ymax],
+                       cmap='Greys_r',
+                       interpolation=interp_method,
+                       origin='lower')
+        fig.colorbar(im)
+        ax.set(xlabel='Spatial Frequency X [cy/mm]',
+               ylabel='Spatial Frequency Y [cy/mm]',
+               title='Normalized FT of image, to 0.1 power')
+        return fig, ax
+
     def as_psf(self):
         ''' Converts this image to a PSF object.
         '''

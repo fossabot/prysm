@@ -73,7 +73,7 @@ class Detector(object):
         if is_odd(px_y):
             trim_y = 1
         self.captures.append(Image(data=output_data[:px_y-trim_y,:px_x-trim_x],
-                                 sample_spacing=self.pixel_size))
+                                   sample_spacing=self.pixel_size))
         return self.captures[-1]
 
     def sample_image(self, image):
