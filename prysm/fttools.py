@@ -32,8 +32,7 @@ def forward_ft_unit(sample_spacing, samples):
         `numpy.ndarray`: array of sample frequencies in the output of an fft.
 
     '''
-    f_s = samples // 2
-    return np.arange(-f_s, f_s) / (sample_spacing / 1e3) / samples
+    return np.fft.ifftshift(np.fft.fftfreq(samples, sample_spacing/1e3))
 
 def matrix_dft(f, alpha, npix, shift=None, unitary=False):
     '''
