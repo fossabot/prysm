@@ -349,7 +349,7 @@ class Slit(Image):
             arr[:, abs(x)<w] = 1
             self.orientation = 'Crossed'
 
-        super().__init__(data=arr, sample_spacing=sample_spacing)
+        super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)
 
 class Pinhole(Image):
     ''' Representation of a pinhole object.
@@ -377,13 +377,13 @@ class Pinhole(Image):
         # paint a circle on a black background
         arr = np.zeros((samples, samples))
         arr[np.sqrt(xv**2 + yv**2) < w] = 1
-        super().__init__(data=arr, sample_spacing=sample_spacing)
+        super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)
 
 class SiemensStar(Image):
     ''' Representation of a Siemen's star object.
     '''
     @lru_cache()
-    def __init__(self, num_spokes, sinusoidal=True, sample_spacing=2, samples=384):
+    def __init__(self, num_spokes, sinusoidal=True, background='black', sample_spacing=2, samples=384):
         ''' Produces a Siemen's Star.
 
         Args:
@@ -391,6 +391,8 @@ class SiemensStar(Image):
 
             sinusoidal (`bool`): if True, generates a sinusoidal Siemen' star.
                 If false, generates a bar/block siemen's star.
+
+            background ('string'): "black" or "white".
 
             sample_spacing (`float`): Spacing of samples, in microns.
 
@@ -415,5 +417,11 @@ class SiemensStar(Image):
 
         # scale to (0,1) and clip into a disk
         arr = (arr+1)/2
-        arr[rv>0.9] = 0
-        super().__init__(data=arr, sample_spacing=sample_spacing)
+        if background.lower() in ('b', 'black'):
+            arr[rv>0.9] = 0
+        elif background.lower() in ('w', 'white'):
+            arr[rv > 0.9] = 1
+        else:
+            raise ValueError('invalid background color')
+
+        super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)
