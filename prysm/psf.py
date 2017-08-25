@@ -3,7 +3,7 @@
 import numpy as np
 from numpy import floor
 from numpy import power as npow
-from numpy.fft import fft2, fftshift, ifftshift, ifft2
+from numpy.fft import fftshift, ifftshift
 
 from scipy import interpolate
 
@@ -11,6 +11,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.axes_rgb import make_rgb_axes
 
 from prysm.conf import config
+from prysm.mathops import fft2, ifft2
 from prysm.fttools import pad2d, forward_ft_unit
 from prysm.coordinates import uniform_cart_to_polar, resample_2d_complex
 from prysm.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax
@@ -350,27 +351,31 @@ class MultispectralPSF(PSF):
         # find the most densely sampled PSF
         min_spacing = 1e99
         ref_idx = None
-        ref_unit = None
-        ref_samples = None
+        ref_unit_x = None
+        ref_unit_y = None
+        ref_samples_x = None
+        ref_samples_y = None
         for idx, psf in enumerate(psfs):
             if psf.sample_spacing < min_spacing:
                 min_spacing = psf.sample_spacing
                 ref_idx = idx
-                ref_unit = psf.unit
-                ref_samples = psf.samples_x
+                ref_unit_x = psf.unit_x
+                ref_unit_y = psf.unit_y
+                ref_samples_x = psf.samples_x
+                ref_samples_y = psf.samples_y
 
-        merge_data = np.zeros((ref_samples, ref_samples, len(psfs)))
+        merge_data = np.zeros((ref_samples_y, ref_samples_x, len(psfs)))
         for idx, psf in enumerate(psfs):
             # don't do anything to our reference PSF
             if idx is ref_idx:
                 merge_data[:, :, idx] = psf.data * weights[idx]
             else:
-                xv, yv = np.meshgrid(ref_unit, ref_unit)
-                interpf = interpolate.RegularGridInterpolator((psf.unit, psf.unit), psf.data)
+                xv, yv = np.meshgrid(ref_unit_x, ref_unit_y)
+                interpf = interpolate.RegularGridInterpolator((psf.unit_y, psf.unit_x), psf.data)
                 merge_data[:, :, idx] = interpf((yv, xv), method='linear') * weights[idx]
 
         self.weights = weights
-        super().__init__(merge_data.sum(axis=2), ref_samples, min_spacing)
+        super().__init__(merge_data.sum(axis=2), min_spacing)
         self._renorm()
 
 class RGBPSF(object):

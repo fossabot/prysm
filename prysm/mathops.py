@@ -1,0 +1,144 @@
+''' This submodule imports and exports math functions from different libraries.
+    The intend is to make the backend for prysm interoperable, allowing users to
+    utilize more high performance engines if they have them installed, or fall
+    back to more widely available options in the case that they do not.
+'''
+from prysm.conf import config
+
+# numpy funcs
+import numpy as np
+#from numpy import cos, sin
+#from numpy.fft import fft2, ifft2, fftshift, ifftshift
+
+# numba funcs, cuda
+from numba import cuda, jit
+
+from pyculib.fft import FFTPlan, fft, fft_inplace, ifft, ifft_inplace
+import pyculib.fft.binding as cuda_bind
+
+###### CUDA code ---------------------------------------------------------------
+
+def cast_array(array):
+    ''' Casts an array to the appropriate complex format.
+
+    Args:
+        array: (`numpy.ndarray`): array.
+
+    Returns:
+        `numpy.ndarray`: array cast to appopriate complex type.
+
+    '''
+    if array.dtype == np.float32:
+        return array.astype(np.complex64)
+    else:
+        return array.astype(np.complex128)
+
+# trigger cuFFT initialization when submodule loads (takes ~1s)
+FFTPlan((384, 384),
+        itype=config.precision_complex,
+        otype=config.precision_complex)
+
+# create a map of output array types from input array types
+arr1 = np.empty(1, dtype=np.float32)
+arr2 = np.empty(1, dtype=np.float64)
+arr3 = np.empty(1, dtype=np.complex64)
+arr4 = np.empty(1, dtype=np.complex128)
+cuda_out_map = {
+    arr1.dtype: np.complex64,
+    arr2.dtype: np.complex128,
+    arr3.dtype: np.complex64,
+    arr4.dtype: np.complex128,
+}
+
+# prepare a variable to cache FFT plans
+_plans = dict()
+
+def best_grid_size(size, tpb):
+    ''' Computes the best grid size for a gpu array, given an array size and
+        number of threads per block.
+
+    Args:
+        size (`tuple`): shape of the source array.
+
+        tpb (`int`): number of threads per block.
+
+    Returns:
+        `tuple`. TODO: doc more
+
+    '''
+    bpg = np.ceil(np.array(size, dtype=np.float) / tpb).astype(np.int).tolist()
+    return tuple(bpg)
+
+def cu_fft2(array):
+    ''' Executes a 2D fast fourier transform on CUDA GPUs.
+
+    Args:
+        array (`numpy.ndarray`): array of 32 or 64-bit floats, or 64 or 128 bit
+            complex values.
+
+    Returns:
+        (`numpy.ndarray`): a new ndarray that is the FT of the input array
+    '''
+    
+    hash = str(array.shape) + str(array.dtype) + str(cuda_out_map[array.dtype])
+
+    # Cast the array to a complex one, because real -> complex ffts from cuFFT
+    # follow the fftw convention of being formatted in a way that is hard to
+    # understand.
+    # Casting makes up 2/3 of the execution time for large arrays.  This should
+    # be re-implemented in cuda.
+    array = cast_array(array)
+    rslt = cuda.pinned_array(array.shape, dtype=cuda_out_map[array.dtype])
+    d_arr = cuda.to_device(array)
+    d_rslt = cuda.to_device(rslt)
+
+    # try to cache FFT plans for more speed.
+    # hash and try/except block cost ~2us on i7-7700HQ CPU.
+    try:
+        _plans[hash].forward(d_arr, out=d_rslt)
+    except KeyError:
+        _plans[hash] = FFTPlan(shape=array.shape,
+                               itype=array.dtype,
+                               otype=cuda_out_map[array.dtype])
+        _plans[hash].forward(d_arr, out=d_rslt)
+
+    # rslt and d_dslt are pinned to each other in the cuda api.  The data will
+    # transfer between them without CPU cycles being used, then python will
+    # return the pointer in a few ns.  This shaves about 33% off of execution
+    # time for fairly large arrays.
+    d_rslt.copy_to_host(rslt)
+    return rslt
+
+def cu_ifft2(array):
+    ''' Executes a 2D inverse fast fourier transform on CUDA GPUs.
+
+    Args:
+        array (`numpy.ndarray`): array of 32 or 64-bit floats, or 64 or 128 bit
+            complex values.
+
+    Returns:
+        (`numpy.ndarray`): a new ndarray that is the FT of the input array
+    '''
+    
+    hash = str(array.shape) + str(array.dtype) + str(cuda_out_map[array.dtype])
+    array = cast_array(array)
+    rslt = cuda.pinned_array(array.shape, dtype=cuda_out_map[array.dtype])
+    d_arr = cuda.to_device(array)
+    d_rslt = cuda.to_device(rslt)
+    try:
+        _plans[hash].inverse(d_arr, out=d_rslt)
+    except KeyError:
+        _plans[hash] = FFTPlan(shape=array.shape,
+                               itype=array.dtype,
+                               otype=cuda_out_map[array.dtype])
+        _plans[hash].inverse(d_arr, out=d_rslt)
+    d_rslt.copy_to_host(rslt)
+    return rslt
+
+###### CUDA code ---------------------------------------------------------------
+
+###### export control ----------------------------------------------------------
+if config.backend == 'np':
+    fft2, ifft2 = np.fft.fft2, np.fft.ifft2
+elif config.backend == 'cu':
+    fft2, ifft2 = cu_fft2, cu_ifft2

@@ -2,13 +2,14 @@
 '''
 import numpy as np
 from numpy import floor
-from numpy.fft import fft2, fftshift
+from numpy.fft import fftshift
 
 from scipy import interpolate
 
 from matplotlib import pyplot as plt
 
 from prysm.conf import config
+from prysm.mathops import fft2
 from prysm.psf import PSF
 from prysm.fttools import forward_ft_unit
 from prysm.util import correct_gamma, share_fig_ax, guarantee_array

@@ -5,16 +5,25 @@ import numpy as np
 _precision = None
 _precision_complex = None
 _parallel_rgb = True
+_backend = 'cu'
 
 class Config(object):
     ''' global configuration of prysm.
     '''
-    def __init__(self, dtype=np.float64, parallel_rgb=True):
+    def __init__(self, precision=64, parallel_rgb=True, backend='cuda'):
         '''Tells prysm to use a given precision
 
         Args:
-            dtype (:class:`numpy.dtype`): a valid numpy datatype.
-                Should be a half, full, or double precision float.
+            precision (`int`): 32 or 64, number of bits of precision.
+            
+            parallel_rgb (`bool`): whether to parallelize RGB computations or
+                not.  This improves performance for large arrays, but may slow
+                things down if arrays are relatively small due to the spinup
+                time of new processes.
+
+            backend (`string`): a supported backend.  Current options are "np"
+                for numpy, or "cuda" for CUDA GPU based computation based on
+                numba and pyculib.
 
         Returns:
             Null
@@ -24,33 +33,37 @@ class Config(object):
         global _precision_complex
         global _parallel_rgb
 
-        if dtype not in (np.float32, np.float64):
-            raise ValueError('invalid precision.  Datatype should be np.float32/64.')
-        _precision = dtype
-        if dtype is np.float32:
-            _precision_complex = np.complex64
-        else:
-            _precision_complex = np.complex128
-        return
-
         _parallel_rgb = parallel_rgb
 
-    def set_precision(self, dtype):
+        self.set_precision(precision)
+        self.set_backend(backend)
+
+    def set_precision(self, precision):
         global _precision
         global _precision_complex
         
-        if dtype not in (np.float32, np.float64):
-            raise ValueError('invalid precision.  Datatype should be np.float32/64.')
-        _precision = dtype
-        if dtype is np.float32:
+        if precision not in (32, 64):
+            raise ValueError('invalid precision.  Precision should be 32 or 64.')
+
+        if precision == 32:
+            _precision = np.float32
             _precision_complex = np.complex64
         else:
+            _precision = np.float64
             _precision_complex = np.complex128
-        return
 
     def set_parallel_rgb(self, parallel):
         global _parallel_rgb
         _parallel_rgb = parallel
+
+    def set_backend(self, backend):
+        if backend.lower() not in ('np', 'numpy', 'cu', 'cuda'):
+            raise ValueError('Backend must be numpy or cuda.')
+        global _backend
+        if backend.lower() in ('np', 'numpy'):
+            _backend = 'np'
+        else:
+            _backend = 'cu'
 
     @property
     def precision(self):
@@ -66,4 +79,10 @@ class Config(object):
     def parallel_rgb(self):
         global _parallel_rgb
         return _parallel_rgb
+
+    @property
+    def backend(self):
+        global _backend
+        return _backend
+
 config = Config()
