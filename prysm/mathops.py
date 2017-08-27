@@ -11,10 +11,17 @@ import numpy as np
 #from numpy.fft import fft2, ifft2, fftshift, ifftshift
 
 # numba funcs, cuda
-from numba import cuda, jit
+try:
+    from numba import cuda, jit
+except ImportError:
+    # if Numba is not installed, create the jit decorator and have it return the
+    # original function.
+    def jit(signature_or_function=None, locals={}, target='cpu', cache=False, **options):
+        return signature_or_function
 
 from pyculib.fft import FFTPlan, fft, fft_inplace, ifft, ifft_inplace
-import pyculib.fft.binding as cuda_bind
+from pyculib.fft import binding as cuda_bind
+
 
 ###### CUDA code ---------------------------------------------------------------
 

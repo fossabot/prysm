@@ -1,7 +1,16 @@
 ''' Object to convolve lens PSFs with
 '''
-from multiprocessing.dummy import Pool as ThreadPool
-from functools import lru_cache
+
+# pathos MP pools are a bit better than stock python pools, but the interfaces
+# are compatible.
+try:
+    from pathos.multiprocessing import ProcessPool as Pool
+    from pathos.multiprocessing import freeze_support
+    freeze_support()
+except ImportError:
+    from multiprocessing import Pool
+
+from functools import lru_cache, partial
 
 import numpy as np
 from numpy.fft import fft2, ifft2, fftshift, ifftshift
@@ -15,6 +24,21 @@ from prysm.coordinates import cart_to_polar
 from prysm.psf import PSF, _unequal_spacing_conv_core
 from prysm.fttools import forward_ft_unit
 from prysm.util import correct_gamma, share_fig_ax, is_odd
+
+def _convcore_wrapper_parallel_raw(fft2, ifft2, fftshift, ifftshift, forward_ft_unit, psf1, psf2):
+    ''' Wraps _unequal_spacing_conv_core with functions
+        passed as arguments, to fascilitate parallelized
+        operation with multiple python processes, which do
+        not share imports.
+    '''
+    #from prysm.mathops import fft2, ifft2
+    #from numpy.fft import fftshift, ifftshift
+    #from prysm.fttools import forward_ft_unit
+    return _unequal_spacing_conv_core(psf1, psf2)
+
+_unequal_spacing_conv_core_2 = partial(_convcore_wrapper_parallel_raw,
+                                       fft2, ifft2, fftshift, ifftshift,
+                                       forward_ft_unit)
 
 class Image(object):
     ''' Images of an object
@@ -289,8 +313,8 @@ class RGBImage(object):
 
             imgs = [img_r, img_g, img_b]
             psfs = [psf_r, psf_g, psf_b]
-            with ThreadPool(3) as Pool:
-                r_conv, g_conv, b_conv = Pool.starmap(_unequal_spacing_conv_core,
+            with Pool(3) as pool:
+                r_conv, g_conv, b_conv = pool.starmap(_unequal_spacing_conv_core2,
                                                       zip(imgs, psfs))
         else:
             r_conv = _unequal_spacing_conv_core(img_r, rgbpsf.r_psf._renorm(to='total'))
@@ -317,7 +341,7 @@ class RGBImage(object):
             TODO: proper handling of images with more than 8bpp.
         '''
         # img is an mxnx3 array of unit8s
-        img = imread(path).astype(config.precision()) / 255
+        img = imread(path).astype(config.precision) / 255
 
         img = np.flip(img, axis=0)
 
