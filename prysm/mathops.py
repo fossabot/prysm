@@ -80,7 +80,7 @@ def cu_fft2(array):
         (`numpy.ndarray`): a new ndarray that is the FT of the input array
     '''
     
-    hash = str(array.shape) + str(array.dtype) + str(cuda_out_map[array.dtype])
+    hashstr = str(array.shape) + str(array.dtype) + str(cuda_out_map[array.dtype])
 
     # Cast the array to a complex one, because real -> complex ffts from cuFFT
     # follow the fftw convention of being formatted in a way that is hard to
@@ -93,14 +93,14 @@ def cu_fft2(array):
     d_rslt = cuda.to_device(rslt)
 
     # try to cache FFT plans for more speed.
-    # hash and try/except block cost ~2us on i7-7700HQ CPU.
+    # hashstr and try/except block cost ~2us on i7-7700HQ CPU.
     try:
-        _plans[hash].forward(d_arr, out=d_rslt)
+        _plans[hashstr].forward(d_arr, out=d_rslt)
     except KeyError:
-        _plans[hash] = FFTPlan(shape=array.shape,
+        _plans[hashstr] = FFTPlan(shape=array.shape,
                                itype=array.dtype,
                                otype=cuda_out_map[array.dtype])
-        _plans[hash].forward(d_arr, out=d_rslt)
+        _plans[hashstr].forward(d_arr, out=d_rslt)
 
     # rslt and d_dslt are pinned to each other in the cuda api.  The data will
     # transfer between them without CPU cycles being used, then python will
@@ -119,25 +119,28 @@ def cu_ifft2(array):
     Returns:
         (`numpy.ndarray`): a new ndarray that is the FT of the input array
     '''
-    
-    hash = str(array.shape) + str(array.dtype) + str(cuda_out_map[array.dtype])
+
+    hashstr = str(array.shape) + str(array.dtype) + str(cuda_out_map[array.dtype])
     array = cast_array(array)
     rslt = cuda.pinned_array(array.shape, dtype=cuda_out_map[array.dtype])
     d_arr = cuda.to_device(array)
     d_rslt = cuda.to_device(rslt)
     try:
-        _plans[hash].inverse(d_arr, out=d_rslt)
+        _plans[hashstr].inverse(d_arr, out=d_rslt)
     except KeyError:
-        _plans[hash] = FFTPlan(shape=array.shape,
+        _plans[hashstr] = FFTPlan(shape=array.shape,
                                itype=array.dtype,
                                otype=cuda_out_map[array.dtype])
-        _plans[hash].inverse(d_arr, out=d_rslt)
+        _plans[hashstr].inverse(d_arr, out=d_rslt)
     d_rslt.copy_to_host(rslt)
     return rslt
 
 ###### CUDA code ---------------------------------------------------------------
 
 ###### export control ----------------------------------------------------------
+
+# thanks, ITAR
+
 if config.backend == 'np':
     fft2, ifft2 = np.fft.fft2, np.fft.ifft2
 elif config.backend == 'cu':

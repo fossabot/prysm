@@ -16,7 +16,7 @@ from prysm.util import correct_gamma, share_fig_ax, guarantee_array
 from prysm.coordinates import polar_to_cart
 
 class MTF(object):
-    '''Modulation Transfer Function
+    ''' Modulation Transfer Function
 
     Properties:
         tan: slice along the X axis of the MTF object.
