@@ -60,149 +60,149 @@ _names = (
     'Z48 - Quarternary Spherical',
 )
 
-@jit
+@jit(cache=True)
 def Z0(rho, phi):
     return np.zeros(rho.shape)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z1(rho, phi):
     return rho * cos(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z2(rho, phi):
     return rho * sin(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z3(rho, phi):
     return 2 * rho**2 - 1
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z4(rho, phi):
     return rho**2 * cos(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z5(rho, phi):
     return rho**2 * sin(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z6(rho, phi):
     return (-2 * rho + 3 * rho**3) * cos(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z7(rho, phi):
     return (-2 * rho + 3 * rho**3) * sin(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z8(rho, phi):
     return 6 * rho**4 - 6 * rho**2 + 1
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z9(rho, phi):
     return rho**3 * cos(3*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z10(rho, phi):
     return rho**3 * sin(3*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z11(rho, phi):
     return (-3 * rho**2 + 4 * rho**4) * cos(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z12(rho, phi):
     return (-3 * rho**2 + 4 * rho**4) * sin(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z13(rho, phi):
     return (3  * rho - 12 * rho**3 + 10 * rho**5) * cos(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z14(rho, phi):
     return (3  * rho - 12 * rho**3 + 10 * rho**5) * cos(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z15(rho, phi):
     return 20 * rho**6 + - 30 * rho**4 + 12 * rho**2 - 1
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z16(rho, phi):
     return rho**4 * cos(4*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z17(rho, phi):
     return rho**4 * sin(4*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z18(rho, phi):
     return (5 * rho**5 -4* rho**3) * cos(3*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z19(rho, phi):
     return (5 * rho**5 -4* rho**3) * sin(3*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z20(rho, phi):
     return (6 * rho**2 - 20 * rho**4 + 15 * rho**6) * cos(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z21(rho, phi):
     return (6 * rho**2 - 20 * rho**4 + 15 * rho**6) * sin(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z22(rho, phi):
     return (-4 * rho + 30 * rho**3 - 60 * rho**5 + 35 * rho**7) * cos(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z23(rho, phi):
     return (-4 * rho + 30 * rho**3 - 60 * rho**5 + 35 * rho**7) * sin(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z24(rho, phi):
     return 70 * rho ** 8 - 140 * rho **6 + 90 * rho **4  - 20 * rho **2 + 1
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z25(rho, phi):
     return rho**5 * cos(5*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z26(rho, phi):
     return rho**5 * sin(5*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z27(rho, phi):
     return (6 * rho**6 - 5 * rho**4) * cos(4*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z28(rho, phi):
     return (6 * rho**6 - 5 * rho**4) * sin(4*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z29(rho, phi):
     return (10 * rho**3 - 30 * rho**5 + 21 * rho**7) * cos(3*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z30(rho, phi):
     return (10 * rho**3 - 30 * rho**5 + 21 * rho**7) * cos(3*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z31(rho, phi):
     return (10 * rho ** 2 - 30 * rho**4 + 21 * rho**6) * cos(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z32(rho, phi):
     return (10 * rho ** 2 - 30 * rho**4 + 21 * rho**6) * sin(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z33(rho, phi):
     return (5 * rho - 60 * rho**3 + 210 * rho**5 - 280 * rho**7 + 126 * rho**9)\
         * cos(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z34(rho, phi):
     return (5 * rho - 60 * rho**3 + 210 * rho**5 - 280 * rho**7 + 126 * rho**9)\
         * sin(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z35(rho, phi):
     return 252 * rho ** 10 \
         - 630 * rho ** 8 \
@@ -211,59 +211,59 @@ def Z35(rho, phi):
         + 30 * rho**2 \
         - 1
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z36(rho, phi):
     return rho**6 * cos(6*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z37(rho, phi):
     return rho**6 * sin(6*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z38(rho, phi):
     return (7 * rho**7 - 6 * rho**5) * cos(5*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z39(rho, phi):
     return (7 * rho**7 - 6 * rho**5) * sin(5*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z40(rho, phi):
     return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * cos(4*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z41(rho, phi):
     return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * sin(4*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z42(rho, phi):
     return (84 * rho**9 - 168 * rho**7 + 105 * rho**5 - 20 * rho**3) * cos(3*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z43(rho, phi):
     return (84 * rho**9 - 168 * rho**7 + 105 * rho**5 - 20 * rho**3) * sin(3*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z44(rho, phi):
     return (210 * rho**10 - 504 * rho**8 + 420 * rho**6 - 140 * rho**4 + 15 * rho**2) \
         * cos(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z45(rho, phi):
     return (210 * rho**10 - 504 * rho**8 + 420 * rho**6 - 140 * rho**4 + 15 * rho**2) \
         * sin(2*phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z46(rho, phi):
     return (462 * rho**11 - 1260 * rho**9 + 1260 * rho**7 - 560 * rho**5 + 105 * rho**3 - 6 * rho) \
         * cos(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z47(rho, phi):
     return (462 * rho**11 - 1260 * rho**9 + 1260 * rho**7 - 560 * rho**5 + 105 * rho**3 - 6 * rho) \
         * sin(phi)
 
-@jit
+@jit(cache=True, nopython=True, parallel=True)
 def Z48(rho, phi):
     return 924 * rho**12 \
        - 2772 * rho**10 \
@@ -447,11 +447,11 @@ class FringeZernike(Pupil):
 
         if args is not None:
             if len(args) is 0:
-                self.coefs = [0] * len(_eqns)
+                self.coefs = [0] * len(zernfcns)
             else:
                 self.coefs = [*args[0]]
         else:
-            self.coefs = [0] * len(_eqns)
+            self.coefs = [0] * len(zernfcns)
 
         self.normalize = False
         pass_args = {}
@@ -528,7 +528,7 @@ class FringeZernike(Pupil):
         footer = f'\n\t{self.pv:.3f} PV, {self.rms:.3f} RMS'
         return f'{header}{body}{footer}'
 
-def fit(data, num_terms=len(_eqns), normalize=False):
+def fit(data, num_terms=len(zernfcns), normalize=False):
     ''' Fits a number of zernike coefficients to provided data by minimizing 
     the root sum square between each coefficient and the given data.  The data
     should be uniformly sampled in an x,y grid.
@@ -542,8 +542,8 @@ def fit(data, num_terms=len(_eqns), normalize=False):
         numpy.ndarray: an array of coefficients matching the input data.
 
     '''
-    if num_terms > len(_eqns):
-        raise ValueError(f'number of terms must be less than {len(_eqns)}')
+    if num_terms > len(zernfcns):
+        raise ValueError(f'number of terms must be less than {len(zernfcns)}')
     sze = data.shape
     x, y = np.linspace(-1, 1, sze[0]), np.linspace(-1, 1, sze[1])
     xv, yv = np.meshgrid(x,y)
@@ -555,7 +555,7 @@ def fit(data, num_terms=len(_eqns), normalize=False):
 
     coefficients = []
     for i in range(num_terms):
-        term_component = eval(_eqns[i])
+        term_component = zernfcns[i]
         term_component[rho>1] = 0
         cm = sum(sum(data*term_component))*4/sze[0]/sze[1]/pi
         coefficients.append(cm)
