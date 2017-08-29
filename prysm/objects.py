@@ -13,13 +13,14 @@ except ImportError:
 from functools import lru_cache, partial
 
 import numpy as np
-from numpy.fft import fft2, ifft2, fftshift, ifftshift
+from numpy.fft import fftshift, ifftshift
 
 from scipy.misc import imsave, imread
 
 from matplotlib import pyplot as plt
 
 from prysm.conf import config
+from prysm.mathops import fft2, ifft2, jit
 from prysm.coordinates import cart_to_polar
 from prysm.psf import PSF, _unequal_spacing_conv_core
 from prysm.fttools import forward_ft_unit
@@ -36,9 +37,9 @@ def _convcore_wrapper_parallel_raw(fft2, ifft2, fftshift, ifftshift, forward_ft_
     #from prysm.fttools import forward_ft_unit
     return _unequal_spacing_conv_core(psf1, psf2)
 
-_unequal_spacing_conv_core_2 = partial(_convcore_wrapper_parallel_raw,
-                                       fft2, ifft2, fftshift, ifftshift,
-                                       forward_ft_unit)
+_unequal_spacing_conv_core2 = partial(_convcore_wrapper_parallel_raw,
+                                      fft2, ifft2, fftshift, ifftshift,
+                                      forward_ft_unit)
 
 class Image(object):
     ''' Images of an object
@@ -314,8 +315,7 @@ class RGBImage(object):
             imgs = [img_r, img_g, img_b]
             psfs = [psf_r, psf_g, psf_b]
             with Pool(3) as pool:
-                r_conv, g_conv, b_conv = pool.starmap(_unequal_spacing_conv_core2,
-                                                      zip(imgs, psfs))
+                r_conv, g_conv, b_conv = pool.map(_unequal_spacing_conv_core2, imgs, psfs)
         else:
             r_conv = _unequal_spacing_conv_core(img_r, rgbpsf.r_psf._renorm(to='total'))
             g_conv = _unequal_spacing_conv_core(img_g, rgbpsf.g_psf._renorm(to='total'))
@@ -374,6 +374,7 @@ class Slit(Image):
     ''' Representation of a slit or pair of slits.
     '''
     @lru_cache()
+    @jit
     def __init__(self, width, orientation='Vertical', sample_spacing=0.075, samples=384):
         ''' Creates a new Slit instance.
 
@@ -417,6 +418,7 @@ class Pinhole(Image):
     ''' Representation of a pinhole object.
     '''
     @lru_cache()
+    @jit
     def __init__(self, width, sample_spacing=0.025, samples=384):
         ''' Produces a Pinhole.
 
@@ -445,6 +447,7 @@ class SiemensStar(Image):
     ''' Representation of a Siemen's star object.
     '''
     @lru_cache()
+    @jit
     def __init__(self, num_spokes, sinusoidal=True, background='black', sample_spacing=2, samples=384):
         ''' Produces a Siemen's Star.
 
@@ -474,13 +477,13 @@ class SiemensStar(Image):
 
         if not sinusoidal:
             #make binary
-            arr[arr<0] = -1
-            arr[arr>0] = 1
+            arr[arr < 0] = -1
+            arr[arr > 0] = 1
 
         # scale to (0,1) and clip into a disk
         arr = (arr+1)/2
         if background.lower() in ('b', 'black'):
-            arr[rv>0.9] = 0
+            arr[rv > 0.9] = 0
         elif background.lower() in ('w', 'white'):
             arr[rv > 0.9] = 1
         else:
