@@ -148,7 +148,7 @@ class Lens(object):
             psfs.append(self._make_psf(idx))
         return psfs
 
-    def mtf_vs_field(self, num_pts, freqs=[10,20,30,40,50]):
+    def mtf_vs_field(self, num_pts, freqs=[10, 20, 30, 40, 50]):
         ''' Generates a 2D array of MTF vs field values for the given spatial
             frequencies.
 
@@ -176,8 +176,8 @@ class Lens(object):
             mtf = self._make_mtf(idx)
             vals_t = mtf.exact_polar(freqs, 0)
             vals_s = mtf.exact_polar(freqs, 90)
-            mtfs_t[idx,:] = vals_t
-            mtfs_s[idx,:] = vals_s
+            mtfs_t[idx, :] = vals_t
+            mtfs_s[idx, :] = vals_s
 
         return mtfs_s, mtfs_t
 
