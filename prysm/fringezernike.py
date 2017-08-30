@@ -496,11 +496,14 @@ class FringeZernike(Pupil):
         self._gengrid()
         self.phase = np.zeros((self.samples, self.samples), dtype=config.precision)
         for term, coef in enumerate(self.coefs):
-            self.phase = self.phase + zernwrapper(term=term,
-                                                  include=bool(coef),
-                                                  rms_norm=self.normalize,
-                                                  rho=self.rho,
-                                                  phi=self.phi)
+            # short circuit for speed
+            if coef == 0:
+                continue
+            self.phase = self.phase + coef * zernwrapper(term=term,
+                                                         include=bool(coef),
+                                                         rms_norm=self.normalize,
+                                                         rho=self.rho,
+                                                         phi=self.phi)
 
         self._correct_phase_units()
         self._phase_to_wavefunction()
@@ -516,11 +519,15 @@ class FringeZernike(Pupil):
 
         strs = []
         for coef, name in zip(self.coefs, _names):
+            # skip 0 terms
+            if coef == 0:
+                continue
+
+            # positive coefficient, prepend with +
             if np.sign(coef) == 1:
-                # positive coefficient, prepend with +
                 _ = '+' + f'{coef:.3f}'
+            # negative, sign comes from the value
             else:
-                # negative, sign comes from the value
                 _ = f'{coef:.3f}'
             strs.append(' '.join([_, name]))
         body = '\n\t'.join(strs)

@@ -109,7 +109,11 @@ class MTF(object):
                 azimuths = 0
             else:
                 azimuths = [0] * len(freqs)
+        # handle single azimuth, multiple freqs
+        elif type(azimuths) in (int, float):
+            azimuths = [azimuths] * len(freqs)
 
+        azimuths = np.radians(azimuths)
         # handle single value case
         if type(freqs) in (int, float):
             x, y = polar_to_cart(freqs, azimuths)
@@ -250,7 +254,7 @@ class MTF(object):
 
         '''
         if not hasattr(self, 'interpf'):
-            self.interpf = interpolate.RegularGridInterpolator((self.unit, self.unit), self.data)
+            self.interpf = interpolate.RegularGridInterpolator((self.unit_y, self.unit_x), self.data)
 
         return self
 

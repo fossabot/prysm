@@ -184,8 +184,8 @@ class PSF(object):
             pts = np.arange(gmin, gmax, pix_grid)
             ax.set_yticks(pts, minor=True)
             ax.set_xticks(pts, minor=True)
-            ax.yaxis.grid(True, which='minor')
-            ax.xaxis.grid(True, which='minor')
+            ax.yaxis.grid(True, which='minor', color='white', alpha=0.25)
+            ax.xaxis.grid(True, which='minor', color='white', alpha=0.25)
 
         return fig, ax
 

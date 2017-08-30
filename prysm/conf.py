@@ -59,6 +59,7 @@ class Config(object):
     def set_backend(self, backend):
         if backend.lower() not in ('np', 'numpy', 'cu', 'cuda'):
             raise ValueError('Backend must be numpy or cuda.')
+
         global _backend
         if backend.lower() in ('np', 'numpy'):
             _backend = 'np'
