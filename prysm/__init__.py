@@ -14,6 +14,7 @@ from prysm.geometry import ( gaussian, rotated_ellipse, triangle, square,
                              pentagon, hexagon, heptagon, octagon, nonagon,
                              decagon, hendecagon, dodecagon, trisdecagon )
 from prysm.objects import Image, RGBImage, Slit, Pinhole, SiemensStar
+from prysm.lens import Lens
 
 __all__ = [
     'plot_fourier_chain',
@@ -29,6 +30,7 @@ __all__ = [
     'MultispectralPSF',
     'RGBPSF',
     'MTF',
+    'Lens',
     'gaussian',
     'rotated_ellipse',
     'triangle',

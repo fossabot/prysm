@@ -125,7 +125,8 @@ class PSF(object):
     # plotting -----------------------------------------------------------------
 
     def plot2d(self, log=False, axlim=25, interp_method='lanczos',
-               pix_grid=None, fig=None, ax=None):
+               pix_grid=None, fig=None, ax=None,
+               show_axlabels=True, show_colorbar=True):
         ''' Creates a 2D plot of the PSF.
 
         Args:
@@ -135,16 +136,20 @@ class PSF(object):
             axlim (`float`): limits of axis, symmetric.
                 xlim=(-axlim,axlim), ylim=(-axlim, axlim).
 
-            interp_method (string): method used to interpolate the image between
+            interp_method (`string`): method used to interpolate the image between
                 samples of the PSF.
 
-            pix_grid (float): if not None, overlays gridlines with spacing equal
+            pix_grid (`float`): if not None, overlays gridlines with spacing equal
                 to pix_grid.  Intended to show the collection into camera pixels
                 while still in the oversampled domain.
 
             fig (pyplot.figure): figure to plot in.
 
             ax (pyplot.axis): axis to plot in.
+
+            show_axlabels (`bool`): whether or not to show the axis labels.
+
+            show_colorbar (`bool`): whether or not to show the colorbar.
 
         Returns:
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot.
@@ -171,10 +176,13 @@ class PSF(object):
                        cmap='Greys_r',
                        interpolation=interp_method,
                        clim=lims)
-        fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
-        ax.set(xlabel=r'Image Plane X [$\mu m$]',
-               ylabel=r'Image Plane Y [$\mu m$]',
-               xlim=(-axlim, axlim),
+        if show_colorbar:
+            fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
+        if show_axlabels:
+            ax.set(xlabel=r'Image Plane X [$\mu m$]',
+                   ylabel=r'Image Plane Y [$\mu m$]')
+
+        ax.set(xlim=(-axlim, axlim),
                ylim=(-axlim, axlim))
 
         if pix_grid is not None:

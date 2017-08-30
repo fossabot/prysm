@@ -116,7 +116,7 @@ def fold_array(array, axis=1):
                                       axis=2)
     return np.average(folded_array, axis=2)
 
-def share_fig_ax(fig=None, ax=None, numax=1):
+def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
     ''' Reurns the given figure and/or axis if given one.  If they are None, creates a new fig/ax
 
     Args:
@@ -133,7 +133,7 @@ def share_fig_ax(fig=None, ax=None, numax=1):
 
     '''
     if fig is None and ax is None:
-        fig, ax = plt.subplots(nrows=1, ncols=numax, dpi=100)
+        fig, ax = plt.subplots(nrows=1, ncols=numax, dpi=100, sharex=sharex, sharey=sharey)
     elif fig is None:
         fig = ax.get_figure()
     elif ax is None:

@@ -95,6 +95,9 @@ class Seidel(Pupil):
         self._phase_to_wavefunction()
         return self.phase, self.fcn
 
+    def __repr__(self):
+        return str(self.__dict__)
+
 @lru_cache()
 def wexpr_to_opd_expr(Wxxx):
     '''Converts a W notation to a string with numpy code to evaluate for pupil
