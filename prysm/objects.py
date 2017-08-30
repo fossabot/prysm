@@ -374,7 +374,6 @@ class Slit(Image):
     ''' Representation of a slit or pair of slits.
     '''
     @lru_cache()
-    @jit
     def __init__(self, width, orientation='Vertical', sample_spacing=0.075, samples=384):
         ''' Creates a new Slit instance.
 
@@ -418,7 +417,6 @@ class Pinhole(Image):
     ''' Representation of a pinhole object.
     '''
     @lru_cache()
-    @jit
     def __init__(self, width, sample_spacing=0.025, samples=384):
         ''' Produces a Pinhole.
 
@@ -447,7 +445,6 @@ class SiemensStar(Image):
     ''' Representation of a Siemen's star object.
     '''
     @lru_cache()
-    @jit
     def __init__(self, num_spokes, sinusoidal=True, background='black', sample_spacing=2, samples=384):
         ''' Produces a Siemen's Star.
 
