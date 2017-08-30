@@ -2,6 +2,7 @@
 '''
 import warnings
 from functools import partial
+from copy import deepcopy
 
 import numpy as np
 from scipy.optimize import minimize
@@ -92,7 +93,7 @@ class Lens(object):
         self.fov_unit = fov_unit
         self.samples = samples
 
-    ####### adjustments --------------------------------------------------------
+    ####### analytically setting aberrations -----------------------------------
 
     def autofocus(self, field_index=0):
         ''' Adjusts the W020 aberration coefficient to maximize the MTF at a
@@ -108,7 +109,7 @@ class Lens(object):
         try:
             # try to access the W020 aberration
             float(coefs['W020'])
-        except Exception as e:
+        except KeyError:
             # if it is not set, make it 0
             coefs['W020'] = 0.0
 
@@ -123,12 +124,12 @@ class Lens(object):
 
         opt_fcn = partial(opt_fcn, self, coefs)
 
-        new_defocus = minimize(opt_fcn, x0=0, method='CG')
+        new_defocus = minimize(opt_fcn, x0=0, method='Powell')
         coefs['W020'] += float(new_defocus['x'])
         self.aberrations = coefs.copy()
         return self
 
-    ####### adjustments --------------------------------------------------------
+    ####### analytically setting aberrations -----------------------------------
 
     ####### data generation ----------------------------------------------------
 
@@ -218,6 +219,44 @@ class Lens(object):
         fig.tight_layout()
         return fig, axes
 
+    def plot_mtf_vs_field(self, num_pts, freqs=[10, 20, 30, 40, 50],
+                          fig=None, ax=None):
+        ''' Generates a plot of the MTF vs Field for the lens.
+
+        Args:
+            num_pts (`int`): number of field points to evaluate.
+
+            freqs (`iterable`): frequencies to evaluate the MTF at.
+
+            fig (`matplotlib.pyplot.figure`): figure to plot inside.
+
+            ax (`matplotlib.pyplot.axis`): axis to plot ini.
+
+        Return:
+            `tuple` containing:
+
+                `matplotlib.pyplot.figure`: figure containing the plot.
+
+                `matplotlib.pyplot.axis`: axis containing the plot.
+
+        '''
+        data_s, data_t = self.mtf_vs_field(num_pts, freqs)
+        flds_abs = np.linspace(0, self.fov_y, num_pts)
+        fig, ax = share_fig_ax(fig, ax)
+        for i in range(len(freqs)):
+            ln, = ax.plot(flds_abs, data_s[:,i], lw=3, ls='--')
+            ax.plot(flds_abs, data_t[:,i], lw=3, color=ln.get_color(), label=f'{freqs[i]}lp/mm')
+
+        ax.plot(0,0, color='k', ls='--', label='Sag')
+        ax.plot(0,0, color='k', label='Tan')
+        # todo: respect units of `self`
+        ax.set(xlim=(0,self.fov_y), xlabel='Image Height [mm]',
+               ylim=(0,1), ylabel='MTF [Rel. 1.0]',
+               title='MTF vs Field')
+        ax.legend()
+
+        return fig, ax
+
     ####### plotting -----------------------------------------------------------
 
     ####### helpers ------------------------------------------------------------
@@ -280,8 +319,73 @@ class Lens(object):
 
     ####### helpers ------------------------------------------------------------
 
+    def clone(self):
+        ''' Makes a deep copy of this Lens instance.
+
+        Returns:
+            `Lens`: a new Lens instance.
+        '''
+        ret = Lens()
+        ret.__dict__ = deepcopy(self.__dict__)
+        return ret
+
     def __repr__(self):
         return (f'Lens with properties:\n\t'
                 f'efl: {self.efl}\n\t'
                 f'f/#: {self.fno}\n\t'
                 f'pupil mag: {self.pupil_magnification}')
+
+def _spherical_defocus_from_monochromatic_mtf(lens, frequencies, mtf_s, mtf_t):
+    ''' Uses nonlinear optimization to set the W020, W040, W060, and W080
+        coefficients in a lens model based on MTF measurements taken on the
+        optical axis.
+
+    Args:
+        lens (`Lens`): a lens object.
+
+        frequencies (`iterable`): A set of frequencies the provided MTF values
+            correspond to.
+
+        mtf_s (`iterable`): A set of sagittal MTF measurements of equal length
+            to the frequencies argument.
+
+        mtf_t (`iterable`): A set of tangential MTF measurements of equal length
+            to the frequencies argument.
+
+    Returns:
+        `Lens`: A new lens object with its aberrations field modified with new
+            spherical coefficients.
+
+    '''
+    work_lens = lens.clone()
+
+    fcn = partial(_spherical_cost_fcn_raw, frequencies,
+                  mtf_s, mtf_t, work_lens)
+
+    results = minimize(fcn, [0,0,0,0], method='Powell')
+    W020, W040, W060, W080 = results['x']
+    work_lens.aberrations['W020'] = W020
+    work_lens.aberrations['W040'] = W040
+    work_lens.aberrations['W060'] = W060
+    work_lens.aberrations['W080'] = W080
+    return work_lens
+
+def _spherical_cost_fcn_raw(frequencies, truth_s, truth_t, lens, abervalues):
+    ''' TODO - document.  partial() should be used on this and scipy.minimize'd
+
+        abervalues - array of [W020, W040, W060, W080]
+    '''
+    pupil = Seidel(epd=lens.epd, samples=lens.samples,
+                   W020=abervalues[0],
+                   W040=abervalues[1],
+                   W060=abervalues[2],
+                   W080=abervalues[3])
+    psf = PSF.from_pupil(pupil, efl=lens.efl)
+    mtf = MTF.from_psf(psf)
+    synth_t = mtf.exact_polar(frequencies, 0)
+    synth_s = mtf.exact_polar(frequencies, 90)
+
+    truth = np.stack((truth_s, truth_t))
+    synth = np.stack((synth_s, synth_t))
+
+    return ((truth-synth)**2).sum()
