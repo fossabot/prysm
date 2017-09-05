@@ -88,7 +88,6 @@ class Pupil(object):
         self.opd_unit         = opd_unit
         self.phase = self.fcn = empty((samples, samples), dtype=config.precision)
         self.unit             = linspace(-epd/2, epd/2, samples, dtype=config.precision)
-        self.unit_norm        = linspace(-1, 1, samples, dtype=config.precision)
         self.sample_spacing   = self.unit[-1] - self.unit[-2]
         self.rho  = self.phi  = empty((samples, samples), dtype=config.precision)
         self.center           = int(floor(samples/2))
@@ -226,8 +225,9 @@ class Pupil(object):
     # meat 'n potatoes ---------------------------------------------------------
 
     def build(self):
-        ''' Constructs a numerical model of a :class:`Pupil`.  The method should be overloaded by all
-        subclasses to impart their unique mathematical models to the simulation.
+        ''' Constructs a numerical model of a :class:`Pupil`.  The method should
+        be overloaded by all subclasses to impart their unique mathematical
+        models to the simulation.
         '''
 
         # build up the pupil

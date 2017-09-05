@@ -68,7 +68,7 @@ class PSF(object):
 
         self.data = data
         self.sample_spacing = sample_spacing
-        self.samples_x, self.samples_y = data.shape
+        self.samples_y, self.samples_x = data.shape
         self.center_x = self.samples_x // 2
         self.center_y = self.samples_y // 2
 
@@ -568,10 +568,10 @@ class RGBPSF(object):
         '''
 
         # make the arrays for the RGB images
-        dat = np.empty((self.samples, self.samples, 3))
-        datr = np.zeros((self.samples, self.samples, 3))
-        datg = np.zeros((self.samples, self.samples, 3))
-        datb = np.zeros((self.samples, self.samples, 3))
+        dat = np.empty((self.samples_y, self.samples_x, 3))
+        datr = np.zeros((self.samples_y, self.samples_x, 3))
+        datg = np.zeros((self.samples_y, self.samples_x, 3))
+        datb = np.zeros((self.samples_y, self.samples_x, 3))
         dat[:, :, 0] = self.R
         dat[:, :, 1] = self.G
         dat[:, :, 2] = self.B
@@ -644,8 +644,6 @@ def convpsf(psf1, psf2):
          psf2.sample_spacing == psf1.sample_spacing ):
         # no need to interpolate, use FFTs to convolve
         psf3 = PSF(data=abs(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data)))),
-                   samples_x=psf1.samples_x,
-                   samples_y=psf1.samples_y,
                    sample_spacing=psf1.sample_spacing)
         return psf3._renorm()
     else:

@@ -9,13 +9,19 @@ def object_to_image_dist(efl, object_distance):
     '''computes the image distance from the object distance
 
     Args:
-        efl (float): focal length of the lens
-        object_distance (float or numpy.ndarray): distance from the object to the front principal
-            plane of the lens, negative for an object to the left of the lens.
+        efl (float): focal length of the lens.
+
+        object_distance (float or numpy.ndarray): distance from the object to
+        the front principal plane of the lens, negative for an object to the
+        left of the lens.
 
     Returns:
-        image distance.  Distance from rear principal plane (assumed to be in contact with front
-            principal plane) to image
+        image distance.  Distance from rear principal plane (assumed to be in
+        contact with front principal plane) to image.
+
+    Notes:
+        efl and object distance should be in the same units.  Return value will
+        be in the same units as the inputs.
 
     '''
     object_distance = guarantee_array(object_distance)
@@ -26,8 +32,9 @@ def image_dist_epd_to_na(image_distance, epd):
     '''Computes the NA from an image distance and entrance pupil diameter
 
     Args:
-        image_distance (float): distance from the image to the entrance pupil
-        epd (float): diameter of the entrance pupil
+        image_distance (float): distance from the image to the entrance pupil.
+
+        epd (float): diameter of the entrance pupil.
 
     Returns:
         numerical aperture.  The NA of the system.
@@ -52,6 +59,18 @@ def image_dist_epd_to_fno(image_distance, epd):
     '''
     na = image_dist_epd_to_na(image_distance, epd)
     return na_to_fno(na)
+
+def fno_to_na(fno):
+    '''Converts an fno to an NA
+
+    Args:
+        fno (float): focal ratio
+
+    Returns:
+        NA.  The NA of the system.
+
+    '''
+    return 1 / (2 * fno)
 
 def na_to_fno(na):
     '''Converts an NA to an f/#
@@ -129,7 +148,7 @@ def defocus_to_image_displacement(defocus, fno, wavelength, zernike=False, rms_n
     # if the defocus is a zernike, make it match Seidel notation for equation validity
     if zernike is True:
         if rms_norm is True:
-            defocus /= (eval(_normalizations[4]) * 2)
+            defocus /= _normalizations[4] * 2
         else:
             defocus /= 2
     return 8 * fno**2 * wavelength * defocus
@@ -156,7 +175,7 @@ def image_displacement_to_defocus(image_displacement, fno, wavelength, zernike=F
     defocus = image_displacement / (8 * np.power(fno,2) * wavelength)
     if zernike is True:
         if rms_norm is True:
-            return defocus / 2 / eval(_normalizations[4])
+            return defocus / 2 / _normalizations[4]
         else:
             return defocus / 2
     else:

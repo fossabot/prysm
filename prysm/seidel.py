@@ -80,9 +80,9 @@ class Seidel(Pupil):
                 :class:`~numpy.ndarray` wavefunction for the pupil
 
         '''
-        mathexpr = 'np.zeros((self.samples, self.samples))'
+        mathexprs = ['np.zeros((self.samples, self.samples))']
         for term, coef in zip(self.eqns, self.coefs):
-            mathexpr += '+' + str(coef) + '*(' + term + ')'
+            mathexprs.append(str(coef) + '*(' + term + ')')
 
         # pull the field point into the namespace our expression wants
         H = self.field
@@ -90,7 +90,7 @@ class Seidel(Pupil):
         rho, phi = self.rho, self.phi
 
         # compute the pupil phase and wave function
-        self.phase = eval(mathexpr).astype(config.precision)
+        self.phase = eval('+'.join(mathexprs)).astype(config.precision)
         self._correct_phase_units()
         self._phase_to_wavefunction()
         return self.phase, self.fcn

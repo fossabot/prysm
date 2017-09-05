@@ -23,7 +23,7 @@ from prysm.conf import config
 from prysm.mathops import fft2, ifft2, jit
 from prysm.coordinates import cart_to_polar
 from prysm.psf import PSF, _unequal_spacing_conv_core
-from prysm.fttools import forward_ft_unit
+from prysm.fttools import forward_ft_unit, pad2d
 from prysm.util import correct_gamma, share_fig_ax, is_odd
 
 def _convcore_wrapper_parallel_raw(fft2, ifft2, fftshift, ifftshift, forward_ft_unit, psf1, psf2):
@@ -55,7 +55,7 @@ class Image(object):
         '''
         self.data = data
         self.sample_spacing = sample_spacing
-        self.samples_x, self.samples_y = data.shape
+        self.samples_y, self.samples_x = data.shape
         self.center_x, self.center_y = self.samples_x // 2, self.samples_y // 2
         self.ext_x = sample_spacing * self.center_x
         self.ext_y = sample_spacing * self.center_y
@@ -87,6 +87,7 @@ class Image(object):
                   interpolation=interp_method,
                   clim=lims,
                   origin='lower')
+        ax.set_axis_off()
         return fig, ax
 
     def show_fourier(self, interp_method='lanczos', fig=None, ax=None):
@@ -108,7 +109,7 @@ class Image(object):
                 `matplotlib.axis`: axis containing the plot.
 
         '''
-        dat = abs(fftshift(fft2(self.data)))
+        dat = abs(fftshift(fft2(pad2d(self.data))))
         dat /= dat.max()
         unit_x = forward_ft_unit(self.sample_spacing, self.samples_x)
         unit_y = forward_ft_unit(self.sample_spacing, self.samples_y)
@@ -249,7 +250,9 @@ class RGBImage(object):
         dat = rgbimage_to_datacube(self)
         ax.imshow(dat,
                   interpolation=interp_method,
+                  clims=lims,
                   origin='lower')
+        ax.set_axis_off()
         return fig, ax
 
     def as_psf(self, color='g'):

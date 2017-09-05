@@ -62,7 +62,7 @@ class MTF(object):
         self.data = data
         self.unit_x = unit_x
         self.unit_y = unit_y
-        self.samples_x, self.samples_y = data.shape
+        self.samples_y, self.samples_x = data.shape
         self.center_x = self.samples_x // 2
         self.center_y = self.samples_y // 2
 
@@ -73,8 +73,8 @@ class MTF(object):
         ''' Retrieves the tangential MTF.
 
         Notes:
-            Assumes the object is extended in y.  If the object is extended along a different
-            azimuth, this will not return the tangential MTF.
+            Assumes the object is extended in y.  If the object is extended
+            along a different azimuth, this will not return the tangential MTF.
         '''
         return self.unit_x[self.center_x:], self.data[self.center_y, self.center_x:]
 
