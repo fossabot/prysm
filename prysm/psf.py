@@ -343,7 +343,7 @@ class PSF(object):
 class MultispectralPSF(PSF):
     ''' A PSF which includes multiple wavelength components.
     '''
-    def __init__(self, psfs, weights):
+    def __init__(self, psfs, weights=None):
         ''' Creates a new :class:`MultispectralPSF` instance.
 
         Args:
@@ -355,6 +355,8 @@ class MultispectralPSF(PSF):
             MultispectralPSF.  A new `MultispectralPSF`.
 
         '''
+        if weights is None:
+            weights = [1] * len(psfs)
 
         # find the most densely sampled PSF
         min_spacing = 1e99

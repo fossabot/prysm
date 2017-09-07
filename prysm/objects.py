@@ -32,9 +32,9 @@ def _convcore_wrapper_parallel_raw(fft2, ifft2, fftshift, ifftshift, forward_ft_
         operation with multiple python processes, which do
         not share imports.
     '''
-    #from prysm.mathops import fft2, ifft2
-    #from numpy.fft import fftshift, ifftshift
-    #from prysm.fttools import forward_ft_unit
+    from prysm.mathops import fft2, ifft2
+    from numpy.fft import fftshift, ifftshift
+    from prysm.fttools import forward_ft_unit
     return _unequal_spacing_conv_core(psf1, psf2)
 
 _unequal_spacing_conv_core2 = partial(_convcore_wrapper_parallel_raw,
@@ -193,7 +193,7 @@ class RGBImage(object):
     '''
     def __init__(self, r, g, b, sample_spacing, synthetic=True):
         ''' creates a new RGB image
-        
+
         Args:
             r (`Image`): array for the red channel.
 
