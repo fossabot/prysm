@@ -90,7 +90,7 @@ class Pupil(object):
         self.unit             = linspace(-epd/2, epd/2, samples, dtype=config.precision)
         self.sample_spacing   = self.unit[-1] - self.unit[-2]
         self.rho  = self.phi  = empty((samples, samples), dtype=config.precision)
-        self.center           = int(floor(samples/2))
+        self.center           = samples //2
 
         if opd_unit.lower() in ('$\lambda$', 'waves'):
             self._opd_unit = 'waves'
@@ -217,7 +217,7 @@ class Pupil(object):
                        interpolation='lanczos',
                        clim=(-1,1),
                        origin='lower')
-        fig.colorbar(im, label=r'Wrapped Phase [$\lambda$]')
+        fig.colorbar(im, label=r'Wrapped Phase [$\lambda$]', ax=ax, fraction=0.046)
         ax.set(xlabel='Pupil X [mm]',
                ylabel='Pupil Y [mm]')
         return fig, ax
