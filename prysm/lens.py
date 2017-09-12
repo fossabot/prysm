@@ -220,6 +220,7 @@ class Lens(object):
         return fig, axes
 
     def plot_mtf_vs_field(self, num_pts, freqs=[10, 20, 30, 40, 50],
+                          title='MTF vs Field', minorgrid=True,
                           fig=None, ax=None):
         ''' Generates a plot of the MTF vs Field for the lens.
 
@@ -250,9 +251,14 @@ class Lens(object):
         ax.plot(0,0, color='k', ls='--', label='Sag')
         ax.plot(0,0, color='k', label='Tan')
         # todo: respect units of `self`
+
+        if minorgrid is True:
+            ax.set_yticks([0.1, 0.3, 0.5, 0.7, 0.9], minor=True)
+            ax.grid(True, which='minor')
+        
         ax.set(xlim=(0,self.fov_y), xlabel='Image Height [mm]',
                ylim=(0,1), ylabel='MTF [Rel. 1.0]',
-               title='MTF vs Field')
+               title=title)
         ax.legend()
 
         return fig, ax
