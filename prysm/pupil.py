@@ -215,7 +215,7 @@ class Pupil(object):
                        extent=[-epd/2, epd/2, -epd/2, epd/2],
                        cmap='Greys_r',
                        interpolation='lanczos',
-                       clim=(-1,1),
+                       clim=(-1, 1),
                        origin='lower')
         fig.colorbar(im, label=r'Wrapped Phase [$\lambda$]', ax=ax, fraction=0.046)
         ax.set(xlabel='Pupil X [mm]',

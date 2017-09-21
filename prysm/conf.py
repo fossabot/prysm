@@ -5,12 +5,12 @@ import numpy as np
 _precision = None
 _precision_complex = None
 _parallel_rgb = True
-_backend = 'cu'
+_backend = 'np'
 
 class Config(object):
     ''' global configuration of prysm.
     '''
-    def __init__(self, precision=64, parallel_rgb=True, backend='cuda'):
+    def __init__(self, precision=64, parallel_rgb=True, backend='cu'):
         '''Tells prysm to use a given precision
 
         Args:
