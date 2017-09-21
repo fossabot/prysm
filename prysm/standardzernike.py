@@ -5,6 +5,8 @@ import numpy as np
 from numpy import arctan2, exp, cos, sin, pi, sqrt, nan
 from numpy import power as npow
 
+from prysm.conf import config
+from prysm.mathops import jit
 from prysm.pupil import Pupil
 from prysm.coordinates import cart_to_polar
 
@@ -59,62 +61,256 @@ _names = (
     'Z47 - Tertiary Pentafoil X',
 )
 
-# These equations are stored as text, we will concatonate all of the strings
-# later and use eval to calculate the function over the rho,phi coordinate grid.
-# Many regard eval as unsafe or bad but here there is considerable performance
-# benefit to not iterate over a large 2D array multiple times, and we are
-# guaranteed safety since we have typed the equations properly and are using
-# tuples, which are immutable.
-_eqns =  (
-    'np.ones((self.samples, self.samples))',                                # Z0
-    'rho * cos(phi)',                                                       # Z1
-    'rho * sin(phi)',                                                       # Z2
-    'rho**2 * cos(2*phi)',                                                  # Z3
-    '2 * rho**2 - 1',                                                       # Z4
-    'rho**2 * sin(2*phi)',                                                  # Z5
-    'rho**3 * cos(3*phi)',                                                  # Z6
-    '(3 * rho**3 - 2 * rho) * cos(phi)',                                    # Z7
-    '(3 * rho**3 - 2 * rho) * sin(phi)',                                    # Z8
-    'rho**3 * sin(3*phi)',                                                  # Z9
-    'rho**4 * cos(4*phi)',                                                  #Z10
-    '(4 * rho**4 - 3 * rho**2) * cos(2*phi)',                               #Z11
-    '-6 * rho**2 + 6 * rho**4 + 1',                                         #Z12
-    '(4 * rho**4 - 3 * rho**2) * sin(2*phi)',                               #Z13
-    'rho**4 * sin(4*phi)',                                                  #Z14
-    'rho**5 * cos(5*phi)',                                                  #Z15
-    '(5 * rho**5 - 4 * rho**3) * cos(3*phi)',                               #Z16
-    '(10 * rho**5 - 12 * rho**3 + 3 * rho) * cos(phi)',                     #Z17
-    '(10 * rho**5 - 12 * rho**3 + 3 * rho) * sin(phi)',                     #Z18
-    '(5 * rho**5 - 4 * rho**3) * sin(3*phi)',                               #Z19
-    'rho**5 * cos(5*phi)',                                                  #Z20
-    'rho**6 * cos(6*phi)',                                                  #Z21
-    '(6 * rho**6 - 5 * rho**4) * cos(4*phi)',                               #Z22
-    '(15 * rho**6 - 20 * rho**4 + 6 * rho**2) * cos(2*phi)',                #Z23
-    '20 * rho**6 - 30 * rho**4 + 12 * rho**2 - 1',                          #Z24
-    '(15 * rho**6 - 20 * rho**4 + 6 * rho**2) * sin(2*phi)',                #Z25
-    '(6 * rho**6 - 5 * rho**4) * sin(4*phi)',                               #Z26
-    'rho**6 * sin(6*phi)',                                                  #Z27
-    'rho**6 * cos(7*phi)',                                                  #Z28
-    '(7 * rho**7 - 6 * rho**5) * cos(5*phi)',                               #Z29
-    '(21 * rho**7 - 30 * rho**5 + 10 * rho**3) * cos(3*phi)',               #Z30
-    '(35 * rho**7 - 60 * rho**5 + 30 * rho**3 - 4 * rho) * cos(phi)',       #Z31
-    '(35 * rho**7 - 60 * rho**5 + 30 * rho**3 - 4 * rho) * sin(phi)',       #Z32
-    '(21 * rho**7 - 30 * rho**5 + 10 * rho**3) * sin(3*phi)',               #Z33
-    '(7 * rho**7 - 6 * rho**5) * sin(5*phi)',                               #Z34
-    'rho**7 * sin(7*phi)',                                                  #Z35
-    'rho**8 * cos(8*phi)',                                                  #Z36
-    '(8 * rho**8 - 7 * rho**6) * cos(6*phi)',                               #Z37
-    '(28 * rho**8 - 42 * rho**6 + 15 * rho**4) * cos(4*phi)',               #Z38
-    '(56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2*phi)',#Z39
-    '70 * rho**8 - 140 * rho**7 + 90 * rho**4 - 20 * rho**2 + 1',           #Z40
-    '(56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2*phi)',#Z41
-    '(28 * rho**8 - 42 * rho**6 + 15 * rho**4) * sin(4*phi)',               #Z42
-    '(8 * rho**8 - 7 * rho**6) * sin(6*phi)',                               #Z43
-    'rho**8 * sin(8*phi)',                                                  #Z44
-    'rho**9 * cos(9*phi)',                                                  #Z45
-    '(9 * rho**9 - 8 * rho**7) * cos(7*phi)',                               #Z46
-    '(36 * rho**9 - 56 * rho**7 + 21 * rho**5) * cos(5*phi)',               #Z47
-)
+@jit(cache=True)
+def Z0(rho, phi):
+    return np.zeros(rho.shape)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z1(rho, phi):
+    return rho * cos(phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z2(rho, phi):
+    return rho * sin(phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z3(rho, phi):
+    return rho**2 * cos(2*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z4(rho, phi):
+    return 2 * rho ** 2 - 1
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z5(rho, phi):
+    return rho**2 * sin(2*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z6(rho, phi):
+    return rho**3 * cos(3*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z7(rho, phi):
+    return (3 * rho**3 - 2 * rho) * cos(phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z8(rho, phi):
+    return (3 * rho**3 - 2 * rho) * sin(phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z9(rho, phi):
+    return rho**3 * sin(3*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z10(rho, phi):
+    return rho**4 * cos(4*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z11(rho, phi):
+    return (4 * rho**4 - 3 * rho**2) * cos(2*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z12(rho, phi):
+    return -6 * rho**2 + 6 * rho**4 + 1
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z13(rho, phi):
+    return (4 * rho**4 - 3 * rho**2) * sin(2*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z14(rho, phi):
+    return rho**4 * sin(4*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z15(rho, phi):
+    return rho**5 * cos(5*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z16(rho, phi):
+    return (5 * rho**5 - 4 * rho**3) * cos(3*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z17(rho, phi):
+    return (10 * rho**5 - 12 * rho**3 + 3 * rho) * cos(phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z18(rho, phi):
+    return (10 * rho**5 - 12 * rho**3 + 3 * rho) * sin(phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z19(rho, phi):
+    return (5 * rho**5 - 4 * rho**3) * sin(3*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z20(rho, phi):
+    return rho**5 * cos(5*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z21(rho, phi):
+    return rho**6 * cos(6*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z22(rho, phi):
+    return (6 * rho**6 - 5 * rho**4) * cos(4*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z23(rho, phi):
+    return (15 * rho**6 - 20 * rho**4 + 6 * rho**2) * cos(2*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z24(rho, phi):
+    return 20 * rho**6 - 30 * rho**4 + 12 * rho**2 - 1
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z25(rho, phi):
+    return (15 * rho**6 - 20 * rho**4 + 6 * rho**2) * sin(2*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z26(rho, phi):
+    return (6 * rho**6 - 5 * rho**4) * sin(4*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z27(rho, phi):
+    return rho**6 * sin(6*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z28(rho, phi):
+    return rho**6 * cos(7*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z29(rho, phi):
+    return (7 * rho**7 - 6 * rho**5) * cos(5*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z30(rho, phi):
+    return (21 * rho**7 - 30 * rho**5 + 10 * rho**3) * cos(3*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z31(rho, phi):
+    return (35 * rho**7 - 60 * rho**5 + 30 * rho**3 - 4 * rho) * cos(phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z32(rho, phi):
+    return (35 * rho**7 - 60 * rho**5 + 30 * rho**3 - 4 * rho) * sin(phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z33(rho, phi):
+    return (21 * rho**7 - 30 * rho**5 + 10 * rho**3) * sin(3*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z34(rho, phi):
+    return (7 * rho**7 - 6 * rho**5) * sin(5*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z35(rho, phi):
+    return rho**7 * sin(7*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z36(rho, phi):
+    return rho**8 * cos(8*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z37(rho, phi):
+    return (8 * rho**8 - 7 * rho**6) * cos(6*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z38(rho, phi):
+    return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * cos(4*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z39(rho, phi):
+    return (56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z40(rho, phi):
+    return 70 * rho**8 - 140 * rho**7 + 90 * rho**4 - 20 * rho**2 + 1
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z41(rho, phi):
+    return (56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z42(rho, phi):
+    return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * sin(4*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z43(rho, phi):
+    return (8 * rho**8 - 7 * rho**6) * sin(6*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z44(rho, phi):
+    return rho**8 * sin(8*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z45(rho, phi):
+    return rho**9 * cos(9*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z46(rho, phi):
+    return (9 * rho**9 - 8 * rho**7) * cos(7*phi)
+
+@jit(cache=True, nopython=True, nogil=True)
+def Z47(rho, phi):
+    return (36 * rho**9 - 56 * rho**7 + 21 * rho**5) * cos(5*phi)
+
+zernfcns = {
+    0.0: Z0,
+    1.0: Z1,
+    2.0: Z2,
+    3.0: Z3,
+    4.0: Z4,
+    5.0: Z5,
+    6.0: Z6,
+    7.0: Z7,
+    8.0: Z8,
+    9.0: Z9,
+    10.0: Z10,
+    11.0: Z11,
+    12.0: Z12,
+    13.0: Z13,
+    14.0: Z14,
+    15.0: Z15,
+    16.0: Z16,
+    17.0: Z17,
+    18.0: Z18,
+    19.0: Z19,
+    20.0: Z20,
+    21.0: Z21,
+    22.0: Z22,
+    23.0: Z23,
+    24.0: Z24,
+    25.0: Z25,
+    26.0: Z26,
+    27.0: Z27,
+    28.0: Z28,
+    29.0: Z29,
+    30.0: Z30,
+    31.0: Z31,
+    32.0: Z32,
+    33.0: Z33,
+    34.0: Z34,
+    35.0: Z35,
+    36.0: Z36,
+    37.0: Z37,
+    38.0: Z38,
+    39.0: Z39,
+    40.0: Z40,
+    41.0: Z41,
+    42.0: Z42,
+    43.0: Z43,
+    44.0: Z44,
+    45.0: Z45,
+    46.0: Z46,
+    47.0: Z47,
+}
+
+def zernwrapper(term, include, rho, phi):
+    ''' Wraps the Z0..Z48 functions.
+    '''
+    if include == 0:
+        return 0
+    else:
+        return zernfcns[term](rho, phi)
 
 class StandardZernike(Pupil):
     '''Standard Zernike pupil description
@@ -204,18 +400,18 @@ class StandardZernike(Pupil):
 
     def build(self):
         # construct an equation for the phase of the pupil
-        mathexpr = 'np.zeros((self.samples, self.samples))'
-        for term, coef in enumerate(self.coefs):
-            if coef is 0:
-                pass
-            else:
-                mathexpr += '+' + str(coef) + '*(' + _eqns[term] + ')'
-
         # build a coordinate system over which to evaluate this function
-        rho, phi = self._gengrid()
+        self._gengrid()
+        self.phase = np.zeros((self.samples, self.samples), dtype=config.precision)
+        for term, coef in enumerate(self.coefs):
+            # short circuit for speed
+            if coef == 0:
+                continue
+            self.phase = self.phase + coef * zernwrapper(term=term,
+                                                         include=bool(coef),
+                                                         rho=self.rho,
+                                                         phi=self.phi)
 
-        # compute the pupil phase and wave function
-        self.phase = eval(mathexpr)
         self._correct_phase_units()
         self._phase_to_wavefunction()
         return self.phase, self.fcn
