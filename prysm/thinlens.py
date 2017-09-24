@@ -2,6 +2,7 @@
 '''
 import numpy as np
 from numpy import sin, arctan, absolute, sqrt, pi
+
 from prysm.util import guarantee_array
 from prysm.fringezernike import _normalizations
 
@@ -84,7 +85,7 @@ def na_to_fno(na):
     '''
     return 1 / (2 * sin(na))
 
-def mag_from_object_dist(efl, object_dist):
+def object_dist_to_mag(efl, object_dist):
     '''Computes the linear magnification from the object distance and focal length
 
     Args:
@@ -93,12 +94,12 @@ def mag_from_object_dist(efl, object_dist):
 
     Returns:
         linear magnification.  Also known as the lateral magnification.
-    
+
     '''
     object_dist = guarantee_array(object_dist)
     return efl / (efl - object_dist)
 
-def logitudinal_mag_from_linear(lateral_mag):
+def linear_to_long_mag(lateral_mag):
     '''Computes the longitudinal (along optical axis) magnification from the lateral mag
 
     Args:
