@@ -181,3 +181,40 @@ def image_displacement_to_defocus(image_displacement, fno, wavelength, zernike=F
             return defocus / 2
     else:
         return defocus
+
+def twolens_efl(efl1, efl2, separation):
+    ''' uses thick lens equations to compute the focal length for two elements
+        separated by some distance.
+
+    Args:
+        efl1 (`float`): EFL of the first lens.
+
+        efl2 (`float`): EFL of the second lens.
+
+        separation (`float`): separation of the two lenses.
+
+    Returns:
+        float. focal length of the two lens system.
+    '''
+    phi1, phi2, t = 1/efl1, 1/efl2, separation
+    phi_tot = phi1 + phi2 - t*phi1*phi2
+    return 1/phi_tot
+
+def twolens_bfl(efl1, efl2, separation):
+    ''' uses thick lens equations to compute the back focal length for two elements
+        separated by some distance.
+
+    Args:
+        efl1 (`float`): EFL of the first lens.
+
+        efl2 (`float`): EFL of the second lens.
+
+        separation (`float`): separation of the two lenses.
+
+    Returns:
+        float. back focal length of the two lens system.
+    '''
+    phi1 = 1/efl1
+    numerator = 1 - t*phi1
+    denomenator = twolens_efl(efl1, efl2, separation)
+    return numerator/denomenator
