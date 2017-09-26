@@ -118,9 +118,108 @@ class TwoElementZoom(object):
 
         ax.plot(efls, l1p, label='Lens 1', lw=3)
         ax.plot(efls, l2p, label='Lens 2', lw=3)
+        ax.legend()
         ax.set(xlim=(self.short, self.long), xlabel='Focal Length [mm]',
                ylim=ylims, ylabel='Distance from Image [mm]',
                title=f'{self.short}-{self.long}mm lens element positions')
-        ax.legend()
 
         return fig, ax
+
+class TwoElementZoomFinite(object):
+    ''' Represents a two element finite conjugate zoom lens.
+    '''
+    def __init__(self, efl1, efl2, objdist, mlow, mhigh):
+        self.f1 = efl1
+        self.f2 = efl2
+        self.objdist = objdist
+        self.low = mlow
+        self.high = mhigh
+
+    def _separation(self, mag, root='positive'):
+        ''' Returns the lens separation solution with the given root
+
+        Args:
+            mag (`float`): magnification of the system
+
+            root (`string`): which root to return
+
+        Returns:
+            float. separation of the two lens elements.
+
+        '''
+        M, f1, f2, L = mag, self.f1, self.f2, self.objdist
+        d = L**2 - 4*(L*(f1+f2) + (M-1)**2 *f1*f2/M)
+        if root.lower() in ('p', 'pos', 'positive'):
+            return (L + np.sqrt(d))/2
+        else:
+            return (L - np.sqrt(d))/2
+
+    def _genpositions(self, mag, num_pts=100, root='p'):
+        M, L, f1 = mag, self.objdist, self.f1
+        t = self._separation(M, root=root)
+        sp = ((M-1)*t+L)/((M-1)-M*t/f1)
+        lens1pos = L + sp
+        lens2pos = L + sp - t
+        objpos = [L] * len(M)
+        return lens1pos, lens2pos, objpos
+
+    def plot_posroot_soln(self, num_pts=100, ylims=None, fig=None, ax=None):
+        M = np.linspace(self.low, self.high, num_pts)
+        l1p, l2p, op = self._genpositions(M, num_pts, root='p')
+
+        fig, ax = share_fig_ax(fig, ax)
+        highlight_zero((l1p, l2p, op), ax=ax)
+
+        ax.plot(M, l1p, lw=3, label='Lens 1')
+        ax.plot(M, l2p, lw=3, label='Lens 2')
+        ax.plot(M, op, lw=1.5, c='k', label='Object')
+        ax.legend()
+        ax.set(xlim=(self.low, self.high), xlabel='Magnification [-]',
+               ylim=ylims, ylabel='Distance from Image [mm]',
+               title=f'{self.low}-{self.high}x Zoom lens')
+
+        return fig, ax
+
+    def plot_negroot_soln(self, num_pts=100, ylims=None, fig=None, ax=None):
+        M = np.linspace(self.low, self.high, num_pts)
+        l1p, l2p, op = self._genpositions(M, num_pts, root='n')
+
+        fig, ax = share_fig_ax(fig, ax)
+        highlight_zero((l1p, l2p, op), ax=ax)
+
+        ax.plot(M, l1p, lw=3, label='Lens 1')
+        ax.plot(M, l2p, lw=3, label='Lens 2')
+        ax.plot(M, op, lw=3, c='k', label='Object')
+        ax.legend()
+        ax.set(xlim=(self.low, self.high), xlabel='Magnification [-]',
+               ylim=ylims, ylabel='Distance from Image [mm]',
+               title=f'{self.low}-{self.high}x Zoom lens')
+
+        return fig, ax
+
+    def plot_both_solns(self, fig=None, axs=None):
+        fig, axs = share_fig_ax(fig, axs, numax=2)
+
+        self.plot_posroot_soln(fig=fig, ax=axs[0])
+        self.plot_negroot_soln(fig=fig, ax=axs[1])
+
+        fig.tight_layout()
+        return fig, axs
+
+def highlight_zero(data, ax):
+    try:
+        # the iterable case with multiple datas.
+        # hasattr will error if the first element of data isn't an iterable;
+        # because data is either a list or np array, we need two depths of
+        # iterability for this to behave as expected.
+        hasattr(data[0], '__iter__')
+        drawline = False
+        for datum in data:
+            if min(datum) < 0:
+                drawline = True
+
+        if drawline is True:
+            ax.axhline(0, c='k', ls=':')
+    except TypeError:
+        if min(data) < 0:
+            ax.axhline(0, c='k', ls=':')
