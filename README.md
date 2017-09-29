@@ -14,7 +14,7 @@
 
 * * noncircular apertures 
 
-* * * n-sided polygons
+* * * n-sided regular polygons
 
 * * * rotated ellipses
 
