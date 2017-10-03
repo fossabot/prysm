@@ -7,12 +7,12 @@ from prysm.util import share_fig_ax
 class TwoElementZoom(object):
     ''' Represents a two-element infinite conjugate zoom
     '''
-    def __init__(self, f1, f2, efl_long, efl_short):
+    def __init__(self, f1, f2, efl_short, efl_long):
         self.f1 = f1
         self.f2 = f2
-        self.long = efl_long
-        self.short = efl_short
-        self.ratio = efl_long/efl_short
+        self.short = float(efl_short)
+        self.long = float(efl_long)
+        self.ratio = self.long / self.short
 
     def l2_image_position(self, separation):
         ''' Uses the separation of the two elements to compute the second lens
@@ -154,7 +154,26 @@ class TwoElementZoomFinite(object):
         else:
             return (L - np.sqrt(d))/2
 
-    def _genpositions(self, mag, num_pts=100, root='p'):
+    def _genpositions(self, mag, root='p'):
+        ''' generates the positions of the lens elements and object as a
+            function of zoom position.
+
+        Args:
+            mag (`float` or `numpy.ndarray`): magnification(s) to generate
+                positions for.
+
+            root (`string`): positive or negative; which root in the solution
+                to provide.
+
+        Returns:
+            `tuple` containing:
+
+                `float` or `numpy.ndarray`, position(s) of the first element.
+
+                `float` or `numpy.ndarray`, position(s) of the second element.
+
+                `float` or `numpy.ndarray`, position(s) of the object.
+        '''
         M, L, f1 = mag, self.objdist, self.f1
         t = self._separation(M, root=root)
         sp = ((M-1)*t+L)/((M-1)-M*t/f1)
@@ -164,6 +183,10 @@ class TwoElementZoomFinite(object):
         return lens1pos, lens2pos, objpos
 
     def plot_posroot_soln(self, num_pts=100, ylims=None, fig=None, ax=None):
+        ''' Plots the motion of the elements for the solution associated with
+            the positive root.
+            TODO: write full docstring.
+        '''
         M = np.linspace(self.low, self.high, num_pts)
         l1p, l2p, op = self._genpositions(M, num_pts, root='p')
 
@@ -181,6 +204,10 @@ class TwoElementZoomFinite(object):
         return fig, ax
 
     def plot_negroot_soln(self, num_pts=100, ylims=None, fig=None, ax=None):
+        ''' Plots the motion of the elements for the solution associated with
+            the negative root.
+            TODO: write full docstring.
+        '''
         M = np.linspace(self.low, self.high, num_pts)
         l1p, l2p, op = self._genpositions(M, num_pts, root='n')
 
@@ -198,6 +225,10 @@ class TwoElementZoomFinite(object):
         return fig, ax
 
     def plot_both_solns(self, fig=None, axs=None):
+        ''' Plots the motion of the elements for the solution associated with
+            both the positive and negative roots.
+            TODO: write full docstring.
+        '''
         fig, axs = share_fig_ax(fig, axs, numax=2)
 
         self.plot_posroot_soln(fig=fig, ax=axs[0])
@@ -207,12 +238,21 @@ class TwoElementZoomFinite(object):
         return fig, axs
 
 def highlight_zero(data, ax):
-    try:
-        # the iterable case with multiple datas.
-        # hasattr will error if the first element of data isn't an iterable;
-        # because data is either a list or np array, we need two depths of
-        # iterability for this to behave as expected.
-        hasattr(data[0], '__iter__')
+    ''' Takes an array of y values to be plotted on an axis, if the y values
+        will cross zero, a horizontal line is added to the axis object to
+        emphasize the crossing.
+
+    Args:
+        data (`iterable`): either a single set of data (vector) or an iterable
+            containing multiple datasets.
+
+        ax (`matplotlib.pyplot.axis`): axis to potentially modify
+
+    Returns:
+        Null (no return)
+
+    '''
+    if hasattr(data[0], '__iter__'):
         drawline = False
         for datum in data:
             if min(datum) < 0:
@@ -220,6 +260,143 @@ def highlight_zero(data, ax):
 
         if drawline is True:
             ax.axhline(0, c='k', ls=':')
-    except TypeError:
+    else:
         if min(data) < 0:
             ax.axhline(0, c='k', ls=':')
+
+class ThreeElementZoom(object):
+    ''' Represents a three-element infinite conjugate zoom lens.
+    '''
+    def __init__(self, f1, f2, f3, efl_short, efl_long, len_minshift):
+        self.f1 = f1
+        self.f2 = f2
+        self.f3 = f3
+
+        self.short = float(efl_short)
+        self.long = float(efl_long)
+        self.ratio = self.long / self.short
+
+        #self.minshift = float(efl_minshift)
+        self.minlen = float(len_minshift)
+
+    def _separations(self, mag, length, root='p'):
+        ''' Returns the lens separation solution with the given root
+
+            Args:
+                mag (`float`): magnification of the lens1 image reimaged by
+                    lens 2~3
+
+                length (`float`): length of elements 2~img
+
+                root (`string`): which root to return
+
+            Returns:
+                float. separation of the two lens elements.
+
+            Notes:
+                This function is identical to the its equivalent on the two element
+                finite zoom
+        '''
+        M, f2, f3, L = mag, self.f2, self.f3, length
+        d = L**2 - 4*(L*(f2+f3) + (M-1)**2 *f2*f3/M)
+        if root.lower() in ('p', 'pos', 'positive'):
+            return (L + np.sqrt(d))/2
+        else:
+            return (L - np.sqrt(d))/2
+
+    def _genpositions(self, efl, root='p'):
+        ''' generates the positions of the lens elements and object as a
+            function of zoom position.
+
+        Args:
+            efl (`float` or `numpy.ndarray`): effective focal length(s) to
+                generate positions for.
+
+            root (`string`): positive or negative; which root in the solution
+                to provide.
+
+        Returns:
+            `tuple` containing:
+
+                `float` or `numpy.ndarray`, position(s) of the first element.
+
+                `float` or `numpy.ndarray`, position(s) of the second element.
+
+                `float` or `numpy.ndarray`, position(s) of the object.
+        '''
+        mag_high = self.long / self.f1
+        mag_low = self.short / self.f1
+        # band-aid, need a relationship between F and M.
+        try:
+            M = np.linspace(mag_low, mag_high, len(efl))
+        except TypeError:
+            if efl > self.short:
+                M = mag_high
+            else:
+                M = mag_low
+
+        length = self.minlen - self.f1
+        t = self._separations(M, length, root=root)
+        sp = ((M-1)*t+length)/((M-1)-M*t/self.f2)
+        try:
+            lens1pos = [length + self.f1] * len(M)
+        except TypeError:
+            lens1pos = length + self.f1
+        lens2pos = length + sp
+        lens3pos = length + sp - t
+        return lens1pos, lens2pos, lens3pos
+
+    def plot_posroot_soln(self, num_pts=100, ylims=None, fig=None, ax=None):
+        ''' Plots the motion of the elements for the solution associated with
+            the positive root.
+            TODO: write full docstring.
+        '''
+        F = np.linspace(self.short, self.long, num_pts)
+        l1p, l2p, l3p = self._genpositions(F, root='p')
+
+        fig, ax = share_fig_ax(fig, ax)
+        highlight_zero((l1p, l2p, l3p), ax=ax)
+
+        ax.plot(F, l1p, lw=3, label='Lens 1')
+        ax.plot(F, l2p, lw=3, label='Lens 2')
+        ax.plot(F, l3p, lw=3, label='Lens 3')
+        ax.legend()
+        ax.set(xlim=(self.short, self.long), xlabel='EFL [mm]',
+               ylim=ylims, ylabel='Distance from Image [mm]',
+               title=f'{self.short}-{self.long}mm Zoom lens')
+
+        return fig, ax
+
+    def plot_negroot_soln(self, num_pts=100, ylims=None, fig=None, ax=None):
+        ''' Plots the motion of the elements for the solution associated with
+            the negative root.
+            TODO: write full docstring.
+        '''
+        F = np.linspace(self.short, self.long, num_pts)
+        l1p, l2p, l3p = self._genpositions(F, root='n')
+
+        fig, ax = share_fig_ax(fig, ax)
+        highlight_zero((l1p, l2p, l3p), ax=ax)
+
+        ax.plot(F, l1p, lw=3, label='Lens 1')
+        ax.plot(F, l2p, lw=3, label='Lens 2')
+        ax.plot(F, l3p, lw=3, label='Lens 3')
+        ax.legend()
+        ax.set(xlim=(self.short, self.long), xlabel='EFL [mm]',
+               ylim=ylims, ylabel='Distance from Image [mm]',
+               title=f'{self.short}-{self.long}mm Zoom lens')
+
+        return fig, ax
+
+    def plot_both_solns(self, fig=None, axs=None):
+        ''' Plots the motion of the elements for the solution associated with
+            both the positive and negative roots.
+            TODO: write full docstring.
+        '''
+        fig, axs = share_fig_ax(fig, axs, numax=2)
+
+        self.plot_posroot_soln(fig=fig, ax=axs[0])
+        self.plot_negroot_soln(fig=fig, ax=axs[1])
+
+        fig.tight_layout()
+        return fig, axs
