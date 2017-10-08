@@ -118,7 +118,7 @@ def Z13(rho, phi):
 
 @jit(cache=True, nopython=True, nogil=True)
 def Z14(rho, phi):
-    return (3  * rho - 12 * rho**3 + 10 * rho**5) * cos(phi)
+    return (3  * rho - 12 * rho**3 + 10 * rho**5) * sin(phi)
 
 @jit(cache=True, nopython=True, nogil=True)
 def Z15(rho, phi):
