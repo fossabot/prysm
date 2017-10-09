@@ -37,6 +37,9 @@ class Lens(object):
 
             fov_unit (`string`): unit for field of view.  mm, degrees, etc.
 
+            wavelength (`float`): wavelength of light, in um.
+
+            samples (`float`): samples in the pupil plane used to compute wavefronts.
         '''
         efl = 1
         fno = 1
@@ -46,6 +49,7 @@ class Lens(object):
         fov_x = 0
         fov_y = 21.64
         fov_unit = 'mm'
+        wavelength = 0.55
         samples = 128
         if kwargs is not None:
             for key, value in kwargs.items():
@@ -66,6 +70,8 @@ class Lens(object):
                     fov_y = value
                 elif kl == 'fov_unit':
                     fov_unit = value
+                elif kl == 'wavelength':
+                    wavelength = value
                 elif kl == 'samples':
                     samples = value
 
@@ -91,6 +97,7 @@ class Lens(object):
         self.fov_x = fov_x
         self.fov_y = fov_y
         self.fov_unit = fov_unit
+        self.wavelength = wavelength
         self.samples = samples
 
     ####### analytically setting aberrations -----------------------------------
@@ -280,6 +287,7 @@ class Lens(object):
         return Seidel(**self.aberrations,
                       epd=self.epd,
                       h=self.fields[field_index],
+                      wavelength=self.wavelength,
                       samples=self.samples)
 
     def _make_psf(self, field_index):
@@ -339,7 +347,9 @@ class Lens(object):
         return (f'Lens with properties:\n\t'
                 f'efl: {self.efl}\n\t'
                 f'f/#: {self.fno}\n\t'
-                f'pupil mag: {self.pupil_magnification}')
+                f'pupil mag: {self.pupil_magnification}\n\t'
+                 'Aberrations:\n\t\t'
+                f'{str(self.aberrations)}')
 
 def _spherical_defocus_from_monochromatic_mtf(lens, frequencies, mtf_s, mtf_t):
     ''' Uses nonlinear optimization to set the W020, W040, W060, and W080
