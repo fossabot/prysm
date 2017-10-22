@@ -148,7 +148,18 @@ def cu_ifft2(array):
 
 # thanks, ITAR
 
-if config.backend == 'np':
-    fft2, ifft2 = np.fft.fft2, np.fft.ifft2
-elif config.backend == 'cu':
-    fft2, ifft2 = cu_fft2, cu_ifft2
+def fft2(array):
+    if config.backend == 'np':
+        return np.fft.fft2(array)
+    elif config.backend == 'cu':
+        return cu_fft2(array)
+    else:
+        raise KeyError('Invalid backend for fft')
+
+def ifft2(array):
+    if config.backend == 'np':
+        return np.fft.ifft2(array)
+    elif config.backend == 'cu':
+        return cu_ifft2(array)
+    else:
+        raise KeyError('Invalid backend for fft')
