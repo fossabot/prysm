@@ -12,6 +12,7 @@ from prysm.seidel import Seidel
 from prysm.psf import PSF
 from prysm.otf import MTF
 from prysm.util import share_fig_ax
+from prysm.thinlens import image_displacement_to_defocus
 
 class Lens(object):
     ''' Represents a lens or optical system.
@@ -226,9 +227,7 @@ class Lens(object):
         fig.tight_layout()
         return fig, axes
 
-    def plot_mtf_vs_field(self, num_pts, freqs=[10, 20, 30, 40, 50],
-                          title='MTF vs Field', minorgrid=True,
-                          fig=None, ax=None):
+    def plot_mtf_vs_field(self, num_pts, freqs=[10, 20, 30, 40, 50], title='MTF vs Field', minorgrid=True, fig=None, ax=None):
         ''' Generates a plot of the MTF vs Field for the lens.
 
         Args:
@@ -270,6 +269,25 @@ class Lens(object):
 
         return fig, ax
 
+    def plot_mtf_thrufocus(self, field_index, focus_range, numpts, freqs, fig=None, ax=None):
+        focus, mtfs = self._make_mtf_thrufocus(field_index, focus_range, numpts)
+        t = []
+        s = []
+        for mtf in mtfs:
+            t.append(mtf.exact_polar(freqs, 0))
+            s.append(mtf.exact_polar(freqs, 90))
+
+        t, s = np.asarray(t), np.asarray(s)
+        fig, ax = share_fig_ax(fig, ax)
+        for idx, freq in enumerate(freqs):
+            l, = ax.plot(focus, t[:,idx], lw=2, label=freq)
+            ax.plot(focus, s[:,idx], lw=2, ls='--', c=l.get_color())
+        ax.legend(title=r'$\nu$ [cy/mm]')
+        ax.set(xlim=(focus[0],focus[-1]),xlabel=r'Defocus [$\mu m$]',
+               ylim=(0,1), ylabel='MTF [Rel. 1.0]',
+               title='Through Focus MTF')
+
+        return fig, ax
     ####### plotting -----------------------------------------------------------
 
     ####### helpers ------------------------------------------------------------
@@ -315,6 +333,37 @@ class Lens(object):
         '''
         pp = self._make_psf(field_index=field_index)
         return MTF.from_psf(pp)
+        
+    def _make_mtf_thrufocus(self, field_index, focus_range, num_pts):
+        ''' Makes a list of MTF objects corresponding to different focus shifts
+            for the lens.  Focusrange will be applied symmetrically.
+        
+        Args:
+            field_index: (`int`): index of the desired field in the self.fields
+                iterable.
+
+            focus_range: (`float`): focus range, in microns.
+
+            num_pts (`int`): number of points to compute MTF at.  Note that for
+                and even number of points, the zero defocus point will not be
+                sampled.
+
+        Returns:
+            list of `MTF` objects.
+
+        '''
+        # todo: parallelize
+        focus_shifts = np.linspace(-focus_range, focus_range, num_pts)
+        defocus_wvs = image_displacement_to_defocus(focus_shifts, self.fno, self.wavelength)
+
+        mtfs = []
+        pupil = self._make_pupil(field_index)
+        for defocus in defocus_wvs:
+            defocus_p = Seidel(W020=defocus, epd=self.epd,
+                               samples=self.samples, wavelength=self.wavelength)
+            psf = PSF.from_pupil(pupil.merge(defocus_p), self.efl)
+            mtfs.append(MTF.from_psf(psf))
+        return focus_shifts, mtfs
 
     def _uniformly_spaced_fields(self, num_pts):
         ''' Changes the `fields` property to n evenly spaced points from 0~1.

@@ -11,7 +11,6 @@ from prysm.seidel import Seidel
 from prysm.surfacefinish import SurfaceFinish
 from prysm.psf import PSF, MultispectralPSF, RGBPSF
 from prysm.otf import MTF
-from prysm.mtftools import mtf_tan_sag_to_dataframe
 from prysm.geometry import ( gaussian, rotated_ellipse, triangle, square,
                              pentagon, hexagon, heptagon, octagon, nonagon,
                              decagon, hendecagon, dodecagon, trisdecagon )
@@ -33,7 +32,6 @@ __all__ = [
     'MultispectralPSF',
     'RGBPSF',
     'MTF',
-    'mtf_tan_sag_to_dataframe',
     'Lens',
     'gaussian',
     'rotated_ellipse',
