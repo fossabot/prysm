@@ -3,6 +3,17 @@
     utilize more high performance engines if they have them installed, or fall
     back to more widely available options in the case that they do not.
 '''
+from math import (
+    sin,
+    cos,
+    tan,
+    atan2,
+    sqrt,
+    exp,
+    pi,
+    nan,
+)
+
 from prysm.conf import config
 
 # numpy funcs
