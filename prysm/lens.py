@@ -261,7 +261,7 @@ class Lens(object):
         if minorgrid is True:
             ax.set_yticks([0.1, 0.3, 0.5, 0.7, 0.9], minor=True)
             ax.grid(True, which='minor')
-        
+
         ax.set(xlim=(0,self.fov_y), xlabel='Image Height [mm]',
                ylim=(0,1), ylabel='MTF [Rel. 1.0]',
                title=title)
@@ -333,11 +333,11 @@ class Lens(object):
         '''
         pp = self._make_psf(field_index=field_index)
         return MTF.from_psf(pp)
-        
+
     def _make_mtf_thrufocus(self, field_index, focus_range, num_pts):
         ''' Makes a list of MTF objects corresponding to different focus shifts
             for the lens.  Focusrange will be applied symmetrically.
-        
+
         Args:
             field_index: (`int`): index of the desired field in the self.fields
                 iterable.
@@ -364,6 +364,25 @@ class Lens(object):
             psf = PSF.from_pupil(pupil.merge(defocus_p), self.efl)
             mtfs.append(MTF.from_psf(psf))
         return focus_shifts, mtfs
+
+    def _make_mtf_vs_field_vs_focus(self, num_fields, focus_range, num_focus, freqs):
+        ''' TODO: docstring
+        '''
+        self._uniformly_spaced_fields(num_fields)
+        net_mtfs = [None] * num_fields
+        for idx in range(num_fields):
+            focus, net_mtfs[idx] = self._make_mtf_thrufocus(idx, focus_range, num_focus)
+
+        fields = (self.fields[-1] * self.fov_y) * np.linspace(0,1,num_fields)
+        t_cube = np.empty((num_focus, num_fields, len(freqs)))
+        s_cube = np.empty((num_focus, num_fields, len(freqs)))
+        for idx, mtfs in enumerate(net_mtfs):
+            for idx2, submtf in enumerate(mtfs):
+                t = submtf.exact_polar(freqs, 0)
+                s = submtf.exact_polar(freqs, 90)
+                t_cube[idx2,idx,:] = t
+                s_cube[idx2,idx,:] = s
+        return t_cube, s_cube, focus, fields, freqs
 
     def _uniformly_spaced_fields(self, num_pts):
         ''' Changes the `fields` property to n evenly spaced points from 0~1.
