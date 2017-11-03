@@ -14,12 +14,10 @@ from math import (
     nan,
 )
 
+import numpy as np
+
 from prysm.conf import config
 
-# numpy funcs
-import numpy as np
-#from numpy import cos, sin
-#from numpy.fft import fft2, ifft2, fftshift, ifftshift
 
 # numba funcs, cuda
 try:
@@ -30,9 +28,7 @@ except ImportError:
     def jit(signature_or_function=None, locals={}, target='cpu', cache=False, **options):
         return signature_or_function
 
-from pyculib.fft import FFTPlan, fft, fft_inplace, ifft, ifft_inplace
-from pyculib.fft import binding as cuda_bind
-
+from pyculib.fft import FFTPlan
 
 ###### CUDA code ---------------------------------------------------------------
 
@@ -97,7 +93,7 @@ def cu_fft2(array):
     Returns:
         (`numpy.ndarray`): a new ndarray that is the FT of the input array
     '''
-    
+
     hashstr = str(array.shape) + str(array.dtype) + str(cuda_out_map[array.dtype])
 
     # Cast the array to a complex one, because real -> complex ffts from cuFFT
@@ -116,8 +112,8 @@ def cu_fft2(array):
         _plans[hashstr].forward(d_arr, out=d_rslt)
     except KeyError:
         _plans[hashstr] = FFTPlan(shape=array.shape,
-                               itype=array.dtype,
-                               otype=cuda_out_map[array.dtype])
+                                  itype=array.dtype,
+                                  otype=cuda_out_map[array.dtype])
         _plans[hashstr].forward(d_arr, out=d_rslt)
 
     # rslt and d_dslt are pinned to each other in the cuda api.  The data will
@@ -147,8 +143,8 @@ def cu_ifft2(array):
         _plans[hashstr].inverse(d_arr, out=d_rslt)
     except KeyError:
         _plans[hashstr] = FFTPlan(shape=array.shape,
-                               itype=array.dtype,
-                               otype=cuda_out_map[array.dtype])
+                                  itype=array.dtype,
+                                  otype=cuda_out_map[array.dtype])
         _plans[hashstr].inverse(d_arr, out=d_rslt)
     d_rslt.copy_to_host(rslt)
     return rslt

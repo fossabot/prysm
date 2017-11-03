@@ -124,7 +124,8 @@ def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
 
         ax (pyplot.axis): axis or array of axes.
 
-        numax (int): number of axes in the desired figure.  1 for most plots, 3 for plot_fourier_chain.
+        numax (int): number of axes in the desired figure.
+                     1 for most plots, 3 for plot_fourier_chain.
 
     Returns:
         pyplot.figure:  A figure object.

@@ -436,7 +436,8 @@ class FringeZernike(Pupil):
 
         Notes:
             Supports multiple syntaxes:
-                - args: pass coefficients as a list, including terms up to the highest given Z-index.
+                - args: pass coefficients as a list, including terms up to
+                        the highest given Z-index.
                         e.g. passing [1,2,3] will be interpreted as Z0=1, Z1=2, Z3=3.
 
                 - kwargs: pass a named set of zernike terms.
@@ -444,7 +445,7 @@ class FringeZernike(Pupil):
 
             Supports normalization and unit conversion, can pass kwargs:
                 - rms_norm=True: coefficients have unit rms value
-                
+
                 - opd_unit='nm': coefficients are expressed in units of nm
 
             The kwargs syntax overrides the args syntax.
@@ -542,7 +543,7 @@ class FringeZernike(Pupil):
         return f'{header}{body}{footer}'
 
 def fit(data, num_terms=len(zernfcns), normalize=False):
-    ''' Fits a number of zernike coefficients to provided data by minimizing 
+    ''' Fits a number of zernike coefficients to provided data by minimizing
     the root sum square between each coefficient and the given data.  The data
     should be uniformly sampled in an x,y grid.
 

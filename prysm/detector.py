@@ -2,12 +2,10 @@
 '''
 import numpy as np
 
-from scipy.misc import imsave
-
 from prysm.conf import config
 from prysm.psf import PSF
 from prysm.objects import Image
-from prysm.util import is_odd, share_fig_ax
+from prysm.util import is_odd
 
 class Detector(object):
     def __init__(self, pixel_size, resolution=(1024,1024), nbits=14):
@@ -170,7 +168,7 @@ class OLPF(PSF):
         space_y = width_y / 2
         shift_x = int(space_x // sample_spacing)
         shift_y = int(space_y // sample_spacing)
-        center_x  = samples_x // 2
+        center_x = samples_x // 2
         center_y = samples_y // 2
 
         data = np.zeros((samples_x, samples_y))
@@ -194,7 +192,7 @@ class OLPF(PSF):
 
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.cos(2 * xq * self.width_x / 1e3) * \
+        return (np.cos(2 * xq * self.width_x / 1e3) *
                 np.cos(2 * yq * self.width_y / 1e3)).astype(config.precision)
 
 class PixelAperture(PSF):
@@ -251,7 +249,7 @@ class PixelAperture(PSF):
 
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.sinc(xq*self.size_x/1e3) * \
+        return (np.sinc(xq*self.size_x/1e3) *
                 np.sinc(yq*self.size_y/1e3)).astype(config.precision)
 
 def generate_mtf(pixel_aperture=1, azimuth=0, num_samples=128):
