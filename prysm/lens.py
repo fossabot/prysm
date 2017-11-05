@@ -13,6 +13,7 @@ from prysm.psf import PSF
 from prysm.otf import MTF
 from prysm.util import share_fig_ax
 from prysm.thinlens import image_displacement_to_defocus
+from prysm.mtf_utils import MTFDataCube
 
 class Lens(object):
     ''' Represents a lens or optical system.
@@ -382,7 +383,10 @@ class Lens(object):
                 s = submtf.exact_polar(freqs, 90)
                 t_cube[idx2,idx,:] = t
                 s_cube[idx2,idx,:] = s
-        return t_cube, s_cube, focus, fields, freqs
+
+        TCube = MTFDataCube(data=t_cube, focus=focus, field=fields, freq=freqs, azimuth='Tan')
+        SCube = MTFDataCube(data=s_cube, focus=focus, field=fields, freq=freqs, azimuth='Sag')
+        return TCube, SCube
 
     def _uniformly_spaced_fields(self, num_pts):
         ''' Changes the `fields` property to n evenly spaced points from 0~1.

@@ -4,6 +4,8 @@
     back to more widely available options in the case that they do not.
 '''
 from math import (
+    floor,
+    ceil,
     sin,
     cos,
     tan,

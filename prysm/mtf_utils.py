@@ -1,0 +1,208 @@
+''' Utilities for working with MTF data
+'''
+
+import numpy as np
+import pandas as pd
+
+from prysm.mathops import floor, ceil
+from prysm.util import correct_gamma, share_fig_ax
+
+class MTFDataCube(object):
+    ''' abstract object representing a cube of MTF vs Field vs Focus data
+    '''
+    def __init__(self, data, focus, field, freq, azimuth):
+        ''' Creates a new MTFDataCube
+
+        Args:
+            data (`numpy.ndarray`): 3D array in the sahape (focus,field,freq)
+
+            focus (`iterable`): 1D set of the column units, in microns.
+
+            field (`iterable`): 1D set of the row units, in any units.
+
+            freq (`iterable`): 1D set of the z axis units, in cy/mm.
+
+            azimuth: `string` or `float`: azimuth this data cube is
+                associated with.
+
+        Returns:
+            `MTFDataCube`: new data cube.
+        '''
+        self.data = data
+        self.focus = focus
+        self.field = field
+        self.freq = freq
+        self.azimuth = azimuth
+
+    def plot2d(self, freq, symmetric=False, contours=True, interp_method='lanczos', fig=None, ax=None):
+        ''' Creates a 2D plot of the cube, an "MTF vs Field vs Focus" plot.
+
+        Args:
+            freq (`float`): frequency to plot, will be rounded to the closest
+                value present in the self.freq iterable.
+
+            symmetric (`bool`): make the plot symmetric by mirroring it about
+                the x-axis origin.
+
+            contours (`bool`): plot contours, yes or no (T/F).
+
+            interp_method (`string`): interpolation method used for the plot.
+
+            fig (`matplotlib.figure.Figure`): Figure to plot inside.
+
+            ax (`matplotlib.axes.Axis`): Axis to plot inside.
+
+        Returns:
+            `tuple` containing:
+
+                `matplotlib.figure.Figure`: figure containing the plot.
+
+                `matplotlib.axes.Axis`: axis containing the plot.
+        '''
+        ext_x = [self.field[0], self.field[-1]]
+        ext_y = [self.focus[0], self.focus[-1]]
+        freq_idx = np.searchsorted(self.freq, freq)
+
+        # if the plot is symmetric, mirror the data
+        if symmetric is True:
+            dat = correct_gamma(
+                np.concatenate((
+                    self.data[:, ::-1, freq_idx],
+                    self.data[:, :, freq_idx]),
+                    axis=1))
+            ext_x[0] = ext_x[1] * -1
+        else:
+            dat = correct_gamma(self.data[:, :, freq_idx])
+
+        ext = [ext_x[0], ext_x[1], ext_y[0], ext_y[1]]
+
+        fig, ax = share_fig_ax(fig, ax)
+        im = ax.imshow(dat,
+                       extent=ext,
+                       origin='lower',
+                       cmap='inferno',
+                       clim=(0, 1),
+                       interpolation=interp_method,
+                       aspect='auto')
+
+        if contours is True:
+            contours = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+            cs = ax.contour(dat, contours, colors='0.15', linewidths=0.75, extent=ext)
+            ax.clabel(cs, fmt='%1.1f', rightside_up=True)
+        fig.colorbar(im, label='MTF [Rel. 1.0]', ax=ax, fraction=0.046)
+        ax.set(xlim=(ext_x[0], ext_x[1]), xlabel='Image Height [mm]',
+               ylim=(ext_y[0], ext_y[1]), ylabel=r'Focus [$\mu$m]')
+        return fig, ax
+
+    def trace_focus(self, algorithm='avg'):
+        ''' finds the focus position in each field.  This is, in effect, the
+            "field curvature" for this azimuth.
+
+        Args:
+            algorithm (`str): algorithm to use to trace focus, currently only
+                supports '0.5', see notes for a description of this technique.
+
+        Returns:
+            `numpy.ndarray`: focal surface sag, in microns, vs field.
+
+        Notes:
+            Algorithm '0.5' uses the frequency that has its peak closest to 0.5
+            to estimate the focus coresponding to the minimum RMS wavefront
+            error condition.  This is based on the following assumptions:
+                * Any combination of third, fifth, and seventh order spherical
+                    aberration will produce a focus shift that depends on
+                    frequency, and this dependence can be well fit by an
+                    equatio of the form y(x) = ax^2 + bx + c.  If this is true,
+                    then the frequency which peaks at 0.5 will be near the
+                    vertex of the quadratic, which converges to the min RMS WFE
+                    condition.
+
+                * Coma, while it enhances depth of field, does not shift the
+                    focus peak.
+
+                * Astigmatism and field curvature are the dominant cause of any
+                    shift in best focus with field.
+
+                * Chromatic aberrations do not influence the thru-focus MTF peak
+                    in a way that varies with field.
+
+        '''
+        if algorithm == '0.5':
+            # fast, vectorized algorithm -- includes prescaling not implemented
+            # todo: implement prescaling for coma, lateral color robustness
+            idx = abs(self.data.max(axis=0)-0.5).argmin(1)
+            focus_idx = self.data[:, np.arange(self.data.shape[1]), idx].argmax(0)
+            return self.focus[focus_idx], self.field
+            # equivalent for loop
+            # cols, rows, zs = self.data.shape
+            # result = []
+            # for i in range(rows):
+            #     # for each field point, make an intermediate array that is 2D
+            #     # with focus,frequency dimensions
+            #     arr = self.data[:,i,:]
+            #     # compute the thru-focus max and find the peak closest to 0.5
+            #     maxs = np.max(arr, axis=0)
+            #     max_manip = abs(maxs-0.5)
+            #     freq_idx = np.argmin(max_manip)
+            #     arr2 = self.data[:,i,freq_idx]
+            #     focus_idx = np.argmax(arr2)
+        elif algorithm.lower() in ('avg', 'average'):
+            if self.freq[0] == 0:
+                # if the zero frequency is included, exclude it from our calculations
+                avg_idxs = self.data.argmax(axis=0)[:, 1:].mean(axis=1)
+            else:
+                avg_idxs = self.data.argmax(axis=0).mean(axis=1)
+
+            focus_out = avg_idxs.copy()
+            for i, idx in enumerate(avg_idxs):
+                li, ri = floor(idx), ceil(idx)
+                part = idx % 1
+                lf, rf = self.focus[li], self.focus[ri]
+                diff = rf-lf
+                focus_out[i] = lf + diff*part
+
+            return focus_out, self.field
+        else:
+            raise ValueError('0.5 is only algorithm supported')
+
+def mtf_ts_extractor(mtf, freqs):
+    ''' Extracts the T and S MTF from a PSF object.
+    '''
+    tan = mtf.exact_polar(freqs=freqs, azimuths=0)
+    sag = mtf.exact_polar(freqs=freqs, azimuths=90)
+    return tan, sag
+
+def mtf_ts_to_dataframe(tan, sag, freqs, field=0, focus=0):
+    ''' Creates a Pandas dataframe from tangential and sagittal MTF data.
+
+    Args:
+        tan (`numpy.ndarray`): vector of tangential MTF data.
+
+        sag (`numpy.ndarray`): vector of sagittal MTF data.
+
+        freqs (`iterable`): vector of spatial frequencies for the data.
+
+        field (`float`): relative field associated with the data.
+
+        focus (`float`): focus offset (um) associated with the data.
+
+    Returns:
+        pandas dataframe.
+
+    '''
+    rows = []
+    for f, s, t in zip(freqs, tan, sag):
+        base_dict = {
+            'Field': field,
+            'Focus': focus,
+            'Freq': f,
+        }
+        rows.append({**base_dict, **{
+            'Azimuth': 'Tan',
+            'MTF': t,
+            }})
+        rows.append({**base_dict, **{
+            'Azimuth': 'Sag',
+            'MTF': s,
+            }})
+    return pd.DataFrame(data=rows)
