@@ -140,11 +140,11 @@ def Z17(rho, phi):
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z18(rho, phi):
-    return (5 * rho**5 -4* rho**3) * cos(3*phi)
+    return (5 * rho**5 -4 * rho**3) * cos(3*phi)
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z19(rho, phi):
-    return (5 * rho**5 -4* rho**3) * sin(3*phi)
+    return (5 * rho**5 -4 * rho**3) * sin(3*phi)
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z20(rho, phi):
@@ -164,7 +164,7 @@ def Z23(rho, phi):
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z24(rho, phi):
-    return 70 * rho ** 8 - 140 * rho **6 + 90 * rho **4  - 20 * rho **2 + 1
+    return 70 * rho**8 - 140 * rho**6 + 90 * rho**4  - 20 * rho**2 + 1
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z25(rho, phi):
@@ -192,11 +192,11 @@ def Z30(rho, phi):
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z31(rho, phi):
-    return (10 * rho ** 2 - 30 * rho**4 + 21 * rho**6) * cos(2*phi)
+    return (10 * rho**2 - 30 * rho**4 + 21 * rho**6) * cos(2*phi)
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z32(rho, phi):
-    return (10 * rho ** 2 - 30 * rho**4 + 21 * rho**6) * sin(2*phi)
+    return (10 * rho**2 - 30 * rho**4 + 21 * rho**6) * sin(2*phi)
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z33(rho, phi):
@@ -210,10 +210,10 @@ def Z34(rho, phi):
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z35(rho, phi):
-    return 252 * rho ** 10 \
-        - 630 * rho ** 8 \
-        + 560 * rho ** 6 \
-        - 210 * rho ** 4 \
+    return 252 * rho**10 \
+        - 630 * rho**8 \
+        + 560 * rho**6 \
+        - 210 * rho**4 \
         + 30 * rho**2 \
         - 1
 
@@ -575,8 +575,7 @@ def fit(data, num_terms=len(zernfcns), normalize=False):
         coefficients.append(cm)
 
     if normalize:
-        norms_raw = _normalizations[0:num_terms]
-        norms = np.asarray([eval(norm) for norm in norms_raw])
+        norms = np.asarray(_normalizations[0:num_terms])
         coefficients = np.asarray(coefficients)
         return norms * coefficients
     else:
