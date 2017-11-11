@@ -246,11 +246,22 @@ class Pupil(object):
         self.fcn = exp(1j * 2 * pi / self.wavelength * self.phase)
         return self
 
-    def clip(self):
-        ''' Clips outside the circular boundary of the pupil
+    def clip(self, normalized_radius=1):
+        ''' Clips outside the circular boundary of the pupil.
+
+        Args:
+            normalized_radius (`float`): normalized_radius to clip at.
+
+        Returns:
+            `tuple` containing:
+
+                `numpy.ndarray`: phase of the pupil.
+
+                `numpy.ndarray`: complex representation of the pupil.
+
         '''
-        self.phase[self.rho > 1] = nan
-        self.fcn[self.rho > 1] = 0
+        self.phase[self.rho > normalized_radius] = nan
+        self.fcn[self.rho > normalized_radius] = 0
         return self.phase, self.fcn
 
     def mask(self, mask):
@@ -270,7 +281,7 @@ class Pupil(object):
         return self
 
     def merge(self, pupil2):
-        ''' Merges this pupil with another
+        ''' Merges this pupil with another.
 
         Args:
             pupil2 (:class:`Pupil`): pupil with same sampling and OPD units as this one
@@ -280,6 +291,14 @@ class Pupil(object):
 
         '''
         return merge_pupils(self, pupil2)
+
+    def clone(self):
+        ''' Creates a copy of this pupil.
+        '''
+        props = deepcopy(self.__dict__)
+        retpupil = Pupil()
+        retpupil.__dict__ = props
+        return retpupil
 
     def _gengrid(self):
         '''Generates a uniform (x,y) grid and maps it to (rho,phi) coordinates for zernike eval
@@ -298,6 +317,26 @@ class Pupil(object):
             self.phase *= waves_to_nanometers(self.wavelength)
         return self
 
+    def stopdown(self, new_epd):
+        ''' Simulates stopping a lens down by applying a circular mask to the
+            pupil, truncating its periphery.
+
+        Args:
+            new_epd (`float`): new diameter of the pupil.
+
+        Returns:
+            `Pupil`. new pupil with modified phase and function arrays.
+
+        Notes:
+            Arrays will not change size -- pupil will become padded and require
+            a lesser padding parameter during a PSF calculation to remain
+            nyquist sampled.
+
+        '''
+        p = self.clone()
+        radius = new_epd / self.epd
+        p.clip(radius)
+        return p
     # meat 'n potatoes ---------------------------------------------------------
 
 def convert_phase(array, pupil):
@@ -335,9 +374,7 @@ def merge_pupils(pupil1, pupil2):
         raise ValueError('Pupils must be identically sampled')
 
     # create a new pupil and copy Pupil1's dictionary into it
-    props = deepcopy(pupil1.__dict__)
-    retpupil = Pupil()
-    retpupil.__dict__ = props
+    retpupil = pupil1.clone()
 
     retpupil.phase = pupil1.phase + pupil2.phase
     retpupil.fcn = exp(1j * 2 * pi / retpupil.wavelength * retpupil.phase)
