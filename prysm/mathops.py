@@ -9,17 +9,17 @@ from math import (
     sin,
     cos,
     tan,
-    atan2,
-    sqrt,
     exp,
     pi,
     nan,
 )
+from numpy import sqrt, arctan2
+
+atan2 = arctan2
 
 import numpy as np
 
 from prysm.conf import config
-
 
 # numba funcs, cuda
 try:
