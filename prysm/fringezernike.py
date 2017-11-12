@@ -14,6 +14,8 @@ from prysm.mathops import (
 from prysm.pupil import Pupil
 
 from numba import jit, vectorize
+
+from scipy.optimize import minimize
 _names = (
     'Z0  - Piston / Bias',
     'Z1  - Tilt X',
@@ -544,10 +546,13 @@ class FringeZernike(Pupil):
 
 def fit(data, num_terms=len(zernfcns), normalize=False):
     ''' Fits a number of zernike coefficients to provided data by minimizing
-    the root sum square between each coefficient and the given data.  The data
-    should be uniformly sampled in an x,y grid.
+        the root sum square between each coefficient and the given data.  The
+        data should be uniformly sampled in an x,y grid.
 
     Args:
+
+        data (`numpy.ndarray`): data to fit to.
+
         num_terms (int): number of terms to fit, fits terms 0~num_terms.
 
         normalize (bool): if true, normalize coefficients to unit RMS value.
@@ -559,9 +564,9 @@ def fit(data, num_terms=len(zernfcns), normalize=False):
     if num_terms > len(zernfcns):
         raise ValueError(f'number of terms must be less than {len(zernfcns)}')
     sze = data.shape
-    x, y = np.linspace(-1, 1, sze[0]), np.linspace(-1, 1, sze[1])
-    xv, yv = np.meshgrid(x,y)
-    rho = sqrt(xv**2, yv**2)
+    x, y = np.linspace(-1, 1, sze[1]), np.linspace(-1, 1, sze[0])
+    xv, yv = np.meshgrid(x, y)
+    rho = sqrt(xv**2 + yv**2)
     phi = atan2(yv, xv)
 
     # enforce circularity of the pupil
@@ -569,14 +574,34 @@ def fit(data, num_terms=len(zernfcns), normalize=False):
 
     coefficients = []
     for i in range(num_terms):
-        term_component = zernfcns[i]
-        term_component[rho>1] = 0
-        cm = sum(sum(data*term_component))*4/sze[0]/sze[1]/pi
+        term_component = zernwrapper(i, True, normalize, rho, phi)
+        term_component[rho > 1] = 0
+        cm = (data*term_component).sum()*4/sze[0]/sze[1]/pi
         coefficients.append(cm)
 
     if normalize:
         norms = np.asarray(_normalizations[0:num_terms])
         coefficients = np.asarray(coefficients)
-        return norms * coefficients
+        return coefficients / norms
     else:
         return np.asarray(coefficients)
+
+def fit2(data, normalize=False):
+    ''' Uses nonlinear optimization to fit zernikes to a wavefront.
+    '''
+    def optfcn(parameters):
+        p = FringeZernike(parameters)
+        #non_nan1 = np.isfinite(p.phase)
+        #non_nan2 = np.isfinite(data)
+        #return ((p.phase[non_nan1] - data[non_nan2])**2).sum()
+        return ((p.fcn-data)**2).sum()
+
+    start = [0] * 48
+    result = minimize(optfcn, x0=start)
+    print(result)
+    return result.x
+
+def fit3(data, normalize=False):
+    ''' Uses matrix operations to find the best fit fringe zernike coefficients
+        for a wavefront.
+    '''
