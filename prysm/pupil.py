@@ -3,12 +3,9 @@
 from copy import deepcopy
 
 from numpy import (
-    nan, pi,
-    arctan2, cos, sin,
-    sqrt, exp,
     empty, ones,
     linspace, meshgrid,
-    floor, isfinite,
+    isfinite,
 )
 
 from matplotlib import pyplot as plt
@@ -19,6 +16,10 @@ from prysm.coordinates import cart_to_polar
 from prysm.units import (
     waves_to_microns, waves_to_nanometers,
     microns_to_waves, nanometers_to_waves,
+)
+from prysm.mathops import (
+    nan, pi,
+    exp,
 )
 
 class Pupil(object):

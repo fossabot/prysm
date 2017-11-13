@@ -9,11 +9,14 @@ from math import (
     sin,
     cos,
     tan,
-    exp,
     pi,
     nan,
 )
-from numpy import sqrt, arctan2
+from numpy import (
+    sqrt,
+    arctan2,
+    exp,
+)
 
 atan2 = arctan2
 
