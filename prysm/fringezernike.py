@@ -568,15 +568,19 @@ def fit(data, num_terms=len(zernfcns), normalize=False):
     xv, yv = np.meshgrid(x, y)
     rho = sqrt(xv**2 + yv**2)
     phi = atan2(yv, xv)
+    valid_pts = np.isfinite(data)
 
-    # enforce circularity of the pupil
-    data[rho > 1] = 0
+    radii = rho[sze[0] // 2, :]
+    truths = radii < 1
+    first, last = np.searchsorted(truths, True), len(truths)-np.searchsorted(truths[::-1], True)
+    r1, r2 = radii[first], radii[last]
+    radius = (r1+r2)/2
+    C = 2*radius*pi
 
     coefficients = []
     for i in range(num_terms):
         term_component = zernwrapper(i, True, normalize, rho, phi)
-        term_component[rho > 1] = 0
-        cm = (data*term_component).sum()*4/sze[0]/sze[1]/pi
+        cm = (data[valid_pts]*term_component[valid_pts]).sum()/sze[0]/sze[1]*C
         coefficients.append(cm)
 
     if normalize:
@@ -585,23 +589,3 @@ def fit(data, num_terms=len(zernfcns), normalize=False):
         return coefficients / norms
     else:
         return np.asarray(coefficients)
-
-def fit2(data, normalize=False):
-    ''' Uses nonlinear optimization to fit zernikes to a wavefront.
-    '''
-    def optfcn(parameters):
-        p = FringeZernike(parameters)
-        #non_nan1 = np.isfinite(p.phase)
-        #non_nan2 = np.isfinite(data)
-        #return ((p.phase[non_nan1] - data[non_nan2])**2).sum()
-        return ((p.fcn-data)**2).sum()
-
-    start = [0] * 48
-    result = minimize(optfcn, x0=start)
-    print(result)
-    return result.x
-
-def fit3(data, normalize=False):
-    ''' Uses matrix operations to find the best fit fringe zernike coefficients
-        for a wavefront.
-    '''
