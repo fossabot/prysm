@@ -9,7 +9,6 @@ from prysm.mathops import (
     cos,
     atan2,
     sqrt,
-    pi,
 )
 from prysm.pupil import Pupil
 
@@ -121,11 +120,11 @@ def Z12(rho, phi):
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z13(rho, phi):
-    return (3  * rho - 12 * rho**3 + 10 * rho**5) * cos(phi)
+    return (3 * rho - 12 * rho**3 + 10 * rho**5) * cos(phi)
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z14(rho, phi):
-    return (3  * rho - 12 * rho**3 + 10 * rho**5) * sin(phi)
+    return (3 * rho - 12 * rho**3 + 10 * rho**5) * sin(phi)
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z15(rho, phi):
@@ -141,11 +140,11 @@ def Z17(rho, phi):
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z18(rho, phi):
-    return (5 * rho**5 -4 * rho**3) * cos(3*phi)
+    return (5 * rho**5 - 4 * rho**3) * cos(3*phi)
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z19(rho, phi):
-    return (5 * rho**5 -4 * rho**3) * sin(3*phi)
+    return (5 * rho**5 - 4 * rho**3) * sin(3*phi)
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z20(rho, phi):
@@ -165,7 +164,7 @@ def Z23(rho, phi):
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z24(rho, phi):
-    return 70 * rho**8 - 140 * rho**6 + 90 * rho**4  - 20 * rho**2 + 1
+    return 70 * rho**8 - 140 * rho**6 + 90 * rho**4 - 20 * rho**2 + 1
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z25(rho, phi):
@@ -273,12 +272,12 @@ def Z47(rho, phi):
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z48(rho, phi):
     return 924 * rho**12 \
-       - 2772 * rho**10 \
-       + 3150 * rho**8 \
-       - 1680 * rho**6 \
-       + 420 * rho**4 \
-       - 42 * rho**2 \
-       + 1
+        - 2772 * rho**10 \
+        + 3150 * rho**8 \
+        - 1680 * rho**6 \
+        + 420 * rho**4 \
+        - 42 * rho**2 \
+        + 1
 
 zernfcns = {
     0.0: Z0,
@@ -430,7 +429,7 @@ class FringeZernike(Pupil):
             base (`int`): 0 or 1, adjusts the base index of the polynomial
                 expansion.
 
-            Zx (`float`): xth fringe zernike coefficient, in range [0,35], 0-base.
+            Zx (`float`): xth fringe zernike coefficient, in range [0,48], 0-base.
 
         Returns:
             FringeZernike.  A new :class:`FringeZernike` pupil instance.
@@ -566,7 +565,6 @@ def fit(data, num_terms=16, normalize=False, round_at=6):
         raise ValueError(f'number of terms must be less than {len(zernfcns)}')
     # precompute the valid indexes in the original data
     pts = np.isfinite(data)
-    sze = data.shape
     # set up an x/y rho/phi grid to evaluate zernikes on
     x, y = np.linspace(-1, 1, data.shape[1]), np.linspace(-1, 1, data.shape[0])
     xv, yv = np.meshgrid(x, y)
