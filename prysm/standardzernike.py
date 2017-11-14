@@ -63,7 +63,7 @@ _names = (
 
 @jit(cache=True)
 def Z0(rho, phi):
-    return np.zeros(rho.shape)
+    return np.ones(rho.shape)
 
 @jit(cache=True, nopython=True, nogil=True)
 def Z1(rho, phi):

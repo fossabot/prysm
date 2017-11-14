@@ -13,9 +13,8 @@ from prysm.mathops import (
 )
 from prysm.pupil import Pupil
 
-from numba import jit, vectorize
+from numba import vectorize
 
-from scipy.optimize import minimize
 _names = (
     'Z0  - Piston / Bias',
     'Z1  - Tilt X',
@@ -70,7 +69,7 @@ _names = (
 
 @jit
 def Z0(rho, phi):
-    return np.zeros(rho.shape)
+    return np.ones(rho.shape)
 
 @vectorize(['float32(float32, float32)', 'float64(float64, float64)'], target='cpu')
 def Z1(rho, phi):
@@ -419,19 +418,19 @@ class FringeZernike(Pupil):
         ''' Creates a FringeZernike Pupil object.
 
         Args:
-            samples (int): number of samples across pupil diameter.
+            samples (`int`): number of samples across pupil diameter.
 
-            wavelength (float): wavelength of light, in um.
+            wavelength (`float`): wavelength of light, in um.
 
-            epd: (float): diameter of the pupil, in mm.
+            epd: (`float`): diameter of the pupil, in mm.
 
-            opd_unit (string): unit OPD is expressed in.  One of:
+            opd_unit (`string`): unit OPD is expressed in.  One of:
                 ($\lambda$, waves, $\mu m$, microns, um, nm , nanometers).
 
             base (`int`): 0 or 1, adjusts the base index of the polynomial
                 expansion.
 
-            Zx (float): xth fringe zernike coefficient, in range [0,35], 0-base.
+            Zx (`float`): xth fringe zernike coefficient, in range [0,35], 0-base.
 
         Returns:
             FringeZernike.  A new :class:`FringeZernike` pupil instance.
@@ -553,9 +552,9 @@ def fit(data, num_terms=len(zernfcns), normalize=False):
 
         data (`numpy.ndarray`): data to fit to.
 
-        num_terms (int): number of terms to fit, fits terms 0~num_terms.
+        num_terms (`int`): number of terms to fit, fits terms 0~num_terms.
 
-        normalize (bool): if true, normalize coefficients to unit RMS value.
+        normalize (`bool`): if true, normalize coefficients to unit RMS value.
 
     Returns:
         numpy.ndarray: an array of coefficients matching the input data.
