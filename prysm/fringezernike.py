@@ -543,7 +543,7 @@ class FringeZernike(Pupil):
         footer = f'\n\t{self.pv:.3f} PV, {self.rms:.3f} RMS'
         return f'{header}{body}{footer}'
 
-def fit(data, num_terms=len(zernfcns), normalize=False):
+def fit(data, num_terms=16, normalize=False, round_at=6):
     ''' Fits a number of zernike coefficients to provided data by minimizing
         the root sum square between each coefficient and the given data.  The
         data should be uniformly sampled in an x,y grid.
@@ -556,35 +556,25 @@ def fit(data, num_terms=len(zernfcns), normalize=False):
 
         normalize (`bool`): if true, normalize coefficients to unit RMS value.
 
+        round_at (`int`): decimal place to round values at.
+
     Returns:
         numpy.ndarray: an array of coefficients matching the input data.
 
     '''
     if num_terms > len(zernfcns):
         raise ValueError(f'number of terms must be less than {len(zernfcns)}')
+    # precompute the valid indexes in the original data
+    pts = np.isfinite(data)
     sze = data.shape
-    x, y = np.linspace(-1, 1, sze[1]), np.linspace(-1, 1, sze[0])
+    # set up an x/y rho/phi grid to evaluate zernikes on
+    x, y = np.linspace(-1, 1, data.shape[1]), np.linspace(-1, 1, data.shape[0])
     xv, yv = np.meshgrid(x, y)
-    rho = sqrt(xv**2 + yv**2)
-    phi = atan2(yv, xv)
-    valid_pts = np.isfinite(data)
-
-    radii = rho[sze[0] // 2, :]
-    truths = radii < 1
-    first, last = np.searchsorted(truths, True), len(truths)-np.searchsorted(truths[::-1], True)
-    r1, r2 = radii[first], radii[last]
-    radius = (r1+r2)/2
-    C = 2*radius*pi
-
-    coefficients = []
+    rho = sqrt(xv**2 + yv**2)[pts].flatten()
+    phi = atan2(yv, xv)[pts].flatten()
+    zernikes = []
     for i in range(num_terms):
-        term_component = zernwrapper(i, True, normalize, rho, phi)
-        cm = (data[valid_pts]*term_component[valid_pts]).sum()/sze[0]/sze[1]*C
-        coefficients.append(cm)
-
-    if normalize:
-        norms = np.asarray(_normalizations[0:num_terms])
-        coefficients = np.asarray(coefficients)
-        return coefficients / norms
-    else:
-        return np.asarray(coefficients)
+        zernikes.append(zernwrapper(i, True, normalize, rho, phi))
+    zerns = np.asarray(zernikes).T
+    coefs = np.linalg.lstsq(zerns, data[pts].flatten())[0]
+    return coefs.round(round_at)
