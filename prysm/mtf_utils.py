@@ -89,6 +89,7 @@ class MTFDataCube(object):
             contours = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
             cs = ax.contour(dat, contours, colors='0.15', linewidths=0.75, extent=ext)
             ax.clabel(cs, fmt='%1.1f', rightside_up=True)
+
         fig.colorbar(im, label='MTF [Rel. 1.0]', ax=ax, fraction=0.046)
         ax.set(xlim=(ext_x[0], ext_x[1]), xlabel='Image Height [mm]',
                ylim=(ext_y[0], ext_y[1]), ylabel=r'Focus [$\mu$m]')
@@ -153,12 +154,13 @@ class MTFDataCube(object):
             else:
                 avg_idxs = self.data.argmax(axis=0).mean(axis=1)
 
+            # account for fractional indexes
             focus_out = avg_idxs.copy()
             for i, idx in enumerate(avg_idxs):
                 li, ri = floor(idx), ceil(idx)
-                part = idx % 1
                 lf, rf = self.focus[li], self.focus[ri]
                 diff = rf-lf
+                part = idx % 1
                 focus_out[i] = lf + diff*part
 
             return focus_out, self.field

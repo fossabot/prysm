@@ -563,16 +563,22 @@ def fit(data, num_terms=16, normalize=False, round_at=6):
     '''
     if num_terms > len(zernfcns):
         raise ValueError(f'number of terms must be less than {len(zernfcns)}')
+
     # precompute the valid indexes in the original data
     pts = np.isfinite(data)
+
     # set up an x/y rho/phi grid to evaluate zernikes on
     x, y = np.linspace(-1, 1, data.shape[1]), np.linspace(-1, 1, data.shape[0])
     xv, yv = np.meshgrid(x, y)
     rho = sqrt(xv**2 + yv**2)[pts].flatten()
     phi = atan2(yv, xv)[pts].flatten()
+
+    # compute each zernike term
     zernikes = []
     for i in range(num_terms):
         zernikes.append(zernwrapper(i, True, normalize, rho, phi))
     zerns = np.asarray(zernikes).T
+
+    # use least squares to compute the coefficients
     coefs = np.linalg.lstsq(zerns, data[pts].flatten())[0]
     return coefs.round(round_at)
