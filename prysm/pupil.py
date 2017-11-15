@@ -301,10 +301,16 @@ class Pupil(object):
         return retpupil
 
     def _gengrid(self):
-        '''Generates a uniform (x,y) grid and maps it to (rho,phi) coordinates for zernike eval
+        ''' Generates a uniform (x,y) grid and maps it to (rho,phi) coordinates
+            for radial polynomials.
+
+            Note:
+                angle is done via cart_to_polar(xv, yv) which yields angles
+                w.r.t. the y axis.  This is the convention of optics and not a
+                typo.
         '''
-        x = y    = linspace(-1, 1, self.samples, dtype=config.precision)
-        xv, yv   = meshgrid(x,y)
+        x = y = linspace(-1, 1, self.samples, dtype=config.precision)
+        xv, yv = meshgrid(x, y)
         self.rho, self.phi = cart_to_polar(xv, yv)
         return self.rho, self.phi
 
