@@ -9,7 +9,7 @@ def is_odd(int):
     ''' Determines if an interger is odd using binary operations.
 
     Args:
-        int: an integer.
+        int (`int`): an integer.
 
     Returns:
         bool: true if odd, False if even.
@@ -21,7 +21,7 @@ def is_power_of_2(value):
     ''' Checks if a value is a power of 2 using binary operations.
 
     Args:
-        value (number): value to check.
+        value (`number`): value to check.
 
     Returns:
         bool: true if the value is a power of two, False if the value is no.
@@ -38,13 +38,13 @@ def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
     ''' Converts pupil sample spacing to PSF sample spacing.
 
     Args:
-        pupil_sample (float): sample spacing in the pupil plane.
+        pupil_sample (`float`): sample spacing in the pupil plane.
 
-        num_samples (int): number of samples present in both planes (must be equal).
+        num_samples (`int`): number of samples present in both planes (must be equal).
 
-        wavelength (float): wavelength of light, in microns.
+        wavelength (`float`): wavelength of light, in microns.
 
-        efl (float): effective focal length of the optical system in mm.
+        efl (`float`): effective focal length of the optical system in mm.
 
     Returns:
         float: the sample spacing in the PSF plane.
@@ -56,13 +56,13 @@ def psf_sample_to_pupil_sample(psf_sample, num_samples, wavelength, efl):
     ''' Converts PSF sample spacing to pupil sample spacing.
 
     Args:
-        psf_sample (float): sample spacing in the PSF plane.
+        psf_sample (`float`): sample spacing in the PSF plane.
 
-        num_samples (int): number of samples present in both planes (must be equal).
+        num_samples (`int`): number of samples present in both planes (must be equal).
 
-        wavelength (float): wavelength of light, in microns.
+        wavelength (`float`): wavelength of light, in microns.
 
-        efl (float): effective focal length of the optical system in mm.
+        efl (`float`): effective focal length of the optical system in mm.
 
     Returns:
         float: the sample spacing in the pupil plane.
@@ -74,9 +74,9 @@ def correct_gamma(img, encoding=2.2):
     ''' Applies an inverse gamma curve to image data that linearizes the given encoding.
 
     Args:
-        img (numpy.ndarray): array of image data, floats avoid quantization error.
+        img (`numpy.ndarray`): array of image data, floats avoid quantization error.
 
-        encoding (float): gamma the data is encoded in (1.0 is linear).
+        encoding (`float`): gamma the data is encoded in (1.0 is linear).
 
     Returns:
         numpy.ndarray:  Array of corrected data.
@@ -88,7 +88,7 @@ def fold_array(array, axis=1):
     ''' Folds an array in half over the given axis and averages.
 
     Args:
-        array (numpy.ndarray): 2d array to fold.
+        array (`numpy.ndarray`): 2d array to fold.
 
         axis (`int`): axis to fold over.
 
@@ -120,11 +120,11 @@ def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
     ''' Reurns the given figure and/or axis if given one.  If they are None, creates a new fig/ax
 
     Args:
-        fig (pyplot.figure): figure.
+        fig (`pyplot.figure`): figure.
 
-        ax (pyplot.axis): axis or array of axes.
+        ax (`pyplot.axis`): axis or array of axes.
 
-        numax (int): number of axes in the desired figure.
+        numax (`int`): number of axes in the desired figure.
                      1 for most plots, 3 for plot_fourier_chain.
 
     Returns:
@@ -146,7 +146,7 @@ def rms(array):
     ''' Returns the RMS value of the valid elements of an array
 
     Args:
-        array (numpy.ndarray)
+        array (`numpy.ndarray`)
 
     Returns:
         float.  RMS of the array
@@ -159,7 +159,7 @@ def guarantee_array(variable):
     ''' Guarantees that a varaible is a numpy ndarray and supports -, *, +, and other operators
 
     Args:
-        variable (number or numpy.ndarray): variable to coalesce
+        variable (`number` or `numpy.ndarray`): variable to coalesce
 
     Returns:
         (type).  Which supports * / and other operations with arrays
