@@ -281,11 +281,11 @@ class Lens(object):
         t, s = np.asarray(t), np.asarray(s)
         fig, ax = share_fig_ax(fig, ax)
         for idx, freq in enumerate(freqs):
-            l, = ax.plot(focus, t[:,idx], lw=2, label=freq)
-            ax.plot(focus, s[:,idx], lw=2, ls='--', c=l.get_color())
+            l, = ax.plot(focus, t[:, idx], lw=2, label=freq)
+            ax.plot(focus, s[:, idx], lw=2, ls='--', c=l.get_color())
         ax.legend(title=r'$\nu$ [cy/mm]')
-        ax.set(xlim=(focus[0],focus[-1]),xlabel=r'Defocus [$\mu m$]',
-               ylim=(0,1), ylabel='MTF [Rel. 1.0]',
+        ax.set(xlim=(focus[0], focus[-1]), xlabel=r'Defocus [$\mu m$]',
+               ylim=(0, 1), ylabel='MTF [Rel. 1.0]',
                title='Through Focus MTF')
 
         return fig, ax
@@ -374,15 +374,15 @@ class Lens(object):
         for idx in range(num_fields):
             focus, net_mtfs[idx] = self._make_mtf_thrufocus(idx, focus_range, num_focus)
 
-        fields = (self.fields[-1] * self.fov_y) * np.linspace(0,1,num_fields)
+        fields = (self.fields[-1] * self.fov_y) * np.linspace(0, 1, num_fields)
         t_cube = np.empty((num_focus, num_fields, len(freqs)))
         s_cube = np.empty((num_focus, num_fields, len(freqs)))
         for idx, mtfs in enumerate(net_mtfs):
             for idx2, submtf in enumerate(mtfs):
                 t = submtf.exact_polar(freqs, 0)
                 s = submtf.exact_polar(freqs, 90)
-                t_cube[idx2,idx,:] = t
-                s_cube[idx2,idx,:] = s
+                t_cube[idx2, idx, :] = t
+                s_cube[idx2, idx, :] = s
 
         TCube = MTFDataCube(data=t_cube, focus=focus, field=fields, freq=freqs, azimuth='Tan')
         SCube = MTFDataCube(data=s_cube, focus=focus, field=fields, freq=freqs, azimuth='Sag')
