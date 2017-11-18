@@ -36,7 +36,31 @@ except ImportError:
     def vectorize(function, *args, **kwargs):
         return function
 
-from pyculib.fft import FFTPlan
+try:
+    from pyculib.fft import FFTPlan
+
+    # trigger cuFFT initialization when submodule loads (takes ~1s)
+    FFTPlan((384, 384),
+            itype=config.precision_complex,
+            otype=config.precision_complex)
+
+    # create a map of output array types from input array types
+    arr1 = np.empty(1, dtype=np.float32)
+    arr2 = np.empty(1, dtype=np.float64)
+    arr3 = np.empty(1, dtype=np.complex64)
+    arr4 = np.empty(1, dtype=np.complex128)
+    cuda_out_map = {
+        arr1.dtype: np.complex64,
+        arr2.dtype: np.complex128,
+        arr3.dtype: np.complex64,
+        arr4.dtype: np.complex128,
+    }
+
+    # prepare a variable to cache FFT plans
+    _plans = dict()
+except ImportError:
+    pass
+
 
 ###### CUDA code ---------------------------------------------------------------
 
@@ -54,26 +78,6 @@ def cast_array(array):
         return array.astype(np.complex64)
     else:
         return array.astype(np.complex128)
-
-# trigger cuFFT initialization when submodule loads (takes ~1s)
-FFTPlan((384, 384),
-        itype=config.precision_complex,
-        otype=config.precision_complex)
-
-# create a map of output array types from input array types
-arr1 = np.empty(1, dtype=np.float32)
-arr2 = np.empty(1, dtype=np.float64)
-arr3 = np.empty(1, dtype=np.complex64)
-arr4 = np.empty(1, dtype=np.complex128)
-cuda_out_map = {
-    arr1.dtype: np.complex64,
-    arr2.dtype: np.complex128,
-    arr3.dtype: np.complex64,
-    arr4.dtype: np.complex128,
-}
-
-# prepare a variable to cache FFT plans
-_plans = dict()
 
 def best_grid_size(size, tpb):
     ''' Computes the best grid size for a gpu array, given an array size and
