@@ -8,15 +8,11 @@ from prysm.mathops import (
     jit,
     vectorize,
     atan2,
-    exp,
     cos,
     sin,
-    pi,
     sqrt,
-    nan,
 )
 from prysm.pupil import Pupil
-from prysm.coordinates import cart_to_polar
 
 _names = (
     'Z0  - Piston / Bias',
