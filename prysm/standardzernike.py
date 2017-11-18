@@ -2,11 +2,19 @@
 optical systems.
 '''
 import numpy as np
-from numpy import arctan2, exp, cos, sin, pi, sqrt, nan
-from numpy import power as npow
 
 from prysm.conf import config
-from prysm.mathops import jit
+from prysm.mathops import (
+    jit,
+    vectorize,
+    atan2,
+    exp,
+    cos,
+    sin,
+    pi,
+    sqrt,
+    nan,
+)
 from prysm.pupil import Pupil
 from prysm.coordinates import cart_to_polar
 
@@ -65,191 +73,191 @@ _names = (
 def Z0(rho, phi):
     return np.ones(rho.shape)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z1(rho, phi):
     return rho * cos(phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z2(rho, phi):
     return rho * sin(phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z3(rho, phi):
     return rho**2 * cos(2*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z4(rho, phi):
     return 2 * rho ** 2 - 1
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z5(rho, phi):
     return rho**2 * sin(2*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z6(rho, phi):
     return rho**3 * cos(3*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z7(rho, phi):
     return (3 * rho**3 - 2 * rho) * cos(phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z8(rho, phi):
     return (3 * rho**3 - 2 * rho) * sin(phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z9(rho, phi):
     return rho**3 * sin(3*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z10(rho, phi):
     return rho**4 * cos(4*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z11(rho, phi):
     return (4 * rho**4 - 3 * rho**2) * cos(2*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z12(rho, phi):
     return -6 * rho**2 + 6 * rho**4 + 1
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z13(rho, phi):
     return (4 * rho**4 - 3 * rho**2) * sin(2*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z14(rho, phi):
     return rho**4 * sin(4*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z15(rho, phi):
     return rho**5 * cos(5*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z16(rho, phi):
     return (5 * rho**5 - 4 * rho**3) * cos(3*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z17(rho, phi):
     return (10 * rho**5 - 12 * rho**3 + 3 * rho) * cos(phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z18(rho, phi):
     return (10 * rho**5 - 12 * rho**3 + 3 * rho) * sin(phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z19(rho, phi):
     return (5 * rho**5 - 4 * rho**3) * sin(3*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z20(rho, phi):
     return rho**5 * cos(5*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z21(rho, phi):
     return rho**6 * cos(6*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z22(rho, phi):
     return (6 * rho**6 - 5 * rho**4) * cos(4*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z23(rho, phi):
     return (15 * rho**6 - 20 * rho**4 + 6 * rho**2) * cos(2*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z24(rho, phi):
     return 20 * rho**6 - 30 * rho**4 + 12 * rho**2 - 1
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z25(rho, phi):
     return (15 * rho**6 - 20 * rho**4 + 6 * rho**2) * sin(2*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z26(rho, phi):
     return (6 * rho**6 - 5 * rho**4) * sin(4*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z27(rho, phi):
     return rho**6 * sin(6*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z28(rho, phi):
     return rho**6 * cos(7*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z29(rho, phi):
     return (7 * rho**7 - 6 * rho**5) * cos(5*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z30(rho, phi):
     return (21 * rho**7 - 30 * rho**5 + 10 * rho**3) * cos(3*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z31(rho, phi):
     return (35 * rho**7 - 60 * rho**5 + 30 * rho**3 - 4 * rho) * cos(phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z32(rho, phi):
     return (35 * rho**7 - 60 * rho**5 + 30 * rho**3 - 4 * rho) * sin(phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z33(rho, phi):
     return (21 * rho**7 - 30 * rho**5 + 10 * rho**3) * sin(3*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z34(rho, phi):
     return (7 * rho**7 - 6 * rho**5) * sin(5*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z35(rho, phi):
     return rho**7 * sin(7*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z36(rho, phi):
     return rho**8 * cos(8*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z37(rho, phi):
     return (8 * rho**8 - 7 * rho**6) * cos(6*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z38(rho, phi):
     return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * cos(4*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z39(rho, phi):
     return (56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z40(rho, phi):
     return 70 * rho**8 - 140 * rho**7 + 90 * rho**4 - 20 * rho**2 + 1
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z41(rho, phi):
     return (56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z42(rho, phi):
     return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * sin(4*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z43(rho, phi):
     return (8 * rho**8 - 7 * rho**6) * sin(6*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z44(rho, phi):
     return rho**8 * sin(8*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z45(rho, phi):
     return rho**9 * cos(9*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z46(rho, phi):
     return (9 * rho**9 - 8 * rho**7) * cos(7*phi)
 
-@jit(cache=True, nopython=True, nogil=True)
+@vectorize
 def Z47(rho, phi):
     return (36 * rho**9 - 56 * rho**7 + 21 * rho**5) * cos(5*phi)
 
@@ -435,27 +443,43 @@ class StandardZernike(Pupil):
         footer = f'\n\t{self.pv:.3f} PV, {self.rms:.3f} RMS'
         return f'{header}{body}{footer}'
 
-def fit(data, num_terms=47, normalize=False):
-    '''
-    fits a number of zernike coefficients to provided data by minimizing the root sum square
-    between each coefficient and the given data.  The data should be uniformly
-    sampled in an x,y grid
-    '''
-    if num_terms > len(_eqns):
-        raise ValueError(f'number of terms must be less than {len(_eqns)}')
-    sze = data.shape
-    x, y = np.linspace(-1, 1, sze[0]), np.linspace(-1, 1, sze[1])
-    xv, yv = np.meshgrid(x,y)
-    rho, phi = cart_to_polar(xv, yv)
+def fit(data, num_terms=16, normalize=False, round_at=6):
+    ''' Fits a number of zernike coefficients to provided data by minimizing
+        the root sum square between each coefficient and the given data.  The
+        data should be uniformly sampled in an x,y grid.
 
-    # enforce circularity of the pupil
-    data[rho > 1] = 0
+    Args:
 
-    coefficients = []
+        data (`numpy.ndarray`): data to fit to.
+
+        num_terms (`int`): number of terms to fit, fits terms 0~num_terms.
+
+        normalize (`bool`): if true, normalize coefficients to unit RMS value.
+
+        round_at (`int`): decimal place to round values at.
+
+    Returns:
+        numpy.ndarray: an array of coefficients matching the input data.
+
+    '''
+    if num_terms > len(zernfcns):
+        raise ValueError(f'number of terms must be less than {len(zernfcns)}')
+
+    # precompute the valid indexes in the original data
+    pts = np.isfinite(data)
+
+    # set up an x/y rho/phi grid to evaluate zernikes on
+    x, y = np.linspace(-1, 1, data.shape[1]), np.linspace(-1, 1, data.shape[0])
+    xv, yv = np.meshgrid(x, y)
+    rho = sqrt(xv**2 + yv**2)[pts].flatten()
+    phi = atan2(xv, yv)[pts].flatten()
+
+    # compute each zernike term
+    zernikes = []
     for i in range(num_terms):
-        term_component = eval(_eqns[i])
-        term_component[rho>1] = 0
-        cm = sum(sum(data*term_component))*4/sze[0]/sze[1]/pi
-        coefficients.append(cm)
+        zernikes.append(zernwrapper(i, True, normalize, rho, phi))
+    zerns = np.asarray(zernikes).T
 
-    return coefficients
+    # use least squares to compute the coefficients
+    coefs = np.linalg.lstsq(zerns, data[pts].flatten())[0]
+    return coefs.round(round_at)

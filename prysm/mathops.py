@@ -26,12 +26,15 @@ from prysm.conf import config
 
 # numba funcs, cuda
 try:
-    from numba import cuda, jit
+    from numba import cuda, jit, vectorize
 except ImportError:
     # if Numba is not installed, create the jit decorator and have it return the
     # original function.
-    def jit(signature_or_function=None, locals={}, target='cpu', cache=False, **options):
-        return signature_or_function
+    def jit(function, *args, **kwargs):
+        return function
+
+    def vectorize(function, *args, **kwargs):
+        return function
 
 from pyculib.fft import FFTPlan
 
