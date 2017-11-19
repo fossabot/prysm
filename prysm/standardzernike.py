@@ -308,13 +308,10 @@ zernfcns = {
     47.0: Z47,
 }
 
-def zernwrapper(term, include, rho, phi):
+def zernwrapper(term, rho, phi):
     ''' Wraps the Z0..Z48 functions.
     '''
-    if include == 0:
-        return 0
-    else:
-        return zernfcns[term](rho, phi)
+    return zernfcns[term](rho, phi)
 
 class StandardZernike(Pupil):
     '''Standard Zernike pupil description
@@ -380,7 +377,7 @@ class StandardZernike(Pupil):
 
         pass_args = {}
 
-        self.base = 0
+        self.base = config.zernike_base
         try:
             bb = kwargs['base']
             if bb > 1:
@@ -396,7 +393,7 @@ class StandardZernike(Pupil):
                     idx = int(key[1:]) # strip 'Z' from index
                     self.coefs[idx-self.base] = value
                 elif key.lower() == 'base':
-                    pass
+                    self.base = value
                 else:
                     pass_args[key] = value
 
@@ -411,10 +408,9 @@ class StandardZernike(Pupil):
             # short circuit for speed
             if coef == 0:
                 continue
-            self.phase = self.phase + coef * zernwrapper(term=term,
-                                                         include=bool(coef),
-                                                         rho=self.rho,
-                                                         phi=self.phi)
+            self.phase += coef * zernwrapper(term=term,
+                                             rho=self.rho,
+                                             phi=self.phi)
 
         self._correct_phase_units()
         self._phase_to_wavefunction()
@@ -426,14 +422,32 @@ class StandardZernike(Pupil):
         header = 'Standard Zernike description with:\n\t'
 
         strs = []
-        for coef, name in zip(self.coefs, _names):
+        for number, (coef, name) in enumerate(zip(self.coefs, _names)):
+            # skip 0 terms
+            if coef == 0:
+                continue
+
+            # positive coefficient, prepend with +
             if np.sign(coef) == 1:
-                # positive coefficient, prepend with +
                 _ = '+' + f'{coef:.3f}'
+            # negative, sign comes from the value
             else:
-                # negative, sign comes from the value
                 _ = f'{coef:.3f}'
-            strs.append(' '.join([_, name]))
+
+            # adjust term numbers
+            if self.base is 1:
+                if number > 9: # two-digit term
+                    name_lcl = ''.join([name[0],
+                                        str(int(name[1:3]) + 1),
+                                        name[3:]])
+                else:
+                    name_lcl = ''.join([name[0],
+                                        str(int(name[1]) + 1),
+                                        name[2:]])
+            else:
+                name_lcl = name
+
+            strs.append(' '.join([_, name_lcl]))
         body = '\n\t'.join(strs)
 
         footer = f'\n\t{self.pv:.3f} PV, {self.rms:.3f} RMS'
