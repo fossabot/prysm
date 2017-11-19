@@ -6,6 +6,7 @@ _precision = 64
 _precision_complex = 128
 _parallel_rgb = True
 _backend = 'np'
+_zernike_base = 1
 
 try:
     import pyculib
@@ -16,12 +17,15 @@ except ImportError:
 class Config(object):
     ''' global configuration of prysm.
     '''
-    def __init__(self, precision=_precision, parallel_rgb=_parallel_rgb, backend=_backend):
+    def __init__(self, precision=_precision,
+        parallel_rgb=_parallel_rgb,
+        backend=_backend,
+        _zernike_base=_zernike_base):
         '''Tells prysm to use a given precision
 
         Args:
             precision (`int`): 32 or 64, number of bits of precision.
-            
+
             parallel_rgb (`bool`): whether to parallelize RGB computations or
                 not.  This improves performance for large arrays, but may slow
                 things down if arrays are relatively small due to the spinup
@@ -38,6 +42,8 @@ class Config(object):
         global _precision
         global _precision_complex
         global _parallel_rgb
+        global _backend
+        global _zernike_base
 
         _parallel_rgb = parallel_rgb
 
@@ -72,6 +78,13 @@ class Config(object):
         else:
             _backend = 'cu'
 
+    def set_zernike_base(self, base):
+        if base not in (0, 1):
+            raise ValueError('Zernikes must be base 0 or base 1 only.')
+
+        global _zernike_base
+        _zernike_base = base
+
     @property
     def precision(self):
         global _precision
@@ -91,5 +104,10 @@ class Config(object):
     def backend(self):
         global _backend
         return _backend
+
+    @property
+    def zernike_base(self):
+        global _zernike_base
+        return _zernike_base
 
 config = Config()
