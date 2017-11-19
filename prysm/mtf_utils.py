@@ -7,11 +7,11 @@ import pandas as pd
 from prysm.mathops import floor, ceil
 from prysm.util import correct_gamma, share_fig_ax
 
-class MTFDataCube(object):
+class MTFvFvF(object):
     ''' abstract object representing a cube of MTF vs Field vs Focus data
     '''
     def __init__(self, data, focus, field, freq, azimuth):
-        ''' Creates a new MTFDataCube
+        ''' Creates a new MTFvFvF object
 
         Args:
             data (`numpy.ndarray`): 3D array in the sahape (focus,field,freq)
@@ -26,7 +26,7 @@ class MTFDataCube(object):
                 associated with.
 
         Returns:
-            `MTFDataCube`: new data cube.
+            `MTFvFvF`: new data cube.
         '''
         self.data = data
         self.focus = focus
@@ -108,12 +108,12 @@ class MTFDataCube(object):
 
         Notes:
             Algorithm '0.5' uses the frequency that has its peak closest to 0.5
-            to estimate the focus coresponding to the minimum RMS wavefront
-            error condition.  This is based on the following assumptions:
+            on-axis to estimate the focus coresponding to the minimum RMS WFE
+            condition.  This is based on the following assumptions:
                 * Any combination of third, fifth, and seventh order spherical
                     aberration will produce a focus shift that depends on
                     frequency, and this dependence can be well fit by an
-                    equatio of the form y(x) = ax^2 + bx + c.  If this is true,
+                    equation of the form y(x) = ax^2 + bx + c.  If this is true,
                     then the frequency which peaks at 0.5 will be near the
                     vertex of the quadratic, which converges to the min RMS WFE
                     condition.
@@ -129,24 +129,11 @@ class MTFDataCube(object):
 
         '''
         if algorithm == '0.5':
-            # fast, vectorized algorithm -- includes prescaling not implemented
-            # todo: implement prescaling for coma, lateral color robustness
-            idx = abs(self.data.max(axis=0)-0.5).argmin(1)
-            focus_idx = self.data[:, np.arange(self.data.shape[1]), idx].argmax(0)
+            # locate the frequency index on axis
+            idx_axis = np.searchsorted(self.field, 0)
+            idx_freq = abs(self.data[:, idx_axis, :].max(axis=0)-0.5).argmin(axis=1)
+            focus_idx = self.data[:, np.arange(self.data.shape[1]), idx_freq].argmax(axis=0)
             return self.focus[focus_idx], self.field
-            # equivalent for loop
-            # cols, rows, zs = self.data.shape
-            # result = []
-            # for i in range(rows):
-            #     # for each field point, make an intermediate array that is 2D
-            #     # with focus,frequency dimensions
-            #     arr = self.data[:,i,:]
-            #     # compute the thru-focus max and find the peak closest to 0.5
-            #     maxs = np.max(arr, axis=0)
-            #     max_manip = abs(maxs-0.5)
-            #     freq_idx = np.argmin(max_manip)
-            #     arr2 = self.data[:,i,freq_idx]
-            #     focus_idx = np.argmax(arr2)
         elif algorithm.lower() in ('avg', 'average'):
             if self.freq[0] == 0:
                 # if the zero frequency is included, exclude it from our calculations
@@ -166,6 +153,39 @@ class MTFDataCube(object):
             return focus_out, self.field
         else:
             raise ValueError('0.5 is only algorithm supported')
+
+    @staticmethod
+    def from_dataframe(df):
+        ''' Returns a pair of MTFvFvF objects from a pandas dataframe, one for
+            the tangential and one for the sagittal MTF.
+
+        Args:
+            df (`pandas.DataFrame`): a dataframe.
+
+        Returns:
+            `tuple` containing:
+
+                `MTFvFvF`: tangential MTFvFvF.
+
+                `MTFvFvF`: sagittal MTFvFvF.
+
+        '''
+        # copy the dataframe for manipulation
+        df = df.copy()
+        df.Fields = df.Field.round(4)
+        df.Focus = df.Focus.round(6)
+        sorted_df = df.sort_values(by=['Focus', 'Field', 'Freq'])
+        T = sorted_df[sorted_df.Azimuth == 'Tan']
+        S = sorted_df[sorted_df.Azimuth == 'Sag']
+        focus = np.unique(df.Focus.as_matrix())
+        fields = np.unique(df.Fields.as_matrix())
+        freqs = np.unique(df.Freq.as_matrix())
+        d1, d2, d3 = len(focus), len(fields), len(freqs)
+        t_mat = T.as_matrix.reshape((d1, d2, d3))
+        s_mat = S.as_matrix.reshape((d1, d2, d3))
+        t_cube = MTFvFvF(data=t_mat, focus=focus, field=fields, freq=freqs, azimuth='Tan')
+        s_cube = MTFvFvF(data=s_mat, focus=focus, field=fields, freq=freqs, azimuth='Sag')
+        return t_cube, s_cube
 
 def mtf_ts_extractor(mtf, freqs):
     ''' Extracts the T and S MTF from a PSF object.
