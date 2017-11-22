@@ -586,7 +586,7 @@ def fit(data, num_terms=16, normalize=False, round_at=6):
     # compute each zernike term
     zernikes = []
     for i in range(num_terms):
-        zernikes.append(zernwrapper(i, True, normalize, rho, phi))
+        zernikes.append(zernwrapper(i, normalize, rho, phi))
     zerns = np.asarray(zernikes).T
 
     # use least squares to compute the coefficients
