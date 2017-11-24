@@ -343,6 +343,15 @@ class Pupil(object):
         radius = new_epd / self.epd
         p.clip(radius)
         return p
+
+    def __sub__(self, other):
+        if self.sample_spacing != other.sample_spacing or self.samples != other.samples:
+            raise ValueError('Pupils must be identically sampled')
+
+        result = self.clone()
+        result.phase = self.phase - other.phase
+        return result._phase_to_wavefunction()
+
     # meat 'n potatoes ---------------------------------------------------------
 
 def convert_phase(array, pupil):
