@@ -1,8 +1,6 @@
 ''' File readers (and someday, writers) for various commercial instruments
 '''
-import re
-
-from prysm.spectrum import Spectrum
+from prysm.colorimetry import Spectrum
 
 def read_oceanoptics(file_path):
     ''' Reads spectral transmission data from an ocean optics spectrometer
