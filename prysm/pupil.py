@@ -344,13 +344,43 @@ class Pupil(object):
         p.clip(radius)
         return p
 
+    def __add__(self, other):
+        ''' Sums the phase of two pupils
+
+        Args:
+            other (`Pupil`): pupil to add to this one.
+
+        Returns:
+            `Pupil`: new Pupil object.
+
+        '''
+        if self.sample_spacing != other.sample_spacing or self.samples != other.samples:
+            raise ValueError('Pupils must be identically sampled')
+
+        result = self.clone()
+        result.phase = self.phase + other.phase
+        result = result._phase_to_wavefunction()
+        result.clip()
+        return result
+
     def __sub__(self, other):
+        ''' Computes the phase difference of two pupils
+
+        Args:
+            other (`Pupil`): pupil to add to this one.
+
+        Returns:
+            `Pupil`: new Pupil object.
+
+        '''
         if self.sample_spacing != other.sample_spacing or self.samples != other.samples:
             raise ValueError('Pupils must be identically sampled')
 
         result = self.clone()
         result.phase = self.phase - other.phase
-        return result._phase_to_wavefunction()
+        result = result._phase_to_wavefunction()
+        result.clip()
+        return result
 
     # meat 'n potatoes ---------------------------------------------------------
 
