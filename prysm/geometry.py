@@ -172,7 +172,7 @@ def check(p1, p2, base_array):
     p2 = p2.astype(float)
 
     # Calculate max column idx for each row idx based on interpolated line between two points
-    max_col_idx = (idxs[0] - p1[0]) / (p2[0] - p1[0]) * (p2[1] - p1[1]) +  p1[1]    
+    max_col_idx = (idxs[0] - p1[0]) / (p2[0] - p1[0]) * (p2[1] - p1[1]) + p1[1]
     sign = np.sign(p2[0] - p1[0])
     return idxs[1] * sign <= max_col_idx * sign
 
@@ -226,4 +226,5 @@ def generate_vertices(num_sides, radius=1):
         x = radius * np.sin(point * angle)
         y = radius * np.cos(point * angle)
         pts.append((x, y))
+
     return np.asarray(pts)
