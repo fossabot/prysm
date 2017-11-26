@@ -225,5 +225,5 @@ def generate_vertices(num_sides, radius=1):
     for point in range(num_sides):
         x = radius * np.sin(point * angle)
         y = radius * np.cos(point * angle)
-        pts.append((x,y))
+        pts.append((x, y))
     return np.asarray(pts)
