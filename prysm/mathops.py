@@ -16,6 +16,7 @@ from numpy import (
     tan,
     arctan2,
     exp,
+    log,
 )
 
 atan2 = arctan2
