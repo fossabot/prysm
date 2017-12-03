@@ -1,18 +1,16 @@
 ''' A base optical transfer function interface
 '''
 import numpy as np
-from numpy import floor
-from numpy.fft import fftshift
 
 from scipy import interpolate
 
 from matplotlib import pyplot as plt
 
 from prysm.conf import config
-from prysm.mathops import fft2
+from prysm.mathops import fft2, fftshift
 from prysm.psf import PSF
 from prysm.fttools import forward_ft_unit
-from prysm.util import correct_gamma, share_fig_ax, guarantee_array
+from prysm.util import correct_gamma, share_fig_ax
 from prysm.coordinates import polar_to_cart
 
 class MTF(object):
@@ -90,7 +88,7 @@ class MTF(object):
 
     def exact_polar(self, freqs, azimuths=None):
         '''Retrieves the MTF at the specified frequency-azimuth pairs
-        
+
         Args:
             freqs (`iterable`): radial frequencies to retrieve MTF for.
 

@@ -134,7 +134,7 @@ def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
 
     '''
     if fig is None and ax is None:
-        fig, ax = plt.subplots(nrows=1, ncols=numax, dpi=100, sharex=sharex, sharey=sharey)
+        fig, ax = plt.subplots(nrows=1, ncols=numax, sharex=sharex, sharey=sharey)
     elif fig is None:
         fig = ax.get_figure()
     elif ax is None:
