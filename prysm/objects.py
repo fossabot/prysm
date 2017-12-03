@@ -3,12 +3,7 @@
 
 # pathos MP pools are a bit better than stock python pools, but the interfaces
 # are compatible.
-try:
-    from pathos.multiprocessing import ProcessPool as Pool
-    from pathos.multiprocessing import freeze_support
-    freeze_support()
-except ImportError:
-    from multiprocessing import Pool
+from multiprocessing import Pool
 
 from functools import lru_cache, partial
 
@@ -17,29 +12,20 @@ from numpy.fft import fftshift, ifftshift
 
 from scipy.misc import imsave, imread
 
-from matplotlib import pyplot as plt
-
 from prysm.conf import config
-from prysm.mathops import fft2, ifft2, jit
+from prysm.mathops import (
+    jit,
+    fft2,
+    ifft2,
+    fftshift,
+    ifftshift,
+    sin,
+    cos,
+)
 from prysm.coordinates import cart_to_polar
 from prysm.psf import PSF, _unequal_spacing_conv_core
 from prysm.fttools import forward_ft_unit, pad2d
-from prysm.util import correct_gamma, share_fig_ax, is_odd
-
-def _convcore_wrapper_parallel_raw(fft2, ifft2, fftshift, ifftshift, forward_ft_unit, psf1, psf2):
-    ''' Wraps _unequal_spacing_conv_core with functions
-        passed as arguments, to fascilitate parallelized
-        operation with multiple python processes, which do
-        not share imports.
-    '''
-    from prysm.mathops import fft2, ifft2
-    from numpy.fft import fftshift, ifftshift
-    from prysm.fttools import forward_ft_unit
-    return _unequal_spacing_conv_core(psf1, psf2)
-
-_unequal_spacing_conv_core2 = partial(_convcore_wrapper_parallel_raw,
-                                      fft2, ifft2, fftshift, ifftshift,
-                                      forward_ft_unit)
+from prysm.util import share_fig_ax, is_odd
 
 class Image(object):
     ''' Images of an object
@@ -318,7 +304,7 @@ class RGBImage(object):
             imgs = [img_r, img_g, img_b]
             psfs = [psf_r, psf_g, psf_b]
             with Pool(3) as pool:
-                r_conv, g_conv, b_conv = pool.map(_unequal_spacing_conv_core2, imgs, psfs)
+                r_conv, g_conv, b_conv = pool.map(unequal_spacing_conv_core, imgs, psfs)
         else:
             r_conv = _unequal_spacing_conv_core(img_r, rgbpsf.r_psf._renorm(to='total'))
             g_conv = _unequal_spacing_conv_core(img_g, rgbpsf.g_psf._renorm(to='total'))
@@ -352,10 +338,10 @@ class RGBImage(object):
         # TODO: change this an understand why it is an issue
         ## fftshift vs ifftshift?
         if is_odd(img.shape[0]):
-            img = img[0:-1,:,:]
+            img = img[0:-1, :, :]
         if is_odd(img.shape[1]):
-            img = img[:,0:-1,:]
-        return RGBImage(r=img[:,:,0], g=img[:,:,1], b=img[:,:,2],
+            img = img[:, 0:-1, :]
+        return RGBImage(r=img[:, :, 0], g=img[:, :, 1], b=img[:, :, 2],
                         sample_spacing=scale, synthetic=False)
 
 def rgbimage_to_datacube(rgbimage):
@@ -368,9 +354,9 @@ def rgbimage_to_datacube(rgbimage):
         `numpy.ndarray`: an ndarray of shape m x n x 3.
     '''
     dat = np.empty((rgbimage.samples_x, rgbimage.samples_y, 3), dtype=np.uint8)
-    dat[:,:,0] = rgbimage.R * 255
-    dat[:,:,1] = rgbimage.G * 255
-    dat[:,:,2] = rgbimage.B * 255
+    dat[:, :, 0] = rgbimage.R * 255
+    dat[:, :, 1] = rgbimage.G * 255
+    dat[:, :, 2] = rgbimage.B * 255
     return dat
 
 class Slit(Image):
@@ -404,14 +390,14 @@ class Slit(Image):
 
         # paint in the slit
         if orientation.lower() in ('v', 'vert', 'vertical'):
-            arr[:, abs(x)<w] = 1
+            arr[:, abs(x) < w] = 1
             self.orientation = 'Vertical'
         elif orientation.lower() in ('h', 'horiz', 'horizontal'):
-            arr[abs(y)<w, :] = 1
+            arr[abs(y) < w, :] = 1
             self.orientation = 'Horizontal'
         elif orientation.lower() in ('b', 'both', 'c', 'crossed'):
-            arr[abs(y)<w, :] = 1
-            arr[:, abs(x)<w] = 1
+            arr[abs(y) < w, :] = 1
+            arr[:, abs(x) < w] = 1
             self.orientation = 'Crossed'
 
         super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)
@@ -436,7 +422,7 @@ class Pinhole(Image):
         # produce coordinate arrays
         ext = samples / 2 * sample_spacing
         x, y = np.linspace(-ext, ext, samples), np.linspace(-ext, ext, samples)
-        xv, yv = np.meshgrid(x,y)
+        xv, yv = np.meshgrid(x, y)
         w = width / 2
 
         # paint a circle on a black background
@@ -464,29 +450,71 @@ class SiemensStar(Image):
             samples (`int`): number of samples per dimension in the synthetic image.
 
         '''
+        relative_width = 0.9
         self.num_spokes = num_spokes
 
         # generate a coordinate grid
         x = np.linspace(-1, 1, samples)
         y = np.linspace(-1, 1, samples)
-        xx, yy = np.meshgrid(x,y)
+        xx, yy = np.meshgrid(x, y)
         rv, pv = cart_to_polar(xx, yy)
 
         # generate the siemen's star as a (rho,phi) polynomial
         arr = np.cos(num_spokes/2*pv)
 
-        if not sinusoidal:
-            #make binary
+        if not sinusoidal: # make binary
             arr[arr < 0] = -1
             arr[arr > 0] = 1
 
         # scale to (0,1) and clip into a disk
         arr = (arr+1)/2
         if background.lower() in ('b', 'black'):
-            arr[rv > 0.9] = 0
+            arr[rv > relative_width] = 0
         elif background.lower() in ('w', 'white'):
-            arr[rv > 0.9] = 1
+            arr[rv > relative_width] = 1
         else:
             raise ValueError('invalid background color')
 
+        super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)
+
+class TiltedSquare(Image):
+    ''' Describes a tilted square for e.g. slanted-edge
+    '''
+    def __init__(self, angle=8, background='white', sample_spacing=2, samples=384):
+        ''' Creates a new TitledSquare instance.
+
+        Args:
+            angle (`float`): angle in degrees to tilt w.r.t. the x axis.
+
+            background (`string`): white or black; the square will be the opposite
+                color of the background.
+
+            sample_spacing (`float`): spacing of samples.
+
+            samples (`int`): number of samples.
+
+        Returns:
+            `TiltedSquare`: new TiltedSquare instance.
+
+        '''
+        radius = 0.2
+        if background.lower() == 'white':
+            arr = np.ones((samples, samples))
+            fill_with = 0
+        else:
+            arr = np.zeros((samples, samples))
+            fill_with = 1
+
+        # TODO: optimize by working with index numbers directly and avoid
+        # creation of X,Y arrays for performance.
+        x = np.linspace(-0.5, 0.5, samples)
+        y = np.linspace(-0.5, 0.5, samples)
+        xx, yy = np.meshgrid(x, y)
+
+        # TODO: convert inline operation to use of rotation matrix
+        angle = np.radians(angle)
+        xp = xx * cos(angle) - yy * sin(angle)
+        yp = xx * sin(angle) + yy * cos(angle)
+        mask = (np.abs(xp) < radius) * (np.abs(yp) < radius)
+        arr[mask] = fill_with
         super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)
