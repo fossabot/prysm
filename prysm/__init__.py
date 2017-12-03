@@ -11,10 +11,31 @@ from prysm.seidel import Seidel
 from prysm.surfacefinish import SurfaceFinish
 from prysm.psf import PSF, MultispectralPSF, RGBPSF
 from prysm.otf import MTF
-from prysm.geometry import ( gaussian, rotated_ellipse, triangle, square,
-                             pentagon, hexagon, heptagon, octagon, nonagon,
-                             decagon, hendecagon, dodecagon, trisdecagon )
-from prysm.objects import Image, RGBImage, Slit, Pinhole, SiemensStar
+from prysm.geometry import (
+    gaussian,
+    rotated_ellipse,
+    triangle,
+    square,
+    pentagon,
+    hexagon,
+    heptagon,
+    octagon,
+    nonagon,
+    decagon,
+    hendecagon,
+    dodecagon,
+    trisdecagon
+)
+
+from prysm.objects import (
+    Image,
+    RGBImage,
+    Slit,
+    Pinhole,
+    SiemensStar,
+    TiltedSquare,
+)
+
 from prysm.lens import Lens
 
 __all__ = [
@@ -51,4 +72,5 @@ __all__ = [
     'Slit',
     'Pinhole',
     'SiemensStar',
+    'TiltedSquare',
 ]
