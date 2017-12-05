@@ -620,4 +620,4 @@ def XYZ_to_sRGB(XYZ, illuminant='D65'):
     if len(XYZ.shape) == 1:
         return np.matmul(invmat, XYZ)
     else:
-        return np.tensordot(invmat, XYZ, axes=((1), (2))).swapaxes(0, 2).swapaxes(0, 1)
+        return np.tensordot(XYZ, invmat, axes=((2), (1)))
