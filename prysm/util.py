@@ -103,16 +103,16 @@ def fold_array(array, axis=1):
         left_chunk = array[:, :xh]
         right_chunk = array[:, xh:]
         folded_array = np.concatenate((right_chunk[:, :, np.newaxis],
-                                      np.flip(np.flip(left_chunk, axis=1),
-                                              axis=0)[:, :, np.newaxis]),
+                                       np.flip(np.flip(left_chunk, axis=1),
+                                               axis=0)[:, :, np.newaxis]),
                                       axis=2)
     else:
         yh = int(np.floor(ys/2))
         top_chunk = array[:yh, :]
         bottom_chunk = array[yh:, :]
         folded_array = np.concatonate((bottom_chunk[:, :, np.newaxis],
-                                      np.flip(np.flip(top_chunk, axis=1),
-                                              axis=0)[:, :, np.newaxis]),
+                                       np.flip(np.flip(top_chunk, axis=1),
+                                               axis=0)[:, :, np.newaxis]),
                                       axis=2)
     return np.average(folded_array, axis=2)
 
