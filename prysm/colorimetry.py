@@ -32,6 +32,28 @@ XYZ_to_sRGB_mat_D50 = np.asarray([
     [0.0719453, -0.2289914, 1.4052427],
 ])
 
+# Adobe RGB 1998 matricies
+XYZ_to_AdobeRGB_mat_D65 = np.asarray([
+    [2.0413690, -0.5649464, -0.3446944],
+    [-0.9692660, 1.8760108, 0.0415560],
+    [0.0134474, -0.1183897, 1.0154096],
+])
+XYZ_to_AdobeRGB_mat_D50 = np.asarray([
+    [1.9624274, -0.6105343, -0.3413404],
+    [-0.9787684, 1.9161415, 0.0334540],
+    [0.0286869, -0.1406752, 1.3487655],
+])
+COLOR_MATRICIES = {
+    'sRGB': {
+        'D65': XYZ_to_sRGB_mat_D65,
+        'D50': XYZ_to_sRGB_mat_D50,
+    },
+    'AdobeRGB': {
+        'D65': XYZ_to_AdobeRGB_mat_D65,
+        'D50': XYZ_to_AdobeRGB_mat_D50,
+    },
+}
+
 class Spectrum(object):
     ''' Representation of a spectrum of light.
     '''
@@ -278,7 +300,7 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
     wvl_line = np.arange(400, 700, 2)
     wvl_line_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_line))
 
-    wvl_annotate = [400, 440, 460, 470, 480, 490,
+    wvl_annotate = [400, 440, 450, 470, 480, 490,
                     500, 510, 520, 540, 560, 570, 580, 590,
                     600, 610, 630, 700]
     wvl_annotate_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_annotate))
@@ -575,12 +597,14 @@ def Luv_uv_to_xy(uv):
     shape = x.shape
     return np.stack((x, y), axis=len(shape))
 
-def XYZ_to_RGB(XYZ):
-    ''' Converts xyz points to RGB points.
+def XYZ_to_AdobeRGB(XYZ, illuminant='D65'):
+    ''' Converts xyz points to xy points.
 
     Args:
         XYZ (`numpy.ndarray`): ndarray with first dimension corresponding to
             X, Y, Z.
+
+        illuminant (`str`): which illuminant to use, either D65 or D50.
 
     Returns:
         `tuple` containing:
@@ -592,7 +616,14 @@ def XYZ_to_RGB(XYZ):
             `numpy.ndarray`: B coordinates.
 
     '''
-    pass
+    if illuminant.upper() == 'D65':
+        invmat = COLOR_MATRICIES['AdobeRGB']['D65']
+    elif illuminant.upper() == 'D50':
+        invmat = COLOR_MATRICIES['AdobeRGB']['D50']
+    else:
+        raise ValueError('Must use D65 or D50 illuminant.')
+
+    return XYZ_to_RGB(XYZ, invmat)
 
 def XYZ_to_sRGB(XYZ, illuminant='D65'):
     ''' Converts xyz points to xy points.
@@ -606,21 +637,47 @@ def XYZ_to_sRGB(XYZ, illuminant='D65'):
     Returns:
         `tuple` containing:
 
-            `numpy.ndarray`: x coordinates.
+            `numpy.ndarray`: R coordinates.
 
-            `numpy.ndarray`: y coordinates.
+            `numpy.ndarray`: G coordinates.
 
-            `numpy.ndarray`: Y coordinates.
+            `numpy.ndarray`: B coordinates.
+
+    Notes:
+        Returns are linear, need to be raised to 2.4 power to make correct
+            values for viewing.
 
     '''
     if illuminant.upper() == 'D65':
-        invmat = XYZ_to_sRGB_mat_D65
+        invmat = COLOR_MATRICIES['sRGB']['D65']
     elif illuminant.upper() == 'D50':
-        invmat = XYZ_to_sRGB_mat_D50
+        invmat = COLOR_MATRICIES['sRGB']['D50']
     else:
         raise ValueError('Must use D65 or D50 illuminant.')
 
+    return XYZ_to_RGB(XYZ, invmat)
+
+def XYZ_to_RGB(XYZ, conversion_matrix):
+    ''' Converts xyz points to xy points.
+
+    Args:
+        XYZ (`numpy.ndarray`): ndarray with first dimension corresponding to
+            X, Y, Z.
+
+        conversion_matrix (`str`): conversion matrix to use to convert XYZ
+            to RGB values.
+
+    Returns:
+        `tuple` containing:
+
+            `numpy.ndarray`: R coordinates.
+
+            `numpy.ndarray`: G coordinates.
+
+            `numpy.ndarray`: B coordinates.
+
+    '''
     if len(XYZ.shape) == 1:
-        return np.matmul(invmat, XYZ)
+        return np.matmul(conversion_matrix, XYZ)
     else:
-        return np.tensordot(XYZ, invmat, axes=((2), (1)))
+        return np.tensordot(XYZ, conversion_matrix, axes=((2), (1)))
