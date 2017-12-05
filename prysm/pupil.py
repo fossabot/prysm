@@ -20,6 +20,7 @@ from prysm.units import (
 from prysm.mathops import (
     nan, pi,
     exp,
+    sin
 )
 
 class Pupil(object):
