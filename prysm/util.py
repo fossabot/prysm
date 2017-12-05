@@ -82,7 +82,10 @@ def correct_gamma(img, encoding=2.2):
         numpy.ndarray:  Array of corrected data.
 
     '''
-    return np.power(img, (1/float(encoding)))
+    if encoding is 1:
+        return img
+    else:
+        return img**(1/float(encoding))
 
 def fold_array(array, axis=1):
     ''' Folds an array in half over the given axis and averages.
