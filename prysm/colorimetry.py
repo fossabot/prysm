@@ -278,10 +278,14 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
     wvl_line = np.arange(400, 700, 2)
     wvl_line_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_line))
 
-    wvl_annotate = np.arange(400, 700, 10)
+    wvl_annotate = [400, 440, 460, 470, 480, 490,
+                    500, 510, 520, 540, 560, 570, 580, 590,
+                    600, 610, 630, 700]
     wvl_annotate_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_annotate))
 
-    wvl_mask = [400, 430, 460, 470, 480, 490, 500, 505, 510, 515, 520, 525, 530, 535, 700]
+    wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
+                500, 505, 510, 515, 520, 525, 530, 535, 570, 700]
+
     wvl_mask_XYZ = colour.wavelength_to_XYZ(wvl_mask)
     wvl_mask_uv = XYZ_to_uv(wvl_mask_XYZ)
     wvl_pts = wvl_mask_uv * samples / np.array([xlim[1], ylim[1]])
@@ -299,7 +303,6 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
 
     xy = Luv_uv_to_xy(uuvv)
     xyz = xy_to_XYZ(xy)
-    xyz[:, :, 1] = 1
     dat = XYZ_to_sRGB(xyz)
     # normalize and clip
     dat /= np.max(dat, axis=2)[..., np.newaxis]
