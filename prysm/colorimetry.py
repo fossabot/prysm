@@ -1,7 +1,11 @@
 ''' optional tools for colorimetry, wrapping the color-science library, see:
     http://colour-science.org/
 '''
+import warnings
+
 import numpy as np
+
+from matplotlib import pyplot as plt
 
 try:
     import colour
@@ -9,13 +13,25 @@ except ImportError:
     # Spectrum objects can be used without colour
     pass
 
-from prysm.util import share_fig_ax
+from prysm.util import share_fig_ax, correct_gamma
 from prysm.geometry import generate_mask
 from prysm.mathops import nan
 
 # some CIE constants
 CIE_K = 24389 / 27
 CIE_E = 216 / 24389
+
+# sRGB conversion matrix
+XYZ_to_sRGB_mat_D65 = np.asarray([
+    [3.2404542, -1.5371385, -0.4985314],
+    [-0.9692660, 1.8760108, 0.0415560],
+    [0.0556434, -0.2040259, 1.0572252]
+])
+XYZ_to_sRGB_mat_D50 = np.asarray([
+    [3.1338561, -1.6168667, -0.4906146],
+    [-0.9787684, 1.9161415, 0.0334540],
+    [0.0719453, -0.2289914, 1.4052427],
+])
 
 class Spectrum(object):
     ''' Representation of a spectrum of light.
@@ -250,37 +266,64 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
             `matplotlib.axes.axis`: axis containing the plot.
 
     '''
+    # ignore runtime warnings -- invalid values in power for some u,v -> sRGB values
+    warnings.simplefilter('ignore', RuntimeWarning)
+
     # duplicate xlim if ylim not set
     if ylim is None:
         ylim = xlim
 
-    # generate a spectral locust and a mask based on it in u, v coordinates
-    wvl = np.arange(400, 700, 10)
-    wvl_XYZ = colour.wavelength_to_XYZ(wvl)
-    wvl_u, wvl_v = XYZ_to_uv(wvl_XYZ)
-    wvl_pts = np.stack((wvl_u, wvl_v), axis=1) * samples
-    wvl_mask = generate_mask(wvl_pts, samples)
-    mask_idxs = np.where(wvl_mask == 0)
+    # create lists of wavelengths and map them to uv,
+    # a reduced set for a faster mask and
+    # an equally spaced set for annotation
+    wvl_line = np.arange(400, 700, 2)
+    wvl_line_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_line))
 
-    # generate a grid of u, v coordinates
+    wvl_annotate = np.arange(400, 700, 10)
+    wvl_annotate_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_annotate))
+
+    wvl_mask = [400, 430, 460, 470, 480, 490, 500, 505, 510, 515, 520, 525, 530, 535, 700]
+    wvl_mask_XYZ = colour.wavelength_to_XYZ(wvl_mask)
+    wvl_mask_uv = XYZ_to_uv(wvl_mask_XYZ)
+    wvl_pts = wvl_mask_uv*samples/np.array([xlim[1], ylim[1]])
+    wvl_mask = generate_mask(wvl_pts, samples)
+
+    # make equally spaced u,v coordinates on a grid
     u = np.linspace(xlim[0], xlim[1], samples)
     v = np.linspace(ylim[0], ylim[1], samples)
     uu, vv = np.meshgrid(u, v)
 
-    # regions outside of the spectral locust will cause color space transforms
-    # to throw or warn, set them to NaN so numpy leaves them be
-    uu[mask_idxs] = nan
-    vv[mask_idxs] = nan
-    shape = uu.shape
+    # set values outside the horseshoe to a safe value that won't blow up
 
     # stack u and v for vectorized computations
-    uuvv = np.stack((uu,vv), axis=len(shape))
+    uuvv = np.stack((vv, uu), axis=2)
 
-    # map -> xy -> XYZ -> sRGB
     xy = Luv_uv_to_xy(uuvv)
     xyz = xy_to_XYZ(xy)
-    colors = colour.XYZ_to_sRGB(xyz)
+    dat = XYZ_to_sRGB(xyz)
+    # normalize and clip
+    dat /= np.max(dat, axis=2)[..., np.newaxis]
+    dat = np.clip(dat, 0, 1)
+
+    # now make an alpha/transparency mask to hide the background
+    # and flip u,v axes because of column-major symantics
+    alpha = np.ones((samples, samples)) * wvl_mask
+    dat = np.swapaxes(np.dstack((dat, alpha)), 0, 1)
+
+    # lastly, duplicate the lowest wavelength so that the boundary line is closed
+    wvl_line_uv = np.vstack((wvl_line_uv, wvl_line_uv[0, :]))
+
     fig, ax = share_fig_ax(fig, ax)
+    ax.imshow(dat,
+              extent=[*xlim, *ylim],
+              interpolation='bilinear',
+              origin='lower')
+    ax.plot(wvl_line_uv[:, 0], wvl_line_uv[:, 1], ls='-', c='0.25', lw=2)
+    for wvl, pts in zip(wvl_annotate, wvl_annotate_uv):
+        ax.annotate(wvl, xy=pts)
+
+    ax.set(xlim=(-0.025, 0.65), xlabel='CIE u\'',
+           ylim=(0, 0.625), ylabel='CIE v\'')
 
     return fig, ax
 
@@ -523,7 +566,6 @@ def Luv_uv_to_xy(uv):
 
     '''
     u, v = uv[..., 0], uv[..., 1]
-    #u, v = v, u
     x = (9 * u) / (6 * u - 16 * v + 12)
     y = (4 * v) / (6 * u - 16 * v + 12)
 
@@ -549,12 +591,14 @@ def XYZ_to_RGB(XYZ):
     '''
     pass
 
-def XYZ_to_sRGB(XYZ):
+def XYZ_to_sRGB(XYZ, illuminant='D65'):
     ''' Converts xyz points to xy points.
 
     Args:
         XYZ (`numpy.ndarray`): ndarray with first dimension corresponding to
             X, Y, Z.
+
+        illuminant (`str`): which illuminant to use, either D65 or D50.
 
     Returns:
         `tuple` containing:
@@ -566,4 +610,11 @@ def XYZ_to_sRGB(XYZ):
             `numpy.ndarray`: Y coordinates.
 
     '''
-    pass
+    if illuminant.upper() == 'D65':
+        invmat = XYZ_to_sRGB_mat_D65
+    elif illuminant.upper() == 'D50':
+        invmat = XYZ_to_sRGB_mat_D50
+    else:
+        raise ValueError('Must use D65 or D50 illuminant.')
+
+    return correct_gamma(XYZ.dot(invmat.T), encoding=1)
