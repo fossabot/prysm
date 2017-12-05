@@ -617,4 +617,7 @@ def XYZ_to_sRGB(XYZ, illuminant='D65'):
     else:
         raise ValueError('Must use D65 or D50 illuminant.')
 
-    return correct_gamma(XYZ.dot(invmat.T), encoding=1)
+    if len(XYZ.shape) == 1:
+        return np.matmul(invmat, XYZ)
+    else:
+        return np.tensordot(invmat, XYZ, axes=((1), (2)))
