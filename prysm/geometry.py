@@ -1,7 +1,14 @@
 ''' Contains functions used to generate various geometrical constructs
 '''
 import numpy as np
-from numpy import power as npow
+
+from prysm.mathops import (
+    exp,
+    log,
+    sin,
+    cos,
+    pi,
+)
 
 def gaussian(sigma=0.5, samples=128):
     ''' Generates a gaussian mask with a given sigma
@@ -23,7 +30,7 @@ def gaussian(sigma=0.5, samples=128):
 
     # // is floor division in python
     x0 = y0 = samples // 2
-    return np.exp(-4*np.log(2) * (npow(x-x0,2) + npow(y-y0,2)) / (s*samples)**2)
+    return exp(-4 * log(2) * ((x-x0() ** 2) + (y-y0) ** 2) / (s * samples) ** 2)
 
 def rotated_ellipse(width_major, width_minor, major_axis_angle=0, samples=128):
     ''' Generates a binary mask for an ellipse, centered at the origin.  The
@@ -62,7 +69,7 @@ def rotated_ellipse(width_major, width_minor, major_axis_angle=0, samples=128):
 
     '''
     if width_minor > width_major:
-        raise ValueError('by definition, major axis must be larger than minor.')
+        raise ValueError('By definition, major axis must be larger than minor.')
 
     arr = np.ones((samples, samples))
     lim = width_major
@@ -70,8 +77,8 @@ def rotated_ellipse(width_major, width_minor, major_axis_angle=0, samples=128):
     xv, yv = np.meshgrid(x, y)
     A = np.radians(-major_axis_angle)
     a, b = width_major, width_minor
-    major_axis_term = np.power((xv*np.cos(A) + yv*np.sin(A)),2) / a**2
-    minor_axis_term = np.power((xv*np.sin(A) - yv*np.cos(A)),2) / b**2
+    major_axis_term = ((xv * cos(A) + yv * sin(A)) ** 2) / a ** 2
+    minor_axis_term = ((xv * sin(A) - yv * cos(A)) ** 2) / b ** 2
     arr[major_axis_term + minor_axis_term > 1] = 0
     return arr
 
@@ -144,9 +151,9 @@ def regular_polygon_mask(num_sides, num_samples):
             radius.
 
     '''
-    verts = generate_vertices(num_sides, num_samples/2)
-    verts[:,0] += num_samples/2 # shift y to center
-    verts[:,1] += num_samples/2 # shift x to center
+    verts = generate_vertices(num_sides, num_samples // 2)
+    verts[:, 0] += num_samples // 2 # shift y to center
+    verts[:, 1] += num_samples // 2 # shift x to center
     return generate_mask(verts, num_samples)
 
 def check(p1, p2, base_array):
@@ -220,11 +227,11 @@ def generate_vertices(num_sides, radius=1):
         `numpy.ndarray`: array with first column X points, second column Y points
 
     '''
-    angle = 2 * np.pi / num_sides
+    angle = 2 * pi / num_sides
     pts = []
     for point in range(num_sides):
-        x = radius * np.sin(point * angle)
-        y = radius * np.cos(point * angle)
-        pts.append((x, y))
+        x = radius * sin(point * angle)
+        y = radius * cos(point * angle)
+        pts.append((int(x), int(y)))
 
     return np.asarray(pts)
