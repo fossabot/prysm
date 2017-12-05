@@ -1,9 +1,6 @@
 ''' A base point spread function interface
 '''
 import numpy as np
-from numpy import floor
-from numpy import power as npow
-from numpy.fft import fftshift, ifftshift
 
 from scipy import interpolate
 
@@ -11,7 +8,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.axes_rgb import make_rgb_axes
 
 from prysm.conf import config
-from prysm.mathops import fft2, ifft2
+from prysm.mathops import fft2, ifft2, fftshift, ifftshift
 from prysm.fttools import pad2d, forward_ft_unit
 from prysm.coordinates import uniform_cart_to_polar, resample_2d_complex
 from prysm.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax
@@ -94,7 +91,6 @@ class PSF(object):
         '''
         return self.unit_y, self.data[:, self.center_y]
 
-
     def encircled_energy(self, azimuth=None):
         ''' Returns the encircled energy at the requested azumith.  If azimuth
             is None, returns the azimuthal average.
@@ -124,17 +120,17 @@ class PSF(object):
 
     # plotting -----------------------------------------------------------------
 
-    def plot2d(self, log=False, axlim=25, interp_method='lanczos',
+    def plot2d(self, axlim=25, power=1, interp_method='lanczos',
                pix_grid=None, fig=None, ax=None,
                show_axlabels=True, show_colorbar=True):
         ''' Creates a 2D plot of the PSF.
 
         Args:
-            log (`bool`): if true, plot in log scale.  If false, plot in linear
-                scale.
 
             axlim (`float`): limits of axis, symmetric.
                 xlim=(-axlim,axlim), ylim=(-axlim, axlim).
+
+            power (`float`): power to stretch the data by for plotting.
 
             interp_method (`string`): method used to interpolate the image between
                 samples of the PSF.
@@ -155,14 +151,9 @@ class PSF(object):
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot.
 
         '''
-        if log:
-            fcn = 20 * np.log10(1e-100 + self.data)
-            label_str = 'Normalized Intensity [dB]'
-            lims = (-100, 0) # show first 100dB -- range from (1e-6, 1) in linear scale
-        else:
-            fcn = correct_gamma(self.data)
-            label_str = 'Normalized Intensity [a.u.]'
-            lims = (0, 1)
+        fcn = correct_gamma(self.data**power)
+        label_str = 'Normalized Intensity [a.u.]'
+        lims = (0, 1)
 
         left, right = self.unit_x[0], self.unit_x[-1]
         bottom, top = self.unit_y[0], self.unit_y[-1]
@@ -642,7 +633,7 @@ def convpsf(psf1, psf2):
 
     '''
     if ( psf2.samples_x == psf1.samples_x and
-         psf2.samples_y == psf1.samples_y and 
+         psf2.samples_y == psf1.samples_y and
          psf2.sample_spacing == psf1.sample_spacing ):
         # no need to interpolate, use FFTs to convolve
         psf3 = PSF(data=abs(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data)))),
