@@ -15,7 +15,6 @@ except ImportError:
 
 from prysm.util import share_fig_ax, correct_gamma
 from prysm.geometry import generate_mask
-from prysm.mathops import nan
 
 # some CIE constants
 CIE_K = 24389 / 27
@@ -285,7 +284,7 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
     wvl_mask = [400, 430, 460, 470, 480, 490, 500, 505, 510, 515, 520, 525, 530, 535, 700]
     wvl_mask_XYZ = colour.wavelength_to_XYZ(wvl_mask)
     wvl_mask_uv = XYZ_to_uv(wvl_mask_XYZ)
-    wvl_pts = wvl_mask_uv*samples/np.array([xlim[1], ylim[1]])
+    wvl_pts = wvl_mask_uv * samples / np.array([xlim[1], ylim[1]])
     wvl_mask = generate_mask(wvl_pts, samples)
 
     # make equally spaced u,v coordinates on a grid
@@ -300,6 +299,7 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
 
     xy = Luv_uv_to_xy(uuvv)
     xyz = xy_to_XYZ(xy)
+    xyz[:, :, 1] = 1
     dat = XYZ_to_sRGB(xyz)
     # normalize and clip
     dat /= np.max(dat, axis=2)[..., np.newaxis]
@@ -620,4 +620,4 @@ def XYZ_to_sRGB(XYZ, illuminant='D65'):
     if len(XYZ.shape) == 1:
         return np.matmul(invmat, XYZ)
     else:
-        return np.tensordot(invmat, XYZ, axes=((1), (2)))
+        return np.tensordot(invmat, XYZ, axes=((1), (2))).swapaxes(0, 2).swapaxes(0, 1)
