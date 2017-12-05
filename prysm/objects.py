@@ -497,7 +497,7 @@ class TiltedSquare(Image):
             `TiltedSquare`: new TiltedSquare instance.
 
         '''
-        radius = 0.2
+        radius = 0.3
         if background.lower() == 'white':
             arr = np.ones((samples, samples))
             fill_with = 0
