@@ -299,7 +299,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
 
     # create lists of wavelengths and map them to uv,
     # a reduced set for a faster mask and
-    # an equally spaced set for annotation
+    # yet another set for annotation.
     wvl_line = np.arange(400, 700, 2)
     wvl_line_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_line))
 
@@ -348,10 +348,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
               interpolation='bilinear',
               origin='lower')
     ax.plot(wvl_line_uv[:, 0], wvl_line_uv[:, 1], ls='-', c='0.25', lw=2)
-    #for wvl, pts in zip(wvl_annotate, wvl_annotate_uv):
-    #    ax.annotate(wvl, xy=pts)
     fig, ax = cie_1976_wavelength_annotations(wvl_annotate, fig=fig, ax=ax)
-
     ax.set(xlim=xlim, xlabel='CIE u\'',
            ylim=ylim, ylabel='CIE v\'')
 
