@@ -16,7 +16,6 @@ except ImportError:
     pass
 
 from prysm.util import share_fig_ax, correct_gamma
-from prysm.geometry import generate_mask
 from prysm.mathops import atan2, pi, cos, sin
 
 # some CIE constants
@@ -310,8 +309,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
                 500, 505, 510, 515, 520, 525, 530, 535, 570, 700]
 
-    wvl_mask_XYZ = colour.wavelength_to_XYZ(wvl_mask)
-    wvl_mask_uv = XYZ_to_uv(wvl_mask_XYZ)
+    wvl_mask_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_mask))
 
     # make equally spaced u,v coordinates on a grid
     u = np.linspace(xlim[0], xlim[1], samples)
@@ -397,10 +395,10 @@ def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
     u2, v2 = u + text_offset * cos_ang, v + text_offset * sin_ang
 
     fig, ax = share_fig_ax(fig, ax)
-    tick_lines = LineCollection(np.c_[u, v, u1, v1].reshape(-1, 2, 2), color="k", lw=1)
+    tick_lines = LineCollection(np.c_[u, v, u1, v1].reshape(-1, 2, 2), color='0.25', lw=1.25)
     ax.add_collection(tick_lines)
     for i in range(len(idx)):
-        ax.text(u2[i], v2[i], str(wvl_lbl[i]), va="center", ha="center")
+        ax.text(u2[i], v2[i], str(wvl_lbl[i]), va="center", ha="center", clip_on=True)
 
     return fig, ax
 
@@ -592,7 +590,7 @@ def Luv_to_XYZ(Luv):
     '''
     L, u, v = Luv[..., 0], Luv[..., 1], Luv[..., 2]
     XYZ_D50 = [0.9642, 1.0000, 0.8251]
-    X_r, Y_r, Z_r = XYZ_D50 # tsplit(xyY_to_XYZ(xy_to_xyY(illuminant)))
+    X_r, Y_r, Z_r = XYZ_D50
 
     Y = np.where(L > CIE_E * CIE_K, ((L + 16) / 116) ** 3, L / CIE_K)
 
