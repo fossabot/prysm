@@ -4,8 +4,10 @@
 import warnings
 
 import numpy as np
+from scipy.spatial import Delaunay
 
 from matplotlib import pyplot as plt
+from matplotlib.collections import LineCollection
 
 try:
     import colour
@@ -15,6 +17,7 @@ except ImportError:
 
 from prysm.util import share_fig_ax, correct_gamma
 from prysm.geometry import generate_mask
+from prysm.mathops import atan2, pi, cos, sin
 
 # some CIE constants
 CIE_K = 24389 / 27
@@ -262,7 +265,7 @@ def check_colour():
             raise ImportError('prysm colorimetry requires the colour package, '
                               'see http://colour-science.org/installation-guide/')
 
-def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
+def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None):
     ''' Creates a CIE 1976 plot.
 
     Args:
@@ -300,18 +303,15 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
     wvl_line = np.arange(400, 700, 2)
     wvl_line_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_line))
 
-    wvl_annotate = [400, 440, 450, 470, 480, 490,
-                    500, 510, 520, 540, 560, 570, 580, 590,
-                    600, 610, 630, 700]
-    wvl_annotate_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_annotate))
+    wvl_annotate = [360, 400, 455, 470, 480, 490,
+                    500, 510, 520, 540, 555, 565, 580, 590,
+                    600, 615, 630, 700, 830]
 
     wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
                 500, 505, 510, 515, 520, 525, 530, 535, 570, 700]
 
     wvl_mask_XYZ = colour.wavelength_to_XYZ(wvl_mask)
     wvl_mask_uv = XYZ_to_uv(wvl_mask_XYZ)
-    wvl_pts = wvl_mask_uv * samples / np.array([xlim[1], ylim[1]])
-    wvl_mask = generate_mask(wvl_pts, samples)
 
     # make equally spaced u,v coordinates on a grid
     u = np.linspace(xlim[0], xlim[1], samples)
@@ -323,6 +323,9 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
     # stack u and v for vectorized computations
     uuvv = np.stack((vv, uu), axis=2)
 
+    triangles = Delaunay(wvl_mask_uv, qhull_options='QJ Qf')
+    wvl_mask = triangles.find_simplex(uuvv) < 0
+
     xy = Luv_uv_to_xy(uuvv)
     xyz = xy_to_XYZ(xy)
     dat = XYZ_to_sRGB(xyz)
@@ -332,7 +335,8 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
 
     # now make an alpha/transparency mask to hide the background
     # and flip u,v axes because of column-major symantics
-    alpha = np.ones((samples, samples)) * wvl_mask
+    alpha = np.ones((samples, samples))
+    alpha[wvl_mask] = 0
     dat = np.swapaxes(np.dstack((dat, alpha)), 0, 1)
 
     # lastly, duplicate the lowest wavelength so that the boundary line is closed
@@ -344,11 +348,62 @@ def cie_1976_plot(xlim=(0, 0.7), ylim=None, samples=200, fig=None, ax=None):
               interpolation='bilinear',
               origin='lower')
     ax.plot(wvl_line_uv[:, 0], wvl_line_uv[:, 1], ls='-', c='0.25', lw=2)
-    for wvl, pts in zip(wvl_annotate, wvl_annotate_uv):
-        ax.annotate(wvl, xy=pts)
+    #for wvl, pts in zip(wvl_annotate, wvl_annotate_uv):
+    #    ax.annotate(wvl, xy=pts)
+    fig, ax = cie_1976_wavelength_annotations(wvl_annotate, fig=fig, ax=ax)
 
-    ax.set(xlim=(-0.025, 0.65), xlabel='CIE u\'',
-           ylim=(0, 0.625), ylabel='CIE v\'')
+    ax.set(xlim=xlim, xlabel='CIE u\'',
+           ylim=ylim, ylabel='CIE v\'')
+
+    return fig, ax
+
+def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
+    ''' Draws lines normal to the spectral locust on a CIE 1976 diagram and
+        writes the text for each wavelength.
+
+    Args:
+        wavelengths (`iterable`): set of wavelengths to annotate.
+
+        fig (`matplotlib.figure.Figure`): figure to draw on.
+
+        ax (`matplotlib.axes.Axis`): axis to draw in.
+
+    Returns:
+
+        `tuple` containing:
+
+            `matplotlib.figure.Figure`: figure containing the annotations.
+
+            `matplotlib.axes.Axis`: axis containing the annotations.
+
+    Notes:
+        see SE:
+        https://stackoverflow.com/questions/26768934/annotation-along-a-curve-in-matplotlib
+
+    '''
+    # some tick parameters
+    tick_length = 0.025
+    text_offset = 0.06
+
+    # convert wavelength to u' v' coordinates
+    wavelengths = np.asarray(wavelengths)
+    idx = np.arange(1, len(wavelengths)-1, dtype=int)
+    wvl_lbl = wavelengths[idx]
+    uv = XYZ_to_uv(colour.wavelength_to_XYZ(wavelengths))
+    u, v = uv[..., 0][idx], uv[..., 1][idx]
+    u_last, v_last = uv[..., 0][idx-1], uv[..., 1][idx-1]
+    u_next, v_next = uv[..., 0][idx+1], uv[..., 1][idx+1]
+
+    angle = atan2(v_next-v_last, u_next-u_last) + pi / 2
+    cos_ang, sin_ang = cos(angle), sin(angle)
+    u1, v1 = u + tick_length * cos_ang, v + tick_length * sin_ang
+    u2, v2 = u + text_offset * cos_ang, v + text_offset * sin_ang
+
+    fig, ax = share_fig_ax(fig, ax)
+    tick_lines = LineCollection(np.c_[u, v, u1, v1].reshape(-1, 2, 2), color="k", lw=1)
+    ax.add_collection(tick_lines)
+    for i in range(len(idx)):
+        ax.text(u2[i], v2[i], str(wvl_lbl[i]), va="center", ha="center")
 
     return fig, ax
 
