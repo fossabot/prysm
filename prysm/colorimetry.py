@@ -1,11 +1,14 @@
 ''' optional tools for colorimetry, wrapping the color-science library, see:
     http://colour-science.org/
 '''
+import csv
 import warnings
+from pathlib import Path
 
 import numpy as np
 from scipy.spatial import Delaunay
 from scipy.constants import c, h, k
+from scipy.interpolate import interp1d
 # c - speed of light
 # h - planck constant
 # k - boltzman constant
@@ -27,6 +30,7 @@ from prysm.mathops import atan2, pi, cos, sin, exp
 CIE_K = 24389 / 27
 CIE_E = 216 / 24389
 
+color_matching_functions = {}
 
 # sRGB conversion matrix
 XYZ_to_sRGB_mat_D65 = np.asarray([
@@ -51,6 +55,7 @@ XYZ_to_AdobeRGB_mat_D50 = np.asarray([
     [-0.9787684, 1.9161415, 0.0334540],
     [0.0286869, -0.1406752, 1.3487655],
 ])
+
 COLOR_MATRICIES = {
     'sRGB': {
         'D65': XYZ_to_sRGB_mat_D65,
@@ -61,6 +66,27 @@ COLOR_MATRICIES = {
         'D50': XYZ_to_AdobeRGB_mat_D50,
     },
 }
+
+
+def prepare_cie_1931_2deg_observer():
+    ''' Prepares the CIE 1931 standard 2 degree observer, if it is not already
+        cached.
+    '''
+    tmp_list = []
+    p = Path(__file__) / './cie_xyz_1931_tristimulus_5nm.csv'
+    with open(p, 'r') as fid:
+        reader = csv.reader(fid)
+        for row in reader:
+            tmp_list.append(row)
+
+    values = np.asarray(tmp_list, dtype=config.precision)
+    wvl, X, Y, Z = values[:, 0], values[:, 1], values[:, 2], values[:, 3]
+    color_matching_functions['cie1931_2deg'] = {
+        'wvl': wvl,
+        'X': X,
+        'Y': Y,
+        'Z': Z
+    }
 
 
 class Spectrum(object):
@@ -314,6 +340,51 @@ def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
     ufuncs supporting array vectorization.  For more information, see colour:
     https://github.com/colour-science/colour/
 '''
+
+
+def spectrum_to_XYZ(wvl, values, cmf='1931_2deg'):
+    ''' Converts a spectrum to XYZ coordinates.
+
+    Args:
+        wvl (`numpy.ndarray`): wavelengths the data is sampled at, in nm.
+
+        values (`numpy.ndarray`): values of the spectrum at each wvl sample.
+
+        cmf (`str`): which color matching function to use, defaults to
+            CIE 1931 2 degree observer.
+
+    Returns:
+        `tuple` containing:
+
+            `float`: X
+
+            `float`: Y
+
+            `float`: Z
+
+    Notes:
+        Assumes the reflective or transmissive case with K=1 and the
+        given values already being the product of an illuminant and the data.
+
+    '''
+    if cmf.lower() is not '1931_2deg':
+        raise ValueError('Must use 1931 2 degree standard observer (cmf=1931_2deg)')
+
+    try:
+        cmf = color_matching_functions[cmf]
+    except KeyError as e:
+        prepare_cie_1931_2deg_observer()
+        cmf = color_matching_functions[cmf]
+
+    wvl_cmf = cmf.wvl
+    if not np.allclose(wvl_cmf, wvl):
+        dat_interpf = interp1d(wvl, values, kind='linear', fill_value=0, assume_sorted=True)
+        values = dat_interpf(wvl_cmf)
+
+    X = np.trapz(values * cmf.X)
+    Y = np.trapz(values * cmf.Y)
+    Z = np.traps(values * cmf.Z)
+    return (X, Y, Z)
 
 
 def XYZ_to_xyY(XYZ):
