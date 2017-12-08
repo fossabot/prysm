@@ -231,7 +231,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     # a reduced set for a faster mask and
     # yet another set for annotation.
     wvl_line = np.arange(400, 700, 2)
-    wvl_line_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_line))
+    wvl_line_uv = XYZ_to_uvprime(colour.wavelength_to_XYZ(wvl_line))
 
     wvl_annotate = [360, 400, 455, 470, 480, 490,
                     500, 510, 520, 540, 555, 570, 580, 590,
@@ -240,7 +240,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
                 500, 505, 510, 515, 520, 525, 530, 535, 570, 700]
 
-    wvl_mask_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_mask))
+    wvl_mask_uv = XYZ_to_uvprime(colour.wavelength_to_XYZ(wvl_mask))
 
     # make equally spaced u,v coordinates on a grid
     u = np.linspace(xlim[0], xlim[1], samples)
@@ -255,7 +255,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     triangles = Delaunay(wvl_mask_uv, qhull_options='QJ Qf')
     wvl_mask = triangles.find_simplex(uuvv) < 0
 
-    xy = Luv_uv_to_xy(uuvv)
+    xy = uvprime_to_xy(uuvv)
     xyz = xy_to_XYZ(xy)
     dat = XYZ_to_sRGB(xyz)
     # normalize and clip
@@ -316,7 +316,7 @@ def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
     wavelengths = np.asarray(wavelengths)
     idx = np.arange(1, len(wavelengths) - 1, dtype=int)
     wvl_lbl = wavelengths[idx]
-    uv = XYZ_to_uv(colour.wavelength_to_XYZ(wavelengths))
+    uv = XYZ_to_uvprime(colour.wavelength_to_XYZ(wavelengths))
     u, v = uv[..., 0][idx], uv[..., 1][idx]
     u_last, v_last = uv[..., 0][idx - 1], uv[..., 1][idx - 1]
     u_next, v_next = uv[..., 0][idx + 1], uv[..., 1][idx + 1]
@@ -342,8 +342,28 @@ def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
 '''
 
 
-def spectrum_to_XYZ(wvl, values, cmf='1931_2deg'):
-    ''' Converts a spectrum to XYZ coordinates.
+def safely_get_cmf(observer='1931_2deg'):
+    ''' Safely returns the color matching function dictionary for the specified
+        observer.
+
+    Args:
+        observer (`str): the observer to return.
+
+    Returns:
+        `dict`: cmf dict.
+
+    '''
+    try:
+        cmf = color_matching_functions[observer]
+    except KeyError as e:
+        prepare_cie_1931_2deg_observer()
+        cmf = color_matching_functions[observer]
+
+    return cmf
+
+
+def spectrum_to_XYZ_emissive(wvl, values, cmf='1931_2deg'):
+    ''' Converts a reflective or transmissive spectrum to XYZ coordinates.
 
     Args:
         wvl (`numpy.ndarray`): wavelengths the data is sampled at, in nm.
@@ -362,37 +382,112 @@ def spectrum_to_XYZ(wvl, values, cmf='1931_2deg'):
 
             `float`: Z
 
-    Notes:
-        Assumes the reflective or transmissive case with K=1 and the
-        given values already being the product of an illuminant and the data.
-
     '''
     if cmf.lower() is not '1931_2deg':
         raise ValueError('Must use 1931 2 degree standard observer (cmf=1931_2deg)')
 
-    try:
-        cmf = color_matching_functions[cmf]
-    except KeyError as e:
-        prepare_cie_1931_2deg_observer()
-        cmf = color_matching_functions[cmf]
+    cmf = safely_get_cmf(cmf)
 
     wvl_cmf = cmf.wvl
     if not np.allclose(wvl_cmf, wvl):
         dat_interpf = interp1d(wvl, values, kind='linear', fill_value=0, assume_sorted=True)
         values = dat_interpf(wvl_cmf)
 
-    X = np.trapz(values * cmf.X)
-    Y = np.trapz(values * cmf.Y)
-    Z = np.traps(values * cmf.Z)
+    X = k * np.trapz(values * cmf.X)
+    Y = k * np.trapz(values * cmf.Y)
+    Z = k * np.traps(values * cmf.Z)
+    return (X,Y,Z)
+
+def spectrum_to_XYZ_nonemissive(wvl, values, illuminant='bb_6500', cmf='1931_2deg'):
+    ''' Converts a reflective or transmissive spectrum to XYZ coordinates.
+
+    Args:
+        wvl (`numpy.ndarray`): wavelengths the data is sampled at, in nm.
+
+        values (`numpy.ndarray`): values of the spectrum at each wvl sample.
+
+        illuminant (`str`): reference illuminant, of the form "bb_temperature".
+            TODO: add D65, D50, etc.
+
+        cmf (`str`): which color matching function to use, defaults to
+            CIE 1931 2 degree observer.
+
+    Returns:
+        `tuple` containing:
+
+            `float`: X
+
+            `float`: Y
+
+            `float`: Z
+
+    '''
+    if cmf.lower() is not '1931_2deg':
+        raise ValueError('Must use 1931 2 degree standard observer (cmf=1931_2deg)')
+
+    cmf = safely_get_cmf(cmf)
+
+    try:
+        if illuminant[2] == '_':
+            # black body
+            _, temperature = illuminant.split('_')
+            ill_type = 'blackbody'
+        else:
+            raise ValueError('not blackbody')
+    except (ValueError, IndexError) as err:
+        # standard illuminant, not implemented
+        raise ValueError('Must use black body illuminants')
+
+    wvl_cmf = cmf.wvl
+    if not np.allclose(wvl_cmf, wvl):
+        dat_interpf = interp1d(wvl, values, kind='linear', fill_value=0, assume_sorted=True)
+        values = dat_interpf(wvl_cmf)
+
+    if ill_type is 'blackbody':
+        ill_spectrum = blackbody_spectral_power_distribution(temperature, cmf.wvl)
+    else:
+        ill_spectrum = np.zeros(cmf.wvl.shape)
+
+    k = 100 / np.trapz(ill_spectrum)
+    X = k * np.trapz(values * ill_spectrum * cmf.X)
+    Y = k * np.trapz(values * ill_spectrum * cmf.Y)
+    Z = k * np.traps(values * ill_spectrum * cmf.Z)
     return (X, Y, Z)
 
+def make_cieluv_isotemperature_line_points(temp, length=0.025):
+    ''' Computes the upper and lower (u',v') points for a given color
+        temperature.
 
-def XYZ_to_xyY(XYZ):
+    Args:
+        temp (`float`): temperature to make isotemperature points for
+
+        length (`float`): total length of the isotemperature line.
+
+    Returns:
+        `numpy.ndarray` with last dim (u',v')
+
+    '''
+    cmf = safely_get_cmf()
+    spectrum = blackbody_spectral_power_distribution(temp, cmf.wvl)
+    xyz = spectrum_to_XYZ_nonemissive(cmf.wvl, spectrum, illuminant=f'bb_{temp}')
+    uv = XYZ_to_uvprime(xyz)
+
+    pass
+
+
+def XYZ_to_xyY(XYZ, assume_nozeros=True, zero_ref_illuminant='D65'):
     ''' Converts xyz points to xy points.
 
     Args:
-        XYZ (`numpy.ndarray`): ndarray with first dimension corresponding to
+        XYZ (`numpy.ndarray`): ndarray with last dimension corresponding to
             X, Y, Z.
+
+        assume_nozeros (`bool`): assume there are no zeros present, computation
+            will run faster as `True`, if `False` will correct for all-zero
+            values.
+
+        zero_ref_illuminant (`str): string for reference illuminant in the case
+            where X==Y==Z==0.
 
     Returns:
         `tuple` containing:
@@ -403,13 +498,32 @@ def XYZ_to_xyY(XYZ):
 
             `numpy.ndarray`: Y coordinates.
 
+    Notes:
+        zero_ref_illuminant is unimplemented, forced to D65 at the time being.
+
     '''
+    x_D65, y_D65 = 0.3128, 0.3290
+
     X, Y, Z = XYZ[..., 0], XYZ[..., 1], XYZ[..., 2]
+
+    if not assume_nozeros:
+        zero_X = np.where(X == 0)
+        zero_Y = np.where(Y == 0)
+        zero_Z = np.where(Z == 0)
+        allzeros = np.all(np.dstack((zero_X, zero_Y, zero_Z)))
+        X[allzeros] = 0.3
+        Y[allzeros] = 0.3
+        Z[allzeros] = 0.3
 
     x = X / (X + Y + Z)
     y = Y / (X + Y + Z)
     Y = Y
     shape = x.shape
+
+    if not assume_nozeros:
+        x[allzeros] = x_D65
+        y[allzeros] = y_D65
+
     return np.stack((x, y, Y), axis=len(shape))
 
 
@@ -417,7 +531,7 @@ def XYZ_to_xy(XYZ):
     ''' Converts XYZ points to xy points.
 
     Args:
-        XYZ (`numpy.ndarray`): ndarray with first dimension corresponding to
+        XYZ (`numpy.ndarray`): ndarray with last dimension corresponding to
             X, Y, Z.
 
     Returns:
@@ -432,19 +546,19 @@ def XYZ_to_xy(XYZ):
     return xyY_to_xy(xyY)
 
 
-def XYZ_to_uv(XYZ):
-    ''' Converts XYZ points to uv points.
+def XYZ_to_uvprime(XYZ):
+    ''' Converts XYZ points to u'v' points.
 
     Args:
-        XYZ (`numpy.ndarray`): ndarray with first dimension corresponding to
+        XYZ (`numpy.ndarray`): ndarray with last dimension corresponding to
             X, Y, Z.
 
     Returns:
         `tuple` containing:
 
-            `numpy.ndarray`: u coordinates.
+            `numpy.ndarray`: u' coordinates.
 
-            `numpy.ndarray`: u coordinates.
+            `numpy.ndarray`: u' coordinates.
 
     '''
     X, Y, Z = XYZ[..., 0], XYZ[..., 1], XYZ[..., 2]
@@ -455,11 +569,52 @@ def XYZ_to_uv(XYZ):
     return np.stack((u, v), axis=len(shape))
 
 
+def XYZ_to_Luv(xyz, refwhite='bb_6500'):
+    ''' Converts XYZ to Luv coordinates with a given white point.
+
+    Args:
+        xyz (`numpy.ndarray`): array with last dimension X, Y, Z.
+
+        refwhite (`str`): reference white, must be a 6500K black body.
+
+    Returns:
+        `tuple` containing:
+
+            `numpy.ndarray`: L coordinates.
+
+            `numpy.ndarray`: u coordinates.
+
+            `numpy.ndarray`: v coordinates.
+
+    '''
+    xyz = np.asarray(xyz)
+    upvp = XYZ_to_uvprime(xyz)
+    up, vp = upvp[..., 0], upvp[..., 1]
+
+    wvl = np.arange(360, 830, 5)
+    spectrum = blackbody_spectral_power_distribution(6500, wvl)
+    ref_xyz = spectrum_to_XYZ_emissive(wvl, spectrum)
+    ref_upvp = XYZ_to_uvprime(ref_xyz)
+    ref_up, ref_vp = ref_upvp[..., 0], ref_upvp[..., 1]
+
+    Y = xyz[..., 1]
+    yr = Y / ref_xyz[1]
+
+    L_case_one = np.where(yr > CIE_E)
+    L = CIE_K * yr
+    L[L_case_one] = 116 * yr ** (1 / 3) - 16
+    u = 13 * L * (up - ref_up)
+    v = 13 * L * (vp - ref_vp)
+
+    shape = xyz.shape
+    return np.stack((L, u, v), axis=len(shape))
+
+
 def xyY_to_xy(xyY):
     ''' converts xyY points to xy points.
 
     Args:
-        xyY (`numpy.ndarray`): ndarray with first dimension corresponding to
+        xyY (`numpy.ndarray`): ndarray with last dimension corresponding to
             x, y, Y.
 
     Returns:
@@ -484,7 +639,7 @@ def xyY_to_XYZ(xyY):
     ''' converts xyY points to XYZ points.
 
     Args:
-        xyY (`numpy.ndarray`): ndarray with first dimension corresponding to
+        xyY (`numpy.ndarray`): ndarray with last dimension corresponding to
             x, y, Y.
 
     Returns:
@@ -510,7 +665,7 @@ def xy_to_xyY(xy, Y=1):
     ''' converts xy points to xyY points.
 
     Args:
-        xy (`numpy.ndarray`): ndarray with first dimension corresponding to
+        xy (`numpy.ndarray`): ndarray with last dimension corresponding to
             x, y.
 
         Y (`numpy.ndarray`): Y value to fill with.
@@ -540,7 +695,7 @@ def xy_to_XYZ(xy):
     ''' converts xy points to xyY points.
 
     Args:
-        xy (`numpy.ndarray`): ndarray with first dimension corresponding to
+        xy (`numpy.ndarray`): ndarray with last dimension corresponding to
             x, y.
 
     Returns:
@@ -561,7 +716,7 @@ def Luv_to_XYZ(Luv):
     ''' Converts Luv points to XYZ points.
 
     Args:
-        Luv (`numpy.ndarray`): ndarray with first dimension corresponding to
+        Luv (`numpy.ndarray`): ndarray with last dimension corresponding to
             L, u, v.
 
     Returns:
@@ -594,12 +749,12 @@ def Luv_to_XYZ(Luv):
     return np.stack((X, Y, Z), axis=len(shape))
 
 
-def Luv_to_uv(Luv):
-    ''' Converts Luv points to uv points.
+def Luv_to_uvprime(Luv):
+    ''' Converts Luv points to u'v' points.
 
     Args:
-        Luv (`numpy.ndarray`): ndarray with first dimension corresponding to
-            L, u, v.
+        Luv (`numpy.ndarray`): ndarray with last dimension corresponding to
+            L*, u*, v*.
 
     Returns:
         `tuple` containing:
@@ -610,15 +765,15 @@ def Luv_to_uv(Luv):
 
     '''
     XYZ = Luv_to_XYZ(Luv)
-    return XYZ_to_uv(XYZ)
+    return XYZ_to_uvprime(XYZ)
 
 
-def Luv_uv_to_xy(uv):
-    ''' Converts Luv u,v points to xyY x,y points.
+def uvprime_to_xy(uv):
+    ''' Converts u' v' points to xyY x,y points.
 
     Args:
-        uv (`numpy.ndarray`): ndarray with first dimension corresponding to
-            u, v.
+        uv (`numpy.ndarray`): ndarray with last dimension corresponding to
+            u', v'.
 
     Returns:
         `tuple` containing:
@@ -636,11 +791,34 @@ def Luv_uv_to_xy(uv):
     return np.stack((x, y), axis=len(shape))
 
 
+def uvprime_to_Luv(uv):
+    ''' Converts u' v' points to xyY x,y points.
+
+    Args:
+        uv (`numpy.ndarray`): ndarray with last dimension corresponding to
+            u', v'.
+
+    Returns:
+        `tuple` containing:
+
+            `numpy.ndarray`: L coordinates.
+
+            `numpy.ndarray`: u coordinates.
+
+            `numpy.ndarray`: v coordinates.
+
+    '''
+    xy = uvprime_to_xy(uv)
+    xyz = xy_to_XYZ(xy)
+    luv = XYZ_to_Luv(xyz)
+    return luv
+
+
 def XYZ_to_AdobeRGB(XYZ, illuminant='D65'):
     ''' Converts xyz points to xy points.
 
     Args:
-        XYZ (`numpy.ndarray`): ndarray with first dimension corresponding to
+        XYZ (`numpy.ndarray`): ndarray with last dimension corresponding to
             X, Y, Z.
 
         illuminant (`str`): which illuminant to use, either D65 or D50.
@@ -669,7 +847,7 @@ def XYZ_to_sRGB(XYZ, illuminant='D65'):
     ''' Converts xyz points to xy points.
 
     Args:
-        XYZ (`numpy.ndarray`): ndarray with first dimension corresponding to
+        XYZ (`numpy.ndarray`): ndarray with last dimension corresponding to
             X, Y, Z.
 
         illuminant (`str`): which illuminant to use, either D65 or D50.
@@ -702,7 +880,7 @@ def XYZ_to_RGB(XYZ, conversion_matrix):
     ''' Converts xyz points to xy points.
 
     Args:
-        XYZ (`numpy.ndarray`): ndarray with first dimension corresponding to
+        XYZ (`numpy.ndarray`): ndarray with last dimension corresponding to
             X, Y, Z.
 
         conversion_matrix (`str`): conversion matrix to use to convert XYZ
