@@ -5,6 +5,10 @@ import warnings
 
 import numpy as np
 from scipy.spatial import Delaunay
+from scipy.constants import c, h, k
+# c - speed of light
+# h - planck constant
+# k - boltzman constant
 
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
@@ -15,12 +19,14 @@ except ImportError:
     # Spectrum objects can be used without colour
     pass
 
+from prysm.conf import config
 from prysm.util import share_fig_ax, correct_gamma
-from prysm.mathops import atan2, pi, cos, sin
+from prysm.mathops import atan2, pi, cos, sin, exp
 
 # some CIE constants
 CIE_K = 24389 / 27
 CIE_E = 216 / 24389
+
 
 # sRGB conversion matrix
 XYZ_to_sRGB_mat_D65 = np.asarray([
@@ -55,6 +61,7 @@ COLOR_MATRICIES = {
         'D50': XYZ_to_AdobeRGB_mat_D50,
     },
 }
+
 
 class Spectrum(object):
     ''' Representation of a spectrum of light.
@@ -106,129 +113,24 @@ class Spectrum(object):
 
         return fig, ax
 
-class CIEXYZ(object):
-    ''' CIE XYZ 1931 color coordinate system.
+
+def blackbody_spectral_power_distribution(temperature, wavelengths):
+    ''' Computes the spectral power distribution of a black body at a given
+        temperature.
+
+    Args:
+        temperature (`float`): body temp, in Kelvin.
+
+        wavelengths (`numpy.ndarray`): array of wavelengths, in nanometers.
+
+    Returns:
+        numpy.ndarray: spectral power distribution in units of W/m^2/nm
+
     '''
+    wavelengths = wavelengths.astype(config.precision) / 1e9
+    return (2 * h * c ** 2) / (wavelengths ** 5) * \
+        1 / (exp((h * c) / (wavelengths * k * temperature) - 1))
 
-    def __init__(self, x, y, z):
-        ''' Creates a new CIEXYZ object.
-
-        Args:
-            x (`numpy.ndarray`): array of x coordinates.
-
-            y (`numpy.ndarray`): array of y coordinates.
-
-            z (`numpy.ndarray`): z unit array.
-
-        Returns:
-            `CIEXYZ`: new CIEXYZ object.
-
-        '''
-        self.x = x
-        self.y = y
-        self.z = z
-
-    def to_xy(self):
-        ''' Returns the x, y coordinates
-        '''
-        check_colour()
-        return colour.XYZ_to_xy((self.x, self.y, self.z))
-
-    @staticmethod
-    def from_spectrum(spectrum):
-        ''' computes XYZ coordinates from a spectrum
-
-        Args:
-            spectrum (`Spectrum`): a Spectrum object.
-
-        Returns:
-            `CIEXYZ`: a new CIEXYZ object.
-
-        '''
-        # we need colour
-        check_colour()
-
-        # convert to a spectral power distribution
-        spectrum = normalize_spectrum(spectrum)
-        spd = spd_from_spectrum(spectrum)
-
-        # map onto correct wavelength pts
-        standard_wavelengths = colour.SpectralShape(start=360, end=780, interval=10)
-        xyz = colour.colorimetry.spectral_to_XYZ(spd.align(standard_wavelengths))
-        return CIEXYZ(*xyz)
-
-class CIELUV(object):
-    ''' CIE 1976 color coordinate system.
-
-    Notes:
-        This is the CIE L* u' v' system, not LUV.
-    '''
-
-    def __init__(self, u, v, l=None):
-        ''' Creates a new CIELUV instance
-
-        Args:
-            u (`float`): u coordinate
-
-            v (`float`): v coordinate
-
-            l (`float): l coordinate
-
-        Returns:
-            `CIELUV`: new CIELIV instance.
-
-        '''
-        self.u = u
-        self.v = v
-        self.l = l
-
-    def to_uv(self):
-        ''' Returns the u, v coordinates.
-        '''
-        return colour.Luv_to_uv((self.l, self.u, self.v))
-
-    @staticmethod
-    def from_XYZ(ciexyz=None, x=None, y=None, z=None):
-        ''' Computes CIEL*u'v' coordinates from XYZ coordinate.
-
-        Args:
-            ciexyz (`CIEXYZ`): CIEXYZ object holding X,Y,Z coordinates.
-
-            x (`float`): x coordinate.
-
-            y (`float`): y coordinate.
-
-            z (`float`): z coordinate.
-
-        Returns:
-            `CIELUV`: new CIELUV object.
-
-        Notes:
-            if given ciexyz object, x, y, and z are not used.  If given x, y, z,
-            then ciexyz object is not needed.
-
-        '''
-        if ciexyz is not None:
-            x, y, z = ciexyz.x, ciexyz.y, ciexyz.z
-        elif x is None and y is None and z is None:
-            raise ValueError('all values are None')
-
-        l, u, v = colour.XYZ_to_Luv((x, y, z))
-        return CIELUV(u, v, l)
-
-    @staticmethod
-    def from_spectrum(spectrum):
-        ''' converts a spectrum to CIELUV coordinates.
-
-        Args:
-            spectrum (`Spectrum`): spectrum object to convert.
-
-        Returns:
-            `CIELUV`: new CIELUV object.
-
-        '''
-        xyz = CIEXYZ.from_spectrum(spectrum)
-        return CIELUV.from_XYZ(xyz)
 
 def normalize_spectrum(spectrum):
     ''' Normalizes a spectrum to have unit peak within the visible band.
@@ -242,7 +144,8 @@ def normalize_spectrum(spectrum):
     wvl, vals = spectrum.wavelengths, spectrum.values
     low, high = np.searchsorted(wvl, 400), np.searchsorted(wvl, 700)
     vis_values_max = vals[low:high].max()
-    return Spectrum(wvl, vals/vis_values_max)
+    return Spectrum(wvl, vals / vis_values_max)
+
 
 def spd_from_spectrum(spectrum):
     ''' converts a spectrum to a colour spectral power distribution object.
@@ -257,12 +160,14 @@ def spd_from_spectrum(spectrum):
     spectrum_dict = dict(zip(spectrum.wavelengths, spectrum.values))
     return colour.SpectralPowerDistribution('', spectrum_dict)
 
+
 def check_colour():
     ''' Checks if colour is available, raises if not.
     '''
-    if 'colour' not in globals(): # or in locals
+    if 'colour' not in globals():  # or in locals
             raise ImportError('prysm colorimetry requires the colour package, '
                               'see http://colour-science.org/installation-guide/')
+
 
 def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None):
     ''' Creates a CIE 1976 plot.
@@ -303,7 +208,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     wvl_line_uv = XYZ_to_uv(colour.wavelength_to_XYZ(wvl_line))
 
     wvl_annotate = [360, 400, 455, 470, 480, 490,
-                    500, 510, 520, 540, 555, 565, 580, 590,
+                    500, 510, 520, 540, 555, 570, 580, 590,
                     600, 615, 630, 700, 830]
 
     wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
@@ -352,6 +257,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
 
     return fig, ax
 
+
 def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
     ''' Draws lines normal to the spectral locust on a CIE 1976 diagram and
         writes the text for each wavelength.
@@ -382,14 +288,14 @@ def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
 
     # convert wavelength to u' v' coordinates
     wavelengths = np.asarray(wavelengths)
-    idx = np.arange(1, len(wavelengths)-1, dtype=int)
+    idx = np.arange(1, len(wavelengths) - 1, dtype=int)
     wvl_lbl = wavelengths[idx]
     uv = XYZ_to_uv(colour.wavelength_to_XYZ(wavelengths))
     u, v = uv[..., 0][idx], uv[..., 1][idx]
-    u_last, v_last = uv[..., 0][idx-1], uv[..., 1][idx-1]
-    u_next, v_next = uv[..., 0][idx+1], uv[..., 1][idx+1]
+    u_last, v_last = uv[..., 0][idx - 1], uv[..., 1][idx - 1]
+    u_next, v_next = uv[..., 0][idx + 1], uv[..., 1][idx + 1]
 
-    angle = atan2(v_next-v_last, u_next-u_last) + pi / 2
+    angle = atan2(v_next - v_last, u_next - u_last) + pi / 2
     cos_ang, sin_ang = cos(angle), sin(angle)
     u1, v1 = u + tick_length * cos_ang, v + tick_length * sin_ang
     u2, v2 = u + text_offset * cos_ang, v + text_offset * sin_ang
@@ -402,11 +308,13 @@ def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
 
     return fig, ax
 
+
 '''
     Below here are color space conversions ported from colour to make them numpy
     ufuncs supporting array vectorization.  For more information, see colour:
     https://github.com/colour-science/colour/
 '''
+
 
 def XYZ_to_xyY(XYZ):
     ''' Converts xyz points to xy points.
@@ -433,6 +341,7 @@ def XYZ_to_xyY(XYZ):
     shape = x.shape
     return np.stack((x, y, Y), axis=len(shape))
 
+
 def XYZ_to_xy(XYZ):
     ''' Converts XYZ points to xy points.
 
@@ -450,6 +359,7 @@ def XYZ_to_xy(XYZ):
     '''
     xyY = XYZ_to_xyY(XYZ)
     return xyY_to_xy(xyY)
+
 
 def XYZ_to_uv(XYZ):
     ''' Converts XYZ points to uv points.
@@ -472,6 +382,7 @@ def XYZ_to_uv(XYZ):
 
     shape = u.shape
     return np.stack((u, v), axis=len(shape))
+
 
 def xyY_to_xy(xyY):
     ''' converts xyY points to xy points.
@@ -497,6 +408,7 @@ def xyY_to_xy(xyY):
         shape = x.shape
         return np.stack((x, y), axis=len(shape))
 
+
 def xyY_to_XYZ(xyY):
     ''' converts xyY points to XYZ points.
 
@@ -521,6 +433,7 @@ def xyY_to_XYZ(xyY):
 
     shape = X.shape
     return np.stack((X, Y, Z), axis=len(shape))
+
 
 def xy_to_xyY(xy, Y=1):
     ''' converts xy points to xyY points.
@@ -551,6 +464,7 @@ def xy_to_xyY(xy, Y=1):
         shape = x.shape
         return np.stack((x, y, Y), axis=len(shape))
 
+
 def xy_to_XYZ(xy):
     ''' converts xy points to xyY points.
 
@@ -570,6 +484,7 @@ def xy_to_XYZ(xy):
     '''
     xyY = xy_to_xyY(xy)
     return xyY_to_XYZ(xyY)
+
 
 def Luv_to_XYZ(Luv):
     ''' Converts Luv points to XYZ points.
@@ -607,6 +522,7 @@ def Luv_to_XYZ(Luv):
     shape = X.shape
     return np.stack((X, Y, Z), axis=len(shape))
 
+
 def Luv_to_uv(Luv):
     ''' Converts Luv points to uv points.
 
@@ -624,6 +540,7 @@ def Luv_to_uv(Luv):
     '''
     XYZ = Luv_to_XYZ(Luv)
     return XYZ_to_uv(XYZ)
+
 
 def Luv_uv_to_xy(uv):
     ''' Converts Luv u,v points to xyY x,y points.
@@ -646,6 +563,7 @@ def Luv_uv_to_xy(uv):
 
     shape = x.shape
     return np.stack((x, y), axis=len(shape))
+
 
 def XYZ_to_AdobeRGB(XYZ, illuminant='D65'):
     ''' Converts xyz points to xy points.
@@ -674,6 +592,7 @@ def XYZ_to_AdobeRGB(XYZ, illuminant='D65'):
         raise ValueError('Must use D65 or D50 illuminant.')
 
     return XYZ_to_RGB(XYZ, invmat)
+
 
 def XYZ_to_sRGB(XYZ, illuminant='D65'):
     ''' Converts xyz points to xy points.
@@ -706,6 +625,7 @@ def XYZ_to_sRGB(XYZ, illuminant='D65'):
         raise ValueError('Must use D65 or D50 illuminant.')
 
     return XYZ_to_RGB(XYZ, invmat)
+
 
 def XYZ_to_RGB(XYZ, conversion_matrix):
     ''' Converts xyz points to xy points.
