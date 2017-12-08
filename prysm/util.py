@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 
 from operator import itemgetter
 
+
 def is_odd(int):
     ''' Determines if an interger is odd using binary operations.
 
@@ -16,6 +17,7 @@ def is_odd(int):
 
     '''
     return int & 0x1
+
 
 def is_power_of_2(value):
     ''' Checks if a value is a power of 2 using binary operations.
@@ -31,7 +33,7 @@ def is_power_of_2(value):
         https://stackoverflow.com/questions/29480680/finding-if-a-number-is-a-power-of-2-using-recursion
 
     '''
-    return bool(value and not value&(value-1))
+    return bool(value and not value & (value - 1))
 
 
 def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
@@ -52,6 +54,7 @@ def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
     '''
     return (wavelength * efl * 1e3) / (pupil_sample * num_samples)
 
+
 def psf_sample_to_pupil_sample(psf_sample, num_samples, wavelength, efl):
     ''' Converts PSF sample spacing to pupil sample spacing.
 
@@ -70,6 +73,7 @@ def psf_sample_to_pupil_sample(psf_sample, num_samples, wavelength, efl):
     '''
     return (psf_sample * num_samples) / (wavelength * efl * 1e3)
 
+
 def correct_gamma(img, encoding=2.2):
     ''' Applies an inverse gamma curve to image data that linearizes the given encoding.
 
@@ -85,7 +89,8 @@ def correct_gamma(img, encoding=2.2):
     if encoding is 1:
         return img
     else:
-        return img**(1/float(encoding))
+        return img ** (1 / float(encoding))
+
 
 def fold_array(array, axis=1):
     ''' Folds an array in half over the given axis and averages.
@@ -102,7 +107,7 @@ def fold_array(array, axis=1):
 
     xs, ys = array.shape
     if axis is 1:
-        xh = int(np.floor(xs/2))
+        xh = xs // 2
         left_chunk = array[:, :xh]
         right_chunk = array[:, xh:]
         folded_array = np.concatenate((right_chunk[:, :, np.newaxis],
@@ -110,7 +115,7 @@ def fold_array(array, axis=1):
                                                axis=0)[:, :, np.newaxis]),
                                       axis=2)
     else:
-        yh = int(np.floor(ys/2))
+        yh = ys // 2
         top_chunk = array[:yh, :]
         bottom_chunk = array[yh:, :]
         folded_array = np.concatonate((bottom_chunk[:, :, np.newaxis],
@@ -118,6 +123,7 @@ def fold_array(array, axis=1):
                                                axis=0)[:, :, np.newaxis]),
                                       axis=2)
     return np.average(folded_array, axis=2)
+
 
 def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
     ''' Reurns the given figure and/or axis if given one.  If they are None, creates a new fig/ax
@@ -145,6 +151,7 @@ def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
 
     return fig, ax
 
+
 def rms(array):
     ''' Returns the RMS value of the valid elements of an array
 
@@ -157,6 +164,7 @@ def rms(array):
     '''
     non_nan = np.isfinite(array)
     return np.sqrt(np.mean(np.square(array[non_nan])))
+
 
 def guarantee_array(variable):
     ''' Guarantees that a varaible is a numpy ndarray and supports -, *, +, and other operators
@@ -177,6 +185,7 @@ def guarantee_array(variable):
     else:
         raise ValueError(f'variable is of invalid type {type(variable)}')
 
+
 def ecdf(x):
     ''' Computes the empirical cumulative distribution function of a dataset
 
@@ -193,6 +202,7 @@ def ecdf(x):
     xs = np.sort(x)
     ys = np.arange(1, len(xs) + 1) / float(len(xs))
     return xs, ys
+
 
 def sort_xy(x, y):
     ''' Sorts a pair of x and y iterables, returning arrays in order of
@@ -211,9 +221,10 @@ def sort_xy(x, y):
 
     '''
     # zip x and y, sort by the 0th element (x) of each tuple in zip()
-    _ = sorted(zip(x,y), key=itemgetter(0))
+    _ = sorted(zip(x, y), key=itemgetter(0))
     sorted_x, sorted_y = zip(*_)
     return sorted_x, sorted_y
+
 
 def smooth(x, window_len=3, window='flat'):
     ''' Smooth data.
@@ -248,12 +259,12 @@ def smooth(x, window_len=3, window='flat'):
     if x.size < window_len:
         raise ValueError('Data must be larger than window.')
 
-    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+    if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError('Window must be one of flat, hanning, hamming, bartlett, blackman')
 
-    s = np.r_[x[window_len-1:0:-1],x,x[-2:-window_len-1:-1]]
-    if window.lower() == 'flat': #moving average
-        w = np.ones(window_len,'d')
+    s = np.r_[x[window_len - 1:0: - 1], x, x[-2:-window_len - 1:-1]]
+    if window.lower() == 'flat':  # moving average
+        w = np.ones(window_len, 'd')
     else:
         w = eval('np.' + window + '(window_len)')
 
