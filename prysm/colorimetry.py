@@ -321,7 +321,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     # set values outside the horseshoe to a safe value that won't blow up
 
     # stack u and v for vectorized computations
-    uuvv = np.stack((vv, uu), axis=2)
+    uuvv = np.stack((uu, vv), axis=2).swapaxes(0,1)
 
     triangles = Delaunay(wvl_mask_uv, qhull_options='QJ Qf')
     wvl_mask = triangles.find_simplex(uuvv) < 0
