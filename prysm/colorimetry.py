@@ -840,6 +840,22 @@ def xy_to_XYZ(xy):
     return xyY_to_XYZ(xyY)
 
 
+def xy_to_CCT(xy):
+    ''' Computes the correlated color temperature given x,y chromaticity coordinates.
+
+    Args:
+        xy (`iterable`): x, y chromaticity coordinates.
+
+    Returns:
+        `float`: CCT.
+
+    '''
+    xy = np.asarray(xy)
+    x, y = xy[..., 0], xy[..., 1]
+    n = (x - 0.3320) / (0.1858 - y)
+    return 449 * n ** 3 + 3525 * n ** 2 + 6823.3 * n + 5520.3
+
+
 def Luv_to_XYZ(Luv):
     ''' Converts Luv points to XYZ points.
 
