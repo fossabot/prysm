@@ -75,6 +75,39 @@ COLOR_MATRICIES = {
     },
 }
 
+# standard illuminant information
+CIE_ILLUMINANT_METADATA = {
+    'files': {
+        'A': 'cie_A_300_830_1nm.csv',
+        'B': 'cie_B_380_770_5nm.csv',
+        'C': 'cie_C_380_780_5nm.csv',
+        'D': 'cie_Dseries_380_780_5nm.csv',
+        'E': 'cie_E_380_780_5nm.csv',
+        'F': 'cie_Fseries_380_730_5nm.csv',
+    },
+    'columns': {
+        'A': 1,
+        'B': 1,
+        'C': 1,
+        'D50': 1,
+        'D55': 2,
+        'D65': 3,
+        'E': 1,
+        'F1': 1,
+        'F2': 2,
+        'F3': 3,
+        'F4': 4,
+        'F5': 5,
+        'F6': 6,
+        'F7': 7,
+        'F8': 8,
+        'F9': 9,
+        'F10': 10,
+        'F11': 11,
+        'F12': 12,
+    }
+}
+
 
 @lru_cache
 def prepare_robertson_cct_data():
@@ -106,18 +139,44 @@ def prepare_robertson_cct_data():
 
 
 @lru_cache
-def prepare_cie_1931_2deg_observer():
-    ''' Prepares the CIE 1931 standard 2 degree observer, if it is not already
-        cached.
+def prepare_source_spd(source='D65'):
+    ''' Prepares the SPD for a given source.
+
+    Args:
+        source (`str`): one of (A, B, C, D50, D55, D65, E, F1..F12).
+
+    Returns:
+        `dict` with keys: `wvl`, `values`
+
     '''
+    file = CIE_ILLUMINANT_METADATA[source[0].upper()]
+    column = CIE_ILLUMINANT_METADATA[source.upper()]
+
     tmp_list = []
-    p = Path(__file__) / 'color_data' / 'cie_xyz_1931_tristimulus_5nm.csv'
+    p = Path(__file__) / 'color_data' / file
     with open(p, 'r') as fid:
         reader = csv.reader(fid)
         for row in reader:
             tmp_list.append(row)
 
-    values = np.asarray(tmp_list, dtype=config.precision)
+    values = np.asarray(tmp_list[1:], dtype=config.precision)
+    return {
+        'wvl': values[:, 0],
+        'values': values[:, column],
+    }
+
+
+def value_array_to_tristimulus(values):
+    ''' Pulls tristimulus data as numpy arrays from a list of CSV rows.
+
+    Args:
+        values (`list`): list with each element being a row of a CSV, headers omitted.
+
+    Returns:
+        `dict` with keys: wvl, X, Y, Z
+
+    '''
+    values = np.asarray(values, dtype=config.precision)
     wvl, X, Y, Z = values[:, 0], values[:, 1], values[:, 2], values[:, 3]
     return {
         'wvl': wvl,
@@ -125,6 +184,43 @@ def prepare_cie_1931_2deg_observer():
         'Y': Y,
         'Z': Z
     }
+
+
+# these two functions could be better refactored, but meh.
+@lru_cache
+def prepare_cie_1931_2deg_observer():
+    ''' Prepares the CIE 1931 standard 2 degree observer.
+
+    Returns:
+        `dict` with keys: wvl, X, Y, Z.
+
+    '''
+    tmp_list = []
+    p = Path(__file__) / 'color_data' / 'cie_xyz_1931_2deg_tristimulus_5nm.csv'
+    with open(p, 'r') as fid:
+        reader = csv.reader(fid)
+        for row in reader:
+            tmp_list.append(row)
+
+    return value_array_to_tristimulus(tmp_list[1:])
+
+
+@lru_cache
+def prepare_cie_1964_10deg_observer():
+    ''' Prepares the CIE 1964 standard 10 degree observer.
+
+    Returns:
+        `dict` with keys: wvl, X, Y, Z.
+
+    '''
+    tmp_list = []
+    p = Path(__file__) / 'color_data' / 'cie_xyz_1964_10deg_tristimulus_5nm.csv'
+    with open(p, 'r') as fid:
+        reader = csv.reader(fid)
+        for row in reader:
+            tmp_list.append(row)
+
+    return value_array_to_tristimulus(tmp_list[1:])
 
 
 class Spectrum(object):
