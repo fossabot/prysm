@@ -24,13 +24,76 @@ except ImportError:
 
 from prysm.conf import config
 from prysm.util import share_fig_ax, correct_gamma
-from prysm.mathops import atan2, pi, cos, sin, exp
+from prysm.mathops import atan2, pi, cos, sin, exp, sqrt
 
 # some CIE constants
 CIE_K = 24389 / 27
 CIE_E = 216 / 24389
 
+# color matching functions will be populated as needed
 color_matching_functions = {}
+
+# CCT values in L*u*v* coordinates, see the following for the source of these values:
+# https://www.osapublishing.org/josa/abstract.cfm?uri=josa-58-11-1528
+cct_K = np.asarray([
+    1667, 1739, 1818, 1905,
+    2000, 2105, 2222, 2353, 2500, 2667, 2857,
+    3077, 3333, 3636,
+    4000, 4444,
+    5000, 5714,
+    6667, 8000, 10000,
+    11111, 12500, 14286, 16667,
+    20000, 25000, 33333,
+    50000, 100000, 1e20,
+], dtype=config.precision)
+
+cct_urd = np.asarray([
+    600, 575, 550, 525,
+    500, 475, 450, 425, 400, 375, 350,
+    325, 300, 275,
+    250, 225,
+    200, 175,
+    150, 125, 100,
+    90, 80, 70, 60,
+    50, 40, 30,
+    20, 10, 0,
+], dtype=config.precision)
+
+cct_u = np.asarray([
+    0.33713, 0.32920, 0.32119, 0.31310,
+    0.30496, 0.29676, 0.28854, 0.28032, 0.27210, 0.26394, 0.25585,
+    0.24787, 0.24005, 0.23243,
+    0.22507, 0.21804,
+    0.21140, 0.20523,
+    0.19960, 0.19461, 0.19031,
+    0.1879, 0.18739, 0.18611, 0.18494,
+    0.18388, 0.18293, 0.18208,
+    0.18132, 0.18065, 0.18006
+], dtype=config.precision)
+
+cct_v = np.asarray([
+    0.36051, 0.36038, 0.36011, 0.35968,
+    0.35906, 0.35822, 0.35713, 0.35575, 0.35405, 0.35198, 0.34948,
+    0.34653, 0.34305, 0.33901,
+    0.33436, 0.32906,
+    0.32309, 0.31645,
+    0.30918, 0.30139, 0.29325,
+    0.28995, 0.28666, 0.28340, 0.28020,
+    0.27708, 0.27407, 0.27118,
+    0.26845, 0.26589, 0.26352
+], dtype=config.precision)
+
+cct_dvdu = np.asarray([
+    -113.8, -40.41, -23.20, -15.56,
+    -11.29, -8.572, -6.711, -5.365, -4.355, -3.576, -2.960,
+    -2.465, -2.061, -1.728,
+    -1.450, -1.216,
+    -1.017, -0.8484,
+    -0.7043, -0.5817, -0.4787,
+    -0.4426, -0.4094, -0.3790, -0.3515,
+    -0.3267, -0.3047, -0.2854,
+    -0.2687, -0.2548, -0.2434,
+], dtype=config.precision)
 
 # sRGB conversion matrix
 XYZ_to_sRGB_mat_D65 = np.asarray([
@@ -335,6 +398,69 @@ def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
     return fig, ax
 
 
+def cie_1976_plankian_locust(trange=(2000, 10000), num_points=100,
+                             isotemperature_lines_at=None, isotemperature_du=0.025,
+                             fig=None, ax=None):
+    ''' draws the plankian locust on the CIE 1976 color diagram.
+
+    Args:
+        trange (`iterable`): (min,max) color temperatures.
+
+        num_points (`int`): number of points to compute.
+
+        isotemperature_lines_at (`iterable`): CCTs to plot isotemperature lines at,
+            defaults to [2000, 3000, 4000, 5000, 6500, 10000] if None.
+            set to False to not plot lines.
+
+        isotemperature_du (`float`): delta-u, parameter, length in x of the isotemperature lines.
+
+        fig (`matplotlib.figure.Figure`): figure to plot in.
+
+        ax (`matplotlib.axes.Axis`): axis to plot in.
+
+    Returns:
+        `tuple` containing:
+
+            `matplotlib.figure.Figure`. figure containing the plot.
+
+            `matplotlib.axes.Axis`: axis containing the plot.
+
+    '''
+
+    # compute the u', v' coordinates of the temperatures
+    temps = np.linspace(trange[0], trange[1], num_points)
+    interpf_u = interp1d(cct_K, cct_u)
+    interpf_v = interp1d(cct_K, cct_v)
+    u = interpf_u(temps)
+    v = interpf_v(temps) * 1.5  # x1.5 converts 1960 uv to 1976 u' v'
+
+    # if plotting isotemperature lines, compute the upper and lower points of
+    # each line and connect them.
+    plot_isotemp = True
+    if isotemperature_lines_at is None:
+        isotemperature_lines_at = np.asarray([2000, 3000, 4000, 5000, 6500, 10000])
+        u_iso = interpf_u(isotemperature_lines_at)
+        v_iso = interpf_v(isotemperature_lines_at)
+        interpf_dvdu = interp1d(cct_u, cct_dvdu)
+
+        dvdu = interpf_dvdu(u_iso)
+        du = isotemperature_du / dvdu
+
+        u_high = u_iso + du / 2
+        u_low = u_iso - du / 2
+        v_high = (v_iso + du / 2 * dvdu) * 1.5  # factors of 1.5 convert from uv to u'v'
+        v_low = (v_iso - du / 2 * dvdu) * 1.5
+    elif isotemperature_lines_at is False:
+        plot_isotemp = False
+
+    fig, ax = share_fig_ax(fig, ax)
+    ax.plot(u, v, c='0.15')
+    if plot_isotemp is True:
+        for ul, uh, vl, vh in zip(u_low, u_high, v_low, v_high):
+            ax.plot([ul, uh], [vl, vh], c='0.15')
+
+    return fig, ax
+
 '''
     Below here are color space conversions ported from colour to make them numpy
     ufuncs supporting array vectorization.  For more information, see colour:
@@ -396,7 +522,8 @@ def spectrum_to_XYZ_emissive(wvl, values, cmf='1931_2deg'):
     X = k * np.trapz(values * cmf.X)
     Y = k * np.trapz(values * cmf.Y)
     Z = k * np.traps(values * cmf.Z)
-    return (X,Y,Z)
+    return (X, Y, Z)
+
 
 def spectrum_to_XYZ_nonemissive(wvl, values, illuminant='bb_6500', cmf='1931_2deg'):
     ''' Converts a reflective or transmissive spectrum to XYZ coordinates.
@@ -453,6 +580,7 @@ def spectrum_to_XYZ_nonemissive(wvl, values, illuminant='bb_6500', cmf='1931_2de
     Y = k * np.trapz(values * ill_spectrum * cmf.Y)
     Z = k * np.traps(values * ill_spectrum * cmf.Z)
     return (X, Y, Z)
+
 
 def make_cieluv_isotemperature_line_points(temp, length=0.025):
     ''' Computes the upper and lower (u',v') points for a given color
@@ -766,6 +894,25 @@ def Luv_to_uvprime(Luv):
     '''
     XYZ = Luv_to_XYZ(Luv)
     return XYZ_to_uvprime(XYZ)
+
+
+def Luv_to_chroma_hue(luv):
+    ''' Converts L*u*v* coordiantes to a chroma and hue.
+
+    Args:
+        luv (`numpy.ndarray`): array with last dimension L*, u*, v*.
+
+    Returns:
+        `numpy.ndarray` with last dimension corresponding to C* and h.
+
+    '''
+    luv = np.asarray(luv)
+    u, v = luv[..., 1], luv[..., 2]
+    C = sqrt(u**2 + v**2)
+    h = atan2(v, u)
+
+    shape = luv.shape
+    return np.stack((C, h), axis=len(shape))
 
 
 def uvprime_to_xy(uv):
