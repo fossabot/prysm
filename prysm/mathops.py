@@ -89,6 +89,7 @@ def cast_array(array):
     else:
         return array.astype(np.complex128)
 
+
 def best_grid_size(size, tpb):
     ''' Computes the best grid size for a gpu array, given an array size and
         number of threads per block.
@@ -104,6 +105,7 @@ def best_grid_size(size, tpb):
     '''
     bpg = np.ceil(np.array(size, dtype=np.float) / tpb).astype(np.int).tolist()
     return tuple(bpg)
+
 
 def cu_fft2(array):
     ''' Executes a 2D fast fourier transform on CUDA GPUs.
@@ -145,6 +147,7 @@ def cu_fft2(array):
     d_rslt.copy_to_host(rslt)
     return rslt
 
+
 def cu_ifft2(array):
     ''' Executes a 2D inverse fast fourier transform on CUDA GPUs.
 
@@ -177,6 +180,7 @@ def cu_ifft2(array):
 
 # thanks, ITAR
 
+
 def fft2(array):
     if config.backend == 'np':
         return np.fft.fft2(array)
@@ -184,6 +188,7 @@ def fft2(array):
         return cu_fft2(array)
     else:
         raise KeyError('Invalid backend for fft')
+
 
 def ifft2(array):
     if config.backend == 'np':

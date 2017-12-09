@@ -24,7 +24,7 @@ except ImportError:
 
 from prysm.conf import config
 from prysm.util import share_fig_ax, correct_gamma
-from prysm.mathops import atan2, pi, cos, sin, exp, sqrt
+from prysm.mathops import atan2, pi, cos, sin, exp, sqrt, arccos
 
 # some CIE constants
 CIE_K = 24389 / 27
@@ -468,6 +468,7 @@ def cie_1976_plankian_locust(trange=(2000, 10000), num_points=100,
             ax.plot([ul, uh], [vl, vh], c='0.15')
 
     return fig, ax
+
 
 '''
     Below here are color space conversions ported from colour to make them numpy
