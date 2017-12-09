@@ -30,6 +30,14 @@ from prysm.mathops import atan2, pi, cos, sin, exp, sqrt
 CIE_K = 24389 / 27
 CIE_E = 216 / 24389
 
+CIE_DUV_k0 = -0.471106
+CIE_DUV_k1 = +1.925865
+CIE_DUV_k2 = -2.4243787
+CIE_DUV_k3 = +1.5317403
+CIE_DUV_k4 = -0.5179722
+CIE_DUV_k5 = +0.0893944
+CIE_DUV_k6 = -0.00616793
+
 # color matching functions will be populated as needed
 color_matching_functions = {}
 
@@ -952,6 +960,45 @@ def uvprime_to_xy(uv):
 
     shape = x.shape
     return np.stack((x, y), axis=len(shape))
+
+
+def uvprime_to_CCT(uv):
+    ''' Computes CCT from u'v' coordinates.
+
+    Args:
+        uv (`numpy.ndarray`): array with last dimensions corresponding to u, v
+
+    Returns:
+        `float`: CCT.
+
+    '''
+    uv = np.asarray(uv)
+    xy = uvprime_to_xy(uv)
+    return xy_to_CCT(xy)
+
+
+def uvprime_to_Duv(uv):
+    ''' Computes Duv from u'v' coordiantes.
+
+    Args:
+        uv (`numpy.ndarray`): array with last dimensions corresponding to u, v
+
+    Returns:
+        `float`: CCT.
+
+    Notes:
+        see "Calculation of CCT and Duv and Practical Conversion Formulae", Yoshi Ohno
+        http://www.cormusa.org/uploads/CORM_2011_Calculation_of_CCT_and_Duv_and_Practical_Conversion_Formulae.PDF
+    '''
+    k0, k1, k2, k3 = CIE_DUV_k0, CIE_DUV_k1, CIE_DUV_k2, CIE_DUV_k3
+    k4, k5, k6 = CIE_DUV_k4, CIE_DUV_k5, CIE_DUV_k6
+
+    uv = np.asarray(uv)
+    u, v = uv[..., 0], uv[..., 1] / 1.5  # inline convert v' to v
+    L_FP = sqrt((u - 0.292) ** 2 + (v - 0.24) ** 2)
+    a = arccos((u - 0.292) / L_FP)
+    L_BB = k6 * a ** 6 + k5 * a ** 5 + k4 * a ** 4 + k3 * a ** 3 + k2 * a ** 2 + k1 * a + k0
+    return L_FP - L_BB
 
 
 def uvprime_to_Luv(uv):
