@@ -3,17 +3,17 @@
 '''
 import csv
 import warnings
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
 from scipy.spatial import Delaunay
-from scipy.constants import c, h, k
 from scipy.interpolate import interp1d
+from scipy.constants import c, h, k
 # c - speed of light
 # h - planck constant
 # k - boltzman constant
 
-from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 
 try:
@@ -23,7 +23,7 @@ except ImportError:
     pass
 
 from prysm.conf import config
-from prysm.util import share_fig_ax, correct_gamma
+from prysm.util import share_fig_ax
 from prysm.mathops import atan2, pi, cos, sin, exp, sqrt, arccos
 
 # some CIE constants
@@ -37,9 +37,6 @@ CIE_DUV_k3 = +1.5317403
 CIE_DUV_k4 = -0.5179722
 CIE_DUV_k5 = +0.0893944
 CIE_DUV_k6 = -0.00616793
-
-# color matching functions will be populated as needed
-color_matching_functions = {}
 
 # CCT values in L*u*v* coordinates, see the following for the source of these values:
 # https://www.osapublishing.org/josa/abstract.cfm?uri=josa-58-11-1528
@@ -76,7 +73,7 @@ cct_u = np.asarray([
     0.19960, 0.19461, 0.19031,
     0.1879, 0.18739, 0.18611, 0.18494,
     0.18388, 0.18293, 0.18208,
-    0.18132, 0.18065, 0.18006
+    0.18132, 0.18065, 0.18006,
 ], dtype=config.precision)
 
 cct_v = np.asarray([
@@ -88,7 +85,7 @@ cct_v = np.asarray([
     0.30918, 0.30139, 0.29325,
     0.28995, 0.28666, 0.28340, 0.28020,
     0.27708, 0.27407, 0.27118,
-    0.26845, 0.26589, 0.26352
+    0.26845, 0.26589, 0.26352,
 ], dtype=config.precision)
 
 cct_dvdu = np.asarray([
@@ -139,12 +136,13 @@ COLOR_MATRICIES = {
 }
 
 
+@lru_cache
 def prepare_cie_1931_2deg_observer():
     ''' Prepares the CIE 1931 standard 2 degree observer, if it is not already
         cached.
     '''
     tmp_list = []
-    p = Path(__file__) / './cie_xyz_1931_tristimulus_5nm.csv'
+    p = Path(__file__) / 'color_data' / 'cie_xyz_1931_tristimulus_5nm.csv'
     with open(p, 'r') as fid:
         reader = csv.reader(fid)
         for row in reader:
@@ -152,7 +150,7 @@ def prepare_cie_1931_2deg_observer():
 
     values = np.asarray(tmp_list, dtype=config.precision)
     wvl, X, Y, Z = values[:, 0], values[:, 1], values[:, 2], values[:, 3]
-    color_matching_functions['cie1931_2deg'] = {
+    return {
         'wvl': wvl,
         'X': X,
         'Y': Y,
@@ -321,7 +319,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     # set values outside the horseshoe to a safe value that won't blow up
 
     # stack u and v for vectorized computations
-    uuvv = np.stack((uu, vv), axis=2).swapaxes(0,1)
+    uuvv = np.stack((uu, vv), axis=2).swapaxes(0, 1)
 
     triangles = Delaunay(wvl_mask_uv, qhull_options='QJ Qf')
     wvl_mask = triangles.find_simplex(uuvv) < 0
@@ -477,7 +475,7 @@ def cie_1976_plankian_locust(trange=(2000, 10000), num_points=100,
 '''
 
 
-def safely_get_cmf(observer='1931_2deg'):
+def get_cmf(observer='1931_2deg'):
     ''' Safely returns the color matching function dictionary for the specified
         observer.
 
@@ -488,13 +486,10 @@ def safely_get_cmf(observer='1931_2deg'):
         `dict`: cmf dict.
 
     '''
-    try:
-        cmf = color_matching_functions[observer]
-    except KeyError as e:
-        prepare_cie_1931_2deg_observer()
-        cmf = color_matching_functions[observer]
-
-    return cmf
+    if observer.lower() == '1931_2deg':
+        return prepare_cie_1931_2deg_observer()
+    else:
+        raise ValueError('observer must be 1931_2deg')
 
 
 def spectrum_to_XYZ_emissive(wvl, values, cmf='1931_2deg'):
@@ -521,7 +516,7 @@ def spectrum_to_XYZ_emissive(wvl, values, cmf='1931_2deg'):
     if cmf.lower() is not '1931_2deg':
         raise ValueError('Must use 1931 2 degree standard observer (cmf=1931_2deg)')
 
-    cmf = safely_get_cmf(cmf)
+    cmf = get_cmf(cmf)
 
     wvl_cmf = cmf.wvl
     if not np.allclose(wvl_cmf, wvl):
@@ -561,7 +556,7 @@ def spectrum_to_XYZ_nonemissive(wvl, values, illuminant='bb_6500', cmf='1931_2de
     if cmf.lower() is not '1931_2deg':
         raise ValueError('Must use 1931 2 degree standard observer (cmf=1931_2deg)')
 
-    cmf = safely_get_cmf(cmf)
+    cmf = get_cmf(cmf)
 
     try:
         if illuminant[2] == '_':
@@ -604,7 +599,7 @@ def make_cieluv_isotemperature_line_points(temp, length=0.025):
         `numpy.ndarray` with last dim (u',v')
 
     '''
-    cmf = safely_get_cmf()
+    cmf = get_cmf()
     spectrum = blackbody_spectral_power_distribution(temp, cmf.wvl)
     xyz = spectrum_to_XYZ_nonemissive(cmf.wvl, spectrum, illuminant=f'bb_{temp}')
     uv = XYZ_to_uvprime(xyz)
