@@ -30,6 +30,7 @@ from prysm.mathops import atan2, pi, cos, sin, exp, sqrt, arccos
 CIE_K = 24389 / 27
 CIE_E = 216 / 24389
 
+# from Ohno PDF, see D_uv function.
 CIE_DUV_k0 = -0.471106
 CIE_DUV_k1 = +1.925865
 CIE_DUV_k2 = -2.4243787
@@ -38,67 +39,6 @@ CIE_DUV_k4 = -0.5179722
 CIE_DUV_k5 = +0.0893944
 CIE_DUV_k6 = -0.00616793
 
-# CCT values in L*u*v* coordinates, see the following for the source of these values:
-# https://www.osapublishing.org/josa/abstract.cfm?uri=josa-58-11-1528
-cct_K = np.asarray([
-    1667, 1739, 1818, 1905,
-    2000, 2105, 2222, 2353, 2500, 2667, 2857,
-    3077, 3333, 3636,
-    4000, 4444,
-    5000, 5714,
-    6667, 8000, 10000,
-    11111, 12500, 14286, 16667,
-    20000, 25000, 33333,
-    50000, 100000, 1e20,
-], dtype=config.precision)
-
-cct_urd = np.asarray([
-    600, 575, 550, 525,
-    500, 475, 450, 425, 400, 375, 350,
-    325, 300, 275,
-    250, 225,
-    200, 175,
-    150, 125, 100,
-    90, 80, 70, 60,
-    50, 40, 30,
-    20, 10, 0,
-], dtype=config.precision)
-
-cct_u = np.asarray([
-    0.33713, 0.32920, 0.32119, 0.31310,
-    0.30496, 0.29676, 0.28854, 0.28032, 0.27210, 0.26394, 0.25585,
-    0.24787, 0.24005, 0.23243,
-    0.22507, 0.21804,
-    0.21140, 0.20523,
-    0.19960, 0.19461, 0.19031,
-    0.1879, 0.18739, 0.18611, 0.18494,
-    0.18388, 0.18293, 0.18208,
-    0.18132, 0.18065, 0.18006,
-], dtype=config.precision)
-
-cct_v = np.asarray([
-    0.36051, 0.36038, 0.36011, 0.35968,
-    0.35906, 0.35822, 0.35713, 0.35575, 0.35405, 0.35198, 0.34948,
-    0.34653, 0.34305, 0.33901,
-    0.33436, 0.32906,
-    0.32309, 0.31645,
-    0.30918, 0.30139, 0.29325,
-    0.28995, 0.28666, 0.28340, 0.28020,
-    0.27708, 0.27407, 0.27118,
-    0.26845, 0.26589, 0.26352,
-], dtype=config.precision)
-
-cct_dvdu = np.asarray([
-    -113.8, -40.41, -23.20, -15.56,
-    -11.29, -8.572, -6.711, -5.365, -4.355, -3.576, -2.960,
-    -2.465, -2.061, -1.728,
-    -1.450, -1.216,
-    -1.017, -0.8484,
-    -0.7043, -0.5817, -0.4787,
-    -0.4426, -0.4094, -0.3790, -0.3515,
-    -0.3267, -0.3047, -0.2854,
-    -0.2687, -0.2548, -0.2434,
-], dtype=config.precision)
 
 # sRGB conversion matrix
 XYZ_to_sRGB_mat_D65 = np.asarray([
@@ -134,6 +74,35 @@ COLOR_MATRICIES = {
         'D50': XYZ_to_AdobeRGB_mat_D50,
     },
 }
+
+
+@lru_cache
+def prepare_robertson_cct_data():
+    ''' Prepares Robertson's correlated color temperature data.
+
+    Returns:
+        `dict` containing: urd, K, u, v, dvdu.
+
+    Notes:
+        # CCT values in L*u*v* coordinates, see the following for the source of these values:
+        # https://www.osapublishing.org/josa/abstract.cfm?uri=josa-58-11-1528
+    '''
+    tmp_list = []
+    p = Path(__file__) / 'color_data' / 'robertson_cct.csv'
+    with open(p, 'r') as fid:
+        reader = csv.reader(fid)
+        for row in reader:
+            tmp_list.append(row)
+
+    values = np.asarray(tmp_list[1:], dtype=config.precision)
+    urd, k, u, v, dvdu = values[:, 0], values[:, 1], values[:, 2], values[:, 3], values[:, 4]
+    return {
+        'urd': urd,
+        'K': k,
+        'u': u,
+        'v': v,
+        'dvdu': dvdu
+    }
 
 
 @lru_cache
@@ -432,7 +401,8 @@ def cie_1976_plankian_locust(trange=(2000, 10000), num_points=100,
             `matplotlib.axes.Axis`: axis containing the plot.
 
     '''
-
+    cct = prepare_robertson_cct_data()
+    cct_K, cct_u, cct_v, cct_dvdu = cct['K'], cct['u'], cct['v'], cct['dvdu']
     # compute the u', v' coordinates of the temperatures
     temps = np.linspace(trange[0], trange[1], num_points)
     interpf_u = interp1d(cct_K, cct_u)
