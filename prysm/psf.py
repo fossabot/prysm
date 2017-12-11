@@ -168,7 +168,9 @@ class PSF(object):
                        interpolation=interp_method,
                        clim=lims)
         if show_colorbar:
-            fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
+            cb = fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
+            cb.outline.set_edgecolor('k')
+            cb.outline.set_linewidth(0.5)
         if show_axlabels:
             ax.set(xlabel=r'Image Plane X [$\mu m$]',
                    ylabel=r'Image Plane Y [$\mu m$]')
@@ -179,7 +181,7 @@ class PSF(object):
         if pix_grid is not None:
             # if pixel grid is desired, add it
             mult = np.floor(axlim / pix_grid)
-            gmin, gmax = -mult * pix_grid, mult*pix_grid
+            gmin, gmax = -mult * pix_grid, mult * pix_grid
             pts = np.arange(gmin, gmax, pix_grid)
             ax.set_yticks(pts, minor=True)
             ax.set_xticks(pts, minor=True)
@@ -280,8 +282,8 @@ class PSF(object):
             psf3 = PSF(data=abs(ifft2(psf_ft * psf2_ft)),
                        sample_spacing=self.sample_spacing)
             return psf3._renorm()
-        except AttributeError: # no analytic FT on the PSF/subclass
-            print('attrerr')
+        except AttributeError:  # no analytic FT on the PSF/subclass
+            print('No analytic FT, falling back to numerical approach.')
             return convpsf(self, psf2)
 
     def _renorm(self, to='peak'):

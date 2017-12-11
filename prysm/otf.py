@@ -196,7 +196,9 @@ class MTF(object):
                        cmap='Greys_r',
                        interpolation='lanczos',
                        clim=lims)
-        fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
+        cb = fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
+        cb.outline.set_edgecolor('k')
+        cb.outline.set_linewidth(0.5)
         ax.set(xlabel='Spatial Frequency X [cy/mm]',
                ylabel='Spatial Frequency Y [cy/mm]',
                xlim=(-max_freq, max_freq),

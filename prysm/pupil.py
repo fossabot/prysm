@@ -158,7 +158,9 @@ class Pupil(object):
                        cmap='Spectral',
                        interpolation='lanczos',
                        origin='lower')
-        fig.colorbar(im, label=f'OPD [{self._opd_str}]', ax=ax, fraction=0.046)
+        cb = fig.colorbar(im, label=f'OPD [{self._opd_str}]', ax=ax, fraction=0.046)
+        cb.outline.set_edgecolor('k')
+        cb.outline.set_linewidth(0.5)
         ax.set(xlabel='Pupil X [mm]',
                ylabel='Pupil Y [mm]')
         return fig, ax
