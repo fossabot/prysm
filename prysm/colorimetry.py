@@ -521,13 +521,11 @@ def get_cmf(observer='1931_2deg'):
         raise ValueError('observer must be 1931_2deg')
 
 
-def spectrum_to_XYZ_emissive(wvl, values, cmf='1931_2deg'):
+def spectrum_to_XYZ_emissive(spectrum_dict, cmf='1931_2deg'):
     ''' Converts a reflective or transmissive spectrum to XYZ coordinates.
 
     Args:
-        wvl (`numpy.ndarray`): wavelengths the data is sampled at, in nm.
-
-        values (`numpy.ndarray`): values of the spectrum at each wvl sample.
+        spectrum_dict (`dict`): dictionary with wvl, values keys.  Wvl in units of nm.
 
         cmf (`str`): which color matching function to use, defaults to
             CIE 1931 2 degree observer.
@@ -542,11 +540,9 @@ def spectrum_to_XYZ_emissive(wvl, values, cmf='1931_2deg'):
             `float`: Z
 
     '''
-    if cmf.lower() is not '1931_2deg':
-        raise ValueError('Must use 1931 2 degree standard observer (cmf=1931_2deg)')
+    wvl, values = spectrum_dict['wvl'], spectrum_dict['values']
 
     cmf = get_cmf(cmf)
-
     wvl_cmf = cmf.wvl
     if not np.allclose(wvl_cmf, wvl):
         dat_interpf = interp1d(wvl, values, kind='linear', fill_value=0, assume_sorted=True)
@@ -558,13 +554,11 @@ def spectrum_to_XYZ_emissive(wvl, values, cmf='1931_2deg'):
     return (X, Y, Z)
 
 
-def spectrum_to_XYZ_nonemissive(wvl, values, illuminant='bb_6500', cmf='1931_2deg'):
+def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='bb_6500', cmf='1931_2deg'):
     ''' Converts a reflective or transmissive spectrum to XYZ coordinates.
 
     Args:
-        wvl (`numpy.ndarray`): wavelengths the data is sampled at, in nm.
-
-        values (`numpy.ndarray`): values of the spectrum at each wvl sample.
+        spectrum_dict (`dict`): dictionary with wvl, values keys.  Wvl in units of nm.
 
         illuminant (`str`): reference illuminant, of the form "bb_temperature".
             TODO: add D65, D50, etc.
@@ -582,10 +576,7 @@ def spectrum_to_XYZ_nonemissive(wvl, values, illuminant='bb_6500', cmf='1931_2de
             `float`: Z
 
     '''
-    if cmf.lower() is not '1931_2deg':
-        raise ValueError('Must use 1931 2 degree standard observer (cmf=1931_2deg)')
-
-    cmf = get_cmf(cmf)
+    wvl, values = spectrum_dict['wvl'], spectrum_dict['values']
 
     try:
         if illuminant[2] == '_':
@@ -598,6 +589,7 @@ def spectrum_to_XYZ_nonemissive(wvl, values, illuminant='bb_6500', cmf='1931_2de
         # standard illuminant, not implemented
         raise ValueError('Must use black body illuminants')
 
+    cmf = get_cmf(cmf)
     wvl_cmf = cmf.wvl
     if not np.allclose(wvl_cmf, wvl):
         dat_interpf = interp1d(wvl, values, kind='linear', fill_value=0, assume_sorted=True)
@@ -1162,3 +1154,20 @@ def XYZ_to_RGB(XYZ, conversion_matrix):
         return np.matmul(conversion_matrix, XYZ)
     else:
         return np.tensordot(XYZ, conversion_matrix, axes=((2), (1)))
+
+
+def spectrum_to_cct_duv(spectrum_dict):
+    ''' Computes the CCT and duv values of a spectrum object.
+
+    Args:
+        spectrum_dict (`dict`): dictionary with keys wvl, values.
+
+    Returns:
+        `tuple` containing (CCT, Duv)
+
+    '''
+    XYZ = spectrum_to_XYZ_nonemissive(spectrum_dict)
+    upvp = XYZ_to_uvprime(XYZ)
+    CCT = uvprime_to_CCT(upvp)
+    Duv = uvprime_to_Duv(upvp)
+    return (CCT, Duv)
