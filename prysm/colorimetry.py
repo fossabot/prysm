@@ -543,14 +543,18 @@ def spectrum_to_XYZ_emissive(spectrum_dict, cmf='1931_2deg'):
     wvl, values = spectrum_dict['wvl'], spectrum_dict['values']
 
     cmf = get_cmf(cmf)
-    wvl_cmf = cmf.wvl
-    if not np.allclose(wvl_cmf, wvl):
+    wvl_cmf = cmf['wvl']
+    try:
+        can_be_direct = np.allclose(wvl_cmf, wvl)
+    except ValueError as e:
+        can_be_direct = False
+    if not can_be_direct:
         dat_interpf = interp1d(wvl, values, kind='linear', fill_value=0, assume_sorted=True)
         values = dat_interpf(wvl_cmf)
 
-    X = k * np.trapz(values * cmf.X)
-    Y = k * np.trapz(values * cmf.Y)
-    Z = k * np.traps(values * cmf.Z)
+    X = k * np.trapz(values * cmf['X'])
+    Y = k * np.trapz(values * cmf['Y'])
+    Z = k * np.trapz(values * cmf['Z'])
     return (X, Y, Z)
 
 
@@ -582,6 +586,7 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='bb_6500', cmf='1931_2
         if illuminant[2] == '_':
             # black body
             _, temperature = illuminant.split('_')
+            temperature = float(temperature)
             ill_type = 'blackbody'
         else:
             raise ValueError('not blackbody')
@@ -590,20 +595,25 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='bb_6500', cmf='1931_2
         raise ValueError('Must use black body illuminants')
 
     cmf = get_cmf(cmf)
-    wvl_cmf = cmf.wvl
-    if not np.allclose(wvl_cmf, wvl):
+    wvl_cmf = cmf['wvl']
+    try:
+        can_be_direct = np.allclose(wvl_cmf, wvl)
+    except ValueError as e:
+        can_be_direct = False
+
+    if not can_be_direct:
         dat_interpf = interp1d(wvl, values, kind='linear', fill_value=0, assume_sorted=True)
         values = dat_interpf(wvl_cmf)
 
     if ill_type is 'blackbody':
-        ill_spectrum = blackbody_spectral_power_distribution(temperature, cmf.wvl)
+        ill_spectrum = blackbody_spectral_power_distribution(temperature, wvl_cmf)
     else:
-        ill_spectrum = np.zeros(cmf.wvl.shape)
+        ill_spectrum = np.zeros(wvl_cmf.shape)
 
     k = 100 / np.trapz(ill_spectrum)
-    X = k * np.trapz(values * ill_spectrum * cmf.X)
-    Y = k * np.trapz(values * ill_spectrum * cmf.Y)
-    Z = k * np.traps(values * ill_spectrum * cmf.Z)
+    X = k * np.trapz(values * ill_spectrum * cmf['X'])
+    Y = k * np.trapz(values * ill_spectrum * cmf['Y'])
+    Z = k * np.trapz(values * ill_spectrum * cmf['Z'])
     return (X, Y, Z)
 
 
@@ -741,6 +751,7 @@ def XYZ_to_uvprime(XYZ):
             `numpy.ndarray`: u' coordinates.
 
     '''
+    XYZ = np.asarray(XYZ)
     X, Y, Z = XYZ[..., 0], XYZ[..., 1], XYZ[..., 2]
     u = (4 * X) / (X + 15 * Y + 3 * Z)
     v = (9 * Y) / (X + 15 * Y + 3 * Z)
