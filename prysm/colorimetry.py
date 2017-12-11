@@ -84,6 +84,7 @@ CIE_ILLUMINANT_METADATA = {
         'D': 'cie_Dseries_380_780_5nm.csv',
         'E': 'cie_E_380_780_5nm.csv',
         'F': 'cie_Fseries_380_730_5nm.csv',
+        'HP': 'cie_HPseries_380_780_5nm.csv',
     },
     'columns': {
         'A': 1,
@@ -105,6 +106,11 @@ CIE_ILLUMINANT_METADATA = {
         'F10': 10,
         'F11': 11,
         'F12': 12,
+        'HP1': 1,
+        'HP2': 2,
+        'HP3': 3,
+        'HP4': 4,
+        'HP5': 5,
     }
 }
 
@@ -143,13 +149,16 @@ def prepare_source_spd(source='D65'):
     ''' Prepares the SPD for a given source.
 
     Args:
-        source (`str`): one of (A, B, C, D50, D55, D65, E, F1..F12).
+        source (`str`): one of (A, B, C, D50, D55, D65, E, F1..F12, HP1..HP5).
 
     Returns:
         `dict` with keys: `wvl`, `values`
 
     '''
-    file = CIE_ILLUMINANT_METADATA[source[0].upper()]
+    if source[0:1].upper() == 'HP':
+        file = CIE_ILLUMINANT_METADATA['HP']
+    else:
+        file = CIE_ILLUMINANT_METADATA[source[0].upper()]
     column = CIE_ILLUMINANT_METADATA[source.upper()]
 
     tmp_list = []
