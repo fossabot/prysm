@@ -16,12 +16,6 @@ from scipy.constants import c, h, k
 
 from matplotlib.collections import LineCollection
 
-try:
-    import colour
-except ImportError:
-    # Spectrum objects can be used without colour
-    pass
-
 from prysm.conf import config
 from prysm.util import share_fig_ax
 from prysm.mathops import atan2, pi, cos, sin, exp, sqrt, arccos
@@ -115,7 +109,7 @@ CIE_ILLUMINANT_METADATA = {
 }
 
 
-@lru_cache
+@lru_cache()
 def prepare_robertson_cct_data():
     ''' Prepares Robertson's correlated color temperature data.
 
@@ -144,7 +138,7 @@ def prepare_robertson_cct_data():
     }
 
 
-@lru_cache
+@lru_cache()
 def prepare_source_spd(source='D65'):
     ''' Prepares the SPD for a given source.
 
@@ -162,7 +156,7 @@ def prepare_source_spd(source='D65'):
     column = CIE_ILLUMINANT_METADATA[source.upper()]
 
     tmp_list = []
-    p = Path(__file__) / 'color_data' / file
+    p = Path(__file__).parent / 'color_data' / file
     with open(p, 'r') as fid:
         reader = csv.reader(fid)
         for row in reader:
@@ -196,7 +190,7 @@ def value_array_to_tristimulus(values):
 
 
 # these two functions could be better refactored, but meh.
-@lru_cache
+@lru_cache()
 def prepare_cie_1931_2deg_observer():
     ''' Prepares the CIE 1931 standard 2 degree observer.
 
@@ -205,7 +199,7 @@ def prepare_cie_1931_2deg_observer():
 
     '''
     tmp_list = []
-    p = Path(__file__) / 'color_data' / 'cie_xyz_1931_2deg_tristimulus_5nm.csv'
+    p = Path(__file__).parent / 'color_data' / 'cie_xyz_1931_2deg_tristimulus_5nm.csv'
     with open(p, 'r') as fid:
         reader = csv.reader(fid)
         for row in reader:
@@ -214,7 +208,7 @@ def prepare_cie_1931_2deg_observer():
     return value_array_to_tristimulus(tmp_list[1:])
 
 
-@lru_cache
+@lru_cache()
 def prepare_cie_1964_10deg_observer():
     ''' Prepares the CIE 1964 standard 10 degree observer.
 
@@ -232,55 +226,34 @@ def prepare_cie_1964_10deg_observer():
     return value_array_to_tristimulus(tmp_list[1:])
 
 
-class Spectrum(object):
-    ''' Representation of a spectrum of light.
+def plot_spectrum(spectrum_dict, xrange=None, yrange=(0, 100), fig=None, ax=None):
+    ''' Plots the spectrum.
+
+    Args:
+        xrange (`iterable`): pair of lower and upper x bounds.
+
+        yrange (`iterable`): pair of lower and upper y bounds.
+
+        fig (`matplotlib.figure.Figure`): figure to plot in.
+
+        ax (`matplotlib.axes.Axis`): axis to plot in.
+
+    Returns:
+        `tuple` containing:
+
+            `matplotlib.figure.Figure`: figure containign the plot.
+
+            `matplotlib.axes.Axis`: axis containing the plot.
+
     '''
-    def __init__(self, wavelengths, values):
-        ''' makes a new Spectrum instance.
 
-        Args:
-            wavelengths (`numpy.ndarray`): wavelengths values correspond to.
-                units of nanometers.
+    fig, ax = share_fig_ax(fig, ax)
 
-            values (`numpy.ndarray`): values associated with the wavelengths.
-                arbitrary units.
+    ax.plot(spectrum_dict['wvl'], spectrum_dict['values'])
+    ax.set(xlim=xrange, xlabel=r'Wavelength $\lambda$ [nm]',
+           ylim=yrange, ylabel='Transmission [%]')
 
-        Returns:
-            `Spectrum`: new Spectrum object.
-
-        '''
-        self.wavelengths = np.asarray(wavelengths)
-        self.values = np.asarray(values)
-        self.meta = dict()
-
-    def plot(self, xrange=None, yrange=(0, 100), fig=None, ax=None):
-        ''' Plots the spectrum.
-
-        Args:
-            xrange (`iterable`): pair of lower and upper x bounds.
-
-            yrange (`iterable`): pair of lower and upper y bounds.
-
-            fig (`matplotlib.figure.Figure`): figure to plot in.
-
-            ax (`matplotlib.axes.Axis`): axis to plot in.
-
-        Returns:
-            `tuple` containing:
-
-                `matplotlib.figure.Figure`: figure containign the plot.
-
-                `matplotlib.axes.Axis`: axis containing the plot.
-
-        '''
-
-        fig, ax = share_fig_ax(fig, ax)
-
-        ax.plot(self.wavelengths, self.values)
-        ax.set(xlim=xrange, xlabel=r'Wavelength $\lambda$ [nm]',
-               ylim=yrange, ylabel='Transmission [%]')
-
-        return fig, ax
+    return fig, ax
 
 
 def blackbody_spectral_power_distribution(temperature, wavelengths):
@@ -310,32 +283,13 @@ def normalize_spectrum(spectrum):
         `Spectrum`: new spectrum object.
 
     '''
-    wvl, vals = spectrum.wavelengths, spectrum.values
+    wvl, vals = spectrum['wvl'], spectrum['values']
     low, high = np.searchsorted(wvl, 400), np.searchsorted(wvl, 700)
     vis_values_max = vals[low:high].max()
-    return Spectrum(wvl, vals / vis_values_max)
-
-
-def spd_from_spectrum(spectrum):
-    ''' converts a spectrum to a colour spectral power distribution object.
-
-    Args:
-        spectrm (`Spectrum`): spectrum object to conver to spd.
-
-    Returns:
-        `SpectralPowerDistribution`: colour SPD object.
-
-    '''
-    spectrum_dict = dict(zip(spectrum.wavelengths, spectrum.values))
-    return colour.SpectralPowerDistribution('', spectrum_dict)
-
-
-def check_colour():
-    ''' Checks if colour is available, raises if not.
-    '''
-    if 'colour' not in globals():  # or in locals
-            raise ImportError('prysm colorimetry requires the colour package, '
-                              'see http://colour-science.org/installation-guide/')
+    return {
+        'wvl': wvl,
+        'values': vals / vis_values_max,
+    }
 
 
 def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None):
@@ -374,7 +328,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     # a reduced set for a faster mask and
     # yet another set for annotation.
     wvl_line = np.arange(400, 700, 2)
-    wvl_line_uv = XYZ_to_uvprime(colour.wavelength_to_XYZ(wvl_line))
+    wvl_line_uv = XYZ_to_uvprime(wavelength_to_XYZ(wvl_line))
 
     wvl_annotate = [360, 400, 455, 470, 480, 490,
                     500, 510, 520, 540, 555, 570, 580, 590,
@@ -383,7 +337,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
                 500, 505, 510, 515, 520, 525, 530, 535, 570, 700]
 
-    wvl_mask_uv = XYZ_to_uvprime(colour.wavelength_to_XYZ(wvl_mask))
+    wvl_mask_uv = XYZ_to_uvprime(wavelength_to_XYZ(wvl_mask))
 
     # make equally spaced u,v coordinates on a grid
     u = np.linspace(xlim[0], xlim[1], samples)
@@ -459,7 +413,7 @@ def cie_1976_wavelength_annotations(wavelengths, fig=None, ax=None):
     wavelengths = np.asarray(wavelengths)
     idx = np.arange(1, len(wavelengths) - 1, dtype=int)
     wvl_lbl = wavelengths[idx]
-    uv = XYZ_to_uvprime(colour.wavelength_to_XYZ(wavelengths))
+    uv = XYZ_to_uvprime(wavelength_to_XYZ(wavelengths))
     u, v = uv[..., 0][idx], uv[..., 1][idx]
     u_last, v_last = uv[..., 0][idx - 1], uv[..., 1][idx - 1]
     u_next, v_next = uv[..., 0][idx + 1], uv[..., 1][idx + 1]
@@ -659,6 +613,33 @@ def spectrum_to_XYZ_nonemissive(wvl, values, illuminant='bb_6500', cmf='1931_2de
     Y = k * np.trapz(values * ill_spectrum * cmf.Y)
     Z = k * np.traps(values * ill_spectrum * cmf.Z)
     return (X, Y, Z)
+
+
+@lru_cache()
+def wavelength_to_XYZ(wavelength, observer='1931_2deg'):
+    ''' Uses tristimulus color matching functions to map a awvelength to XYZ
+        coordinates.
+
+    Args:
+        wavelength (`float`): wavelength in nm.
+
+        observer (`str`): CIE observer name, must be 1931_2deg.
+
+    Returns:
+        `numpy.ndarray`: array with last dimension corresponding to X, Y, Z.
+
+    '''
+    wavelength = np.asarray(wavelength, dtype=config.precision)
+
+    cmf = get_cmf(observer)
+    wvl, X, Y, Z = cmf['wvl'], cmf['X'], cmf['Y'], cmf['Z']
+
+    ia = {'bounds_error': False, 'fill_value': 0, 'assume_sorted': True}
+    f_X, f_Y, f_Z = interp1d(wvl, X, **ia), interp1d(wvl, Y, **ia), interp1d(wvl, Z, **ia)
+    x, y, z = f_X(wavelength), f_Y(wavelength), f_Z(wavelength)
+
+    shape = wavelength.shape
+    return np.stack((x, y, z), axis=len(shape))
 
 
 def make_cieluv_isotemperature_line_points(temp, length=0.025):

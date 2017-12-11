@@ -1,6 +1,7 @@
 ''' File readers (and someday, writers) for various commercial instruments
 '''
-from prysm.colorimetry import Spectrum
+import numpy as np
+
 
 def read_oceanoptics(file_path):
     ''' Reads spectral transmission data from an ocean optics spectrometer
@@ -23,10 +24,13 @@ def read_oceanoptics(file_path):
             if '>>>>>Begin Spectral Data<<<<<' in line:
                 idx = i
 
-        data_lines = txtlines[idx+1:]
+        data_lines = txtlines[idx + 1:]
         for line in data_lines:
             wvl, v = line.split()
             wavelengths.append(float(wvl))
             values.append(float(v))
 
-        return Spectrum(wavelengths=wavelengths, values=values)
+        return {
+            'wvl': np.asarray(wavelengths),
+            'values': np.asarray(values),
+        }
