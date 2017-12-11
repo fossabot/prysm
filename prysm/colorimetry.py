@@ -121,7 +121,7 @@ def prepare_robertson_cct_data():
         # https://www.osapublishing.org/josa/abstract.cfm?uri=josa-58-11-1528
     '''
     tmp_list = []
-    p = Path(__file__) / 'color_data' / 'robertson_cct.csv'
+    p = Path(__file__).parent / 'color_data' / 'robertson_cct.csv'
     with open(p, 'r') as fid:
         reader = csv.reader(fid)
         for row in reader:
@@ -549,7 +549,7 @@ def spectrum_to_XYZ_emissive(spectrum_dict, cmf='1931_2deg'):
     except ValueError as e:
         can_be_direct = False
     if not can_be_direct:
-        dat_interpf = interp1d(wvl, values, kind='linear', fill_value=0, assume_sorted=True)
+        dat_interpf = interp1d(wvl, values, kind='linear', bounds_error=False, fill_value=0, assume_sorted=True)
         values = dat_interpf(wvl_cmf)
 
     X = k * np.trapz(values * cmf['X'])
@@ -602,7 +602,7 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='bb_6500', cmf='1931_2
         can_be_direct = False
 
     if not can_be_direct:
-        dat_interpf = interp1d(wvl, values, kind='linear', fill_value=0, assume_sorted=True)
+        dat_interpf = interp1d(wvl, values, kind='linear', bounds_error=False, fill_value=0, assume_sorted=True)
         values = dat_interpf(wvl_cmf)
 
     if ill_type is 'blackbody':
@@ -617,7 +617,6 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='bb_6500', cmf='1931_2
     return (X, Y, Z)
 
 
-@lru_cache()
 def wavelength_to_XYZ(wavelength, observer='1931_2deg'):
     ''' Uses tristimulus color matching functions to map a awvelength to XYZ
         coordinates.
