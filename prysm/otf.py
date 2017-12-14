@@ -6,12 +6,12 @@ from scipy import interpolate
 
 from matplotlib import pyplot as plt
 
-from prysm.conf import config
 from prysm.mathops import fft2, fftshift
 from prysm.psf import PSF
 from prysm.fttools import forward_ft_unit
 from prysm.util import correct_gamma, share_fig_ax
 from prysm.coordinates import polar_to_cart
+
 
 class MTF(object):
     ''' Modulation Transfer Function
@@ -199,8 +199,8 @@ class MTF(object):
         cb = fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         cb.outline.set_edgecolor('k')
         cb.outline.set_linewidth(0.5)
-        ax.set(xlabel='Spatial Frequency X [cy/mm]',
-               ylabel='Spatial Frequency Y [cy/mm]',
+        ax.set(xlabel=r'$\nu_x$ [cy/mm]',
+               ylabel=r'$\nu_y$ [cy/mm]',
                xlim=(-max_freq, max_freq),
                ylim=(-max_freq, max_freq))
         return fig, ax
@@ -292,6 +292,7 @@ class MTF(object):
         psf = PSF.from_pupil(pupil, efl=efl, padding=padding)
         return MTF.from_psf(psf)
 
+
 def diffraction_limited_mtf(fno, wavelength=0.55, num_pts=128):
     ''' Gives the diffraction limited MTF for a circular pupil and the given parameters.
 
@@ -310,8 +311,8 @@ def diffraction_limited_mtf(fno, wavelength=0.55, num_pts=128):
             `numpy.ndarray`: mtf array (rel. 1.0).
     '''
     normalized_frequency = np.linspace(0, 1, num_pts)
-    extinction = 1/(wavelength/1000*fno)
+    extinction = 1 / (wavelength / 1000 * fno)
     mtf = (2 / np.pi) * \
-          (np.arccos(normalized_frequency) - normalized_frequency * \
+          (np.arccos(normalized_frequency) - normalized_frequency *
            np.sqrt(1 - normalized_frequency ** 2))
     return normalized_frequency * extinction, mtf

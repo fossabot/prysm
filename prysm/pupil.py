@@ -23,6 +23,7 @@ from prysm.mathops import (
     sin
 )
 
+
 class Pupil(object):
     ''' Pupil of an optical system.
 
@@ -83,15 +84,15 @@ class Pupil(object):
 
         '''
 
-        self.samples          = samples
-        self.epd              = epd
-        self.wavelength       = wavelength
-        self.opd_unit         = opd_unit
+        self.samples = samples
+        self.epd = epd
+        self.wavelength = wavelength
+        self.opd_unit = opd_unit
         self.phase = self.fcn = empty((samples, samples), dtype=config.precision)
-        self.unit             = linspace(-epd/2, epd/2, samples, dtype=config.precision)
-        self.sample_spacing   = self.unit[-1] - self.unit[-2]
-        self.rho  = self.phi  = empty((samples, samples), dtype=config.precision)
-        self.center           = samples // 2
+        self.unit = linspace(-epd / 2, epd / 2, samples, dtype=config.precision)
+        self.sample_spacing = self.unit[-1] - self.unit[-2]
+        self.rho = self.phi = empty((samples, samples), dtype=config.precision)
+        self.center = samples // 2
 
         if opd_unit.lower() in ('$\lambda$', 'waves'):
             self._opd_unit = 'waves'
@@ -133,7 +134,7 @@ class Pupil(object):
     def rms(self):
         ''' Returns the RMS wavefront error in the given OPD units
         '''
-        return  convert_phase(rms(self.phase), self)
+        return convert_phase(rms(self.phase), self)
 
     # quick-access slices, properties ------------------------------------------
 
@@ -154,15 +155,15 @@ class Pupil(object):
 
         fig, ax = share_fig_ax(fig, ax)
         im = ax.imshow(convert_phase(self.phase, self),
-                       extent=[-epd/2, epd/2, -epd/2, epd/2],
+                       extent=[-epd / 2, epd / 2, -epd / 2, epd / 2],
                        cmap='Spectral',
                        interpolation='lanczos',
                        origin='lower')
         cb = fig.colorbar(im, label=f'OPD [{self._opd_str}]', ax=ax, fraction=0.046)
         cb.outline.set_edgecolor('k')
         cb.outline.set_linewidth(0.5)
-        ax.set(xlabel='Pupil X [mm]',
-               ylabel='Pupil Y [mm]')
+        ax.set(xlabel=r'Pupil $\xi$ [mm]',
+               ylabel=r'Pupil $\eta$ [mm]')
         return fig, ax
 
     def plot_slice_xy(self, fig=None, ax=None):
@@ -215,7 +216,7 @@ class Pupil(object):
         fig, ax = share_fig_ax(fig, ax)
         plotdata = (visibility * sin(2 * pi * passes * self.phase))
         im = ax.imshow(plotdata,
-                       extent=[-epd/2, epd/2, -epd/2, epd/2],
+                       extent=[-epd / 2, epd / 2, -epd / 2, epd / 2],
                        cmap='Greys_r',
                        interpolation='lanczos',
                        clim=(-1, 1),
@@ -387,6 +388,7 @@ class Pupil(object):
 
     # meat 'n potatoes ---------------------------------------------------------
 
+
 def convert_phase(array, pupil):
     '''Converts an OPD/phase map to have the same unit of expression as a pupil
 
@@ -405,6 +407,7 @@ def convert_phase(array, pupil):
         return array * nanometers_to_waves(pupil.wavelength)
     else:
         return array
+
 
 def merge_pupils(pupil1, pupil2):
     '''Merges the phase from two pupils and returns a new :class:`Pupil` instance

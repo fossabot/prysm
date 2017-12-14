@@ -172,8 +172,8 @@ class PSF(object):
             cb.outline.set_edgecolor('k')
             cb.outline.set_linewidth(0.5)
         if show_axlabels:
-            ax.set(xlabel=r'Image Plane X [$\mu m$]',
-                   ylabel=r'Image Plane Y [$\mu m$]')
+            ax.set(xlabel=r'Image Plane $x$ [$\mu m$]',
+                   ylabel=r'Image Plane $y$ [$\mu m$]')
 
         ax.set(xlim=(-axlim, axlim),
                ylim=(-axlim, axlim))
