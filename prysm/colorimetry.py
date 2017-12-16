@@ -292,7 +292,7 @@ def normalize_spectrum(spectrum):
     }
 
 
-def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=400, fig=None, ax=None):
+def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=300, fig=None, ax=None):
     ''' Creates a CIE 1931 plot.
 
     Args:
@@ -321,10 +321,22 @@ def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=400, fig=None, ax=None):
     if ylim is None:
         ylim = xlim
 
+    # don't compute over dead space
+    xlim_bg = list(xlim)
+    ylim_bg = list(ylim)
+    if xlim[0] < 0:
+        xlim_bg[0] = 0
+    if xlim[1] > 0.75:
+        xlim_bg[1] = 0.75
+    if ylim[0] < 0:
+        ylim_bg[0] = 0
+    if ylim[1] > 0.85:
+        ylim_bg[1] = 0.85
+
     # create lists of wavelengths and map them to uv,
     # a reduced set for a faster mask and
     # yet another set for annotation.
-    wvl_line = np.arange(400, 700, 2)
+    wvl_line = np.arange(400, 700, 2.5)
     wvl_line_xy = XYZ_to_xy(wavelength_to_XYZ(wvl_line))
 
     wvl_annotate = [360, 400, 455, 470, 480, 490,
@@ -337,8 +349,8 @@ def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=400, fig=None, ax=None):
     wvl_mask_xy = XYZ_to_xy(wavelength_to_XYZ(wvl_mask))
 
     # make equally spaced u,v coordinates on a grid
-    x = np.linspace(xlim[0], xlim[1], samples)
-    y = np.linspace(ylim[0], ylim[1], samples)
+    x = np.linspace(xlim_bg[0], xlim_bg[1], samples)
+    y = np.linspace(ylim_bg[0], ylim_bg[1], samples)
     xx, yy = np.meshgrid(x, y)
 
     # stack u and v for vectorized computations, also mask out negative values
@@ -367,7 +379,7 @@ def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=400, fig=None, ax=None):
 
     fig, ax = share_fig_ax(fig, ax)
     ax.imshow(dat,
-              extent=[*xlim, *ylim],
+              extent=[*xlim_bg, *ylim_bg],
               interpolation='bilinear',
               origin='lower')
     ax.plot(wvl_line_xy[:, 0], wvl_line_xy[:, 1], ls='-', c='0.25', lw=2)
@@ -378,7 +390,7 @@ def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=400, fig=None, ax=None):
     return fig, ax
 
 
-def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=300, fig=None, ax=None):
+def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400, fig=None, ax=None):
     ''' Creates a CIE 1976 plot.
 
     Args:
@@ -408,6 +420,18 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=300, fig=None, ax=None)
     if ylim is None:
         ylim = xlim
 
+    # don't compute over dead space
+    xlim_bg = list(xlim)
+    ylim_bg = list(ylim)
+    if xlim[0] < 0:
+        xlim_bg[0] = 0
+    if xlim[1] > 0.65:
+        xlim_bg[1] = 0.65
+    if ylim[0] < 0:
+        ylim_bg[0] = 0
+    if ylim[1] > 0.6:
+        ylim_bg[1] = 0.6
+
     # create lists of wavelengths and map them to uv,
     # a reduced set for a faster mask and
     # yet another set for annotation.
@@ -424,8 +448,8 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=300, fig=None, ax=None)
     wvl_mask_uv = XYZ_to_uvprime(wavelength_to_XYZ(wvl_mask))
 
     # make equally spaced u,v coordinates on a grid
-    u = np.linspace(xlim[0], xlim[1], samples)
-    v = np.linspace(ylim[0], ylim[1], samples)
+    u = np.linspace(xlim_bg[0], xlim_bg[1], samples)
+    v = np.linspace(ylim_bg[0], ylim_bg[1], samples)
     uu, vv = np.meshgrid(u, v)
 
     # stack u and v for vectorized computations, also mask out negative values
@@ -455,10 +479,10 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=300, fig=None, ax=None)
 
     fig, ax = share_fig_ax(fig, ax)
     ax.imshow(dat,
-              extent=[*xlim, *ylim],
+              extent=[*xlim_bg, *ylim_bg],
               interpolation='bilinear',
               origin='lower')
-    ax.plot(wvl_line_uv[:, 0], wvl_line_uv[:, 1], ls='-', c='0.25', lw=2)
+    ax.plot(wvl_line_uv[:, 0], wvl_line_uv[:, 1], ls='-', c='0.25', lw=2.5)
     fig, ax = cie_1976_wavelength_annotations(wvl_annotate, fig=fig, ax=ax)
     ax.set(xlim=xlim, xlabel='CIE u\'',
            ylim=ylim, ylabel='CIE v\'')
