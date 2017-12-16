@@ -292,7 +292,93 @@ def normalize_spectrum(spectrum):
     }
 
 
-def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None):
+def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=400, fig=None, ax=None):
+    ''' Creates a CIE 1931 plot.
+
+    Args:
+
+        xlim (`iterable`): left and right bounds of the plot.
+
+        ylim (`iterable`): lower and upper bounds of the plot.  If `None`,
+            the y bounds will be chosen to match the x bounds.
+
+        samples (`int`): number of 1D samples within the region of interest,
+            total pixels will be samples^2.
+
+        fig (`matplotlib.figure.Figure`): figure to plot in.
+
+        ax (`matplotlib.axes.Axis`): axis to plot in.
+
+    Returns:
+        `tuple` containing:
+
+            `matplotlib.figure.Figure`: figure containing the plot.
+
+            `matplotlib.axes.axis`: axis containing the plot.
+
+    '''
+    # duplicate xlim if ylim not set
+    if ylim is None:
+        ylim = xlim
+
+    # create lists of wavelengths and map them to uv,
+    # a reduced set for a faster mask and
+    # yet another set for annotation.
+    wvl_line = np.arange(400, 700, 2)
+    wvl_line_xy = XYZ_to_xy(wavelength_to_XYZ(wvl_line))
+
+    wvl_annotate = [360, 400, 455, 470, 480, 490,
+                    500, 510, 520, 540, 555, 570, 580, 590,
+                    600, 615, 630, 700, 830]
+
+    wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
+                500, 505, 510, 515, 520, 525, 530, 540, 555, 570, 700]
+
+    wvl_mask_xy = XYZ_to_xy(wavelength_to_XYZ(wvl_mask))
+
+    # make equally spaced u,v coordinates on a grid
+    x = np.linspace(xlim[0], xlim[1], samples)
+    y = np.linspace(ylim[0], ylim[1], samples)
+    xx, yy = np.meshgrid(x, y)
+
+    # stack u and v for vectorized computations, also mask out negative values
+    xxyy = np.stack((xx, yy), axis=2)
+
+    # make a mask, of value 1 outside the horseshoe, 0 inside
+    triangles = Delaunay(wvl_mask_xy, qhull_options='QJ Qf')
+    wvl_mask = triangles.find_simplex(xxyy) < 0
+
+    xyz = xy_to_XYZ(xxyy) / 220
+    dat = XYZ_to_sRGB(xyz)
+
+    # normalize and clip sRGB values.
+    maximum = np.max(dat, axis=-1)
+    dat /= maximum[..., np.newaxis]
+    dat = np.clip(dat, 0, 1)
+
+    # now make an alpha/transparency mask to hide the background
+    # and flip u,v axes because of column-major symantics
+    alpha = np.ones((samples, samples))
+    alpha[wvl_mask] = 0
+    dat = np.dstack((dat, alpha))
+
+    # lastly, duplicate the lowest wavelength so that the boundary line is closed
+    wvl_line_xy = np.vstack((wvl_line_xy, wvl_line_xy[0, :]))
+
+    fig, ax = share_fig_ax(fig, ax)
+    ax.imshow(dat,
+              extent=[*xlim, *ylim],
+              interpolation='bilinear',
+              origin='lower')
+    ax.plot(wvl_line_xy[:, 0], wvl_line_xy[:, 1], ls='-', c='0.25', lw=2)
+    fig, ax = cie_1931_wavelength_annotations(wvl_annotate, fig=fig, ax=ax)
+    ax.set(xlim=xlim, xlabel='CIE x',
+           ylim=ylim, ylabel='CIE y')
+
+    return fig, ax
+
+
+def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=300, fig=None, ax=None):
     ''' Creates a CIE 1976 plot.
 
     Args:
@@ -317,8 +403,6 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
             `matplotlib.axes.axis`: axis containing the plot.
 
     '''
-    # ignore runtime warnings -- invalid values in power for some u,v -> sRGB values
-    warnings.simplefilter('ignore', RuntimeWarning)
 
     # duplicate xlim if ylim not set
     if ylim is None:
@@ -344,26 +428,27 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     v = np.linspace(ylim[0], ylim[1], samples)
     uu, vv = np.meshgrid(u, v)
 
-    # set values outside the horseshoe to a safe value that won't blow up
+    # stack u and v for vectorized computations, also mask out negative values
+    uuvv = np.stack((uu, vv), axis=2)
 
-    # stack u and v for vectorized computations
-    uuvv = np.stack((uu, vv), axis=2).swapaxes(0, 1)
-
+    # make a mask, of value 1 outside the horseshoe, 0 inside
     triangles = Delaunay(wvl_mask_uv, qhull_options='QJ Qf')
     wvl_mask = triangles.find_simplex(uuvv) < 0
 
     xy = uvprime_to_xy(uuvv)
     xyz = xy_to_XYZ(xy)
     dat = XYZ_to_sRGB(xyz)
-    # normalize and clip
-    dat /= np.max(dat, axis=2)[..., np.newaxis]
+
+    # normalize and clip sRGB values.
+    maximum = np.max(dat, axis=-1)
+    dat /= maximum[..., np.newaxis]
     dat = np.clip(dat, 0, 1)
 
     # now make an alpha/transparency mask to hide the background
     # and flip u,v axes because of column-major symantics
     alpha = np.ones((samples, samples))
     alpha[wvl_mask] = 0
-    dat = np.swapaxes(np.dstack((dat, alpha)), 0, 1)
+    dat = np.dstack((dat, alpha))
 
     # lastly, duplicate the lowest wavelength so that the boundary line is closed
     wvl_line_uv = np.vstack((wvl_line_uv, wvl_line_uv[0, :]))
@@ -377,6 +462,57 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=200, fig=None, ax=None)
     fig, ax = cie_1976_wavelength_annotations(wvl_annotate, fig=fig, ax=ax)
     ax.set(xlim=xlim, xlabel='CIE u\'',
            ylim=ylim, ylabel='CIE v\'')
+
+    return fig, ax
+
+
+def cie_1931_wavelength_annotations(wavelengths, fig=None, ax=None):
+    ''' Draws lines normal to the spectral locust on a CIE 1931 diagram and
+        writes the text for each wavelength.
+
+    Args:
+        wavelengths (`iterable`): set of wavelengths to annotate.
+
+        fig (`matplotlib.figure.Figure`): figure to draw on.
+
+        ax (`matplotlib.axes.Axis`): axis to draw in.
+
+    Returns:
+
+        `tuple` containing:
+
+            `matplotlib.figure.Figure`: figure containing the annotations.
+
+            `matplotlib.axes.Axis`: axis containing the annotations.
+
+    Notes:
+        see SE:
+        https://stackoverflow.com/questions/26768934/annotation-along-a-curve-in-matplotlib
+
+    '''
+    # some tick parameters
+    tick_length = 0.025
+    text_offset = 0.06
+
+    # convert wavelength to u' v' coordinates
+    wavelengths = np.asarray(wavelengths)
+    idx = np.arange(1, len(wavelengths) - 1, dtype=int)
+    wvl_lbl = wavelengths[idx]
+    xy = XYZ_to_xy(wavelength_to_XYZ(wavelengths))
+    x, y = xy[..., 0][idx], xy[..., 1][idx]
+    x_last, y_last = xy[..., 0][idx - 1], xy[..., 1][idx - 1]
+    x_next, y_next = xy[..., 0][idx + 1], xy[..., 1][idx + 1]
+
+    angle = atan2(y_next - y_last, x_next - x_last) + pi / 2
+    cos_ang, sin_ang = cos(angle), sin(angle)
+    x1, y1 = x + tick_length * cos_ang, y + tick_length * sin_ang
+    x2, y2 = x + text_offset * cos_ang, y + text_offset * sin_ang
+
+    fig, ax = share_fig_ax(fig, ax)
+    tick_lines = LineCollection(np.c_[x, y, x1, y1].reshape(-1, 2, 2), color='0.25', lw=1.25)
+    ax.add_collection(tick_lines)
+    for i in range(len(idx)):
+        ax.text(x2[i], y2[i], str(wvl_lbl[i]), va="center", ha="center", clip_on=True)
 
     return fig, ax
 
@@ -591,10 +727,10 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'
             temperature = float(temperature)
             ill_type = 'blackbody'
         else:
-            raise ValueError('not blackbody')
+            ill_type = 'cie_std'
     except (ValueError, IndexError) as err:
         # standard illuminant, not implemented
-        raise ValueError('Must use black body illuminants')
+        raise ValueError('Must use black body illuminants or CIE standard illuminants')
 
     cmf = get_cmf(cmf)
     wvl_cmf = cmf['wvl']
@@ -610,7 +746,18 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'
     if ill_type is 'blackbody':
         ill_spectrum = blackbody_spectral_power_distribution(temperature, wvl_cmf)
     else:
-        ill_spectrum = np.zeros(wvl_cmf.shape)
+        ill_spectrum = prepare_source_spd(illuminant)
+
+        try:
+            can_be_direct_illuminant = np.allclose(wvl_cmf, ill_spectrum['wvl'])
+        except ValueError as e:
+            can_be_direct_illuminant = False
+        if can_be_direct_illuminant:
+            ill_spectrum = ill_spectrum['values']
+        else:
+            ill_wvl, ill_vals = ill_spectrum['wvl'], ill_spectrum['values']
+            ill_interpf = interp1d(ill_wvl, ill_vals, kind='linear', bounds_error=False, fill_value=0, assume_sorted=True)
+            ill_spectrum = ill_interpf(wvl_cmf)
 
     dw = wvl_cmf[1] - wvl_cmf[0]
     k = 100 / (values * ill_spectrum * cmf['Y']).sum() / dw
@@ -818,11 +965,12 @@ def xyY_to_xy(xyY):
             `numpy.ndarray`: y coordinates.
 
     '''
+    xyY = np.asarray(xyY)
     shape = xyY.shape
     if shape[-1] is 2:
         return xyY
     else:
-        x, y, Y = xyY
+        x, y, Y = xyY[..., 0], xyY[..., 1], xyY[..., 2]
 
         shape = x.shape
         return np.stack((x, y), axis=len(shape))
@@ -845,7 +993,9 @@ def xyY_to_XYZ(xyY):
             `numpy.ndarray`: Z coordinates.
 
     '''
+    xyY = np.asarray(xyY)
     x, y, Y = xyY[..., 0], xyY[..., 1], xyY[..., 2]
+
     X = (x * Y) / y
     Y = Y
     Z = ((1 - x - y) * Y) / y
@@ -873,6 +1023,7 @@ def xy_to_xyY(xy, Y=1):
             `numpy.ndarray`: Y coordinates.
 
     '''
+    xy = np.asarray(xy)
     shape = xy.shape
     if shape[-1] is 3:
         return xy
@@ -880,8 +1031,7 @@ def xy_to_xyY(xy, Y=1):
         x, y = xy[..., 0], xy[..., 1]
         Y = np.ones(x.shape) * Y
 
-        shape = x.shape
-        return np.stack((x, y, Y), axis=len(shape))
+        return np.stack((x, y, Y), axis=len(shape) - 1)
 
 
 def xy_to_XYZ(xy):
@@ -901,6 +1051,7 @@ def xy_to_XYZ(xy):
             `numpy.ndarray`: Z coordinates.
 
     '''
+    xy = np.asarray(xy)
     xyY = xy_to_xyY(xy)
     return xyY_to_XYZ(xyY)
 
@@ -1011,6 +1162,7 @@ def uvprime_to_xy(uv):
             `numpy.ndarray`: y coordinates.
 
     '''
+    uv = np.asarray(uv)
     u, v = uv[..., 0], uv[..., 1]
     x = (9 * u) / (6 * u - 16 * v + 12)
     y = (4 * v) / (6 * u - 16 * v + 12)
@@ -1110,7 +1262,7 @@ def XYZ_to_AdobeRGB(XYZ, illuminant='D65'):
     return XYZ_to_RGB(XYZ, invmat)
 
 
-def XYZ_to_sRGB(XYZ, illuminant='D65'):
+def XYZ_to_sRGB(XYZ, illuminant='D65', gamma_encode=True):
     ''' Converts xyz points to xy points.
 
     Args:
@@ -1118,6 +1270,9 @@ def XYZ_to_sRGB(XYZ, illuminant='D65'):
             X, Y, Z.
 
         illuminant (`str`): which illuminant to use, either D65 or D50.
+
+        gamma_encode (`bool`): if True, apply sRGB_oetf to the data for display,
+            if false, leave values in linear regime.
 
     Returns:
         `tuple` containing:
@@ -1140,10 +1295,14 @@ def XYZ_to_sRGB(XYZ, illuminant='D65'):
     else:
         raise ValueError('Must use D65 or D50 illuminant.')
 
-    return XYZ_to_RGB(XYZ, invmat)
+    if gamma_encode is True:
+        rgb = XYZ_to_RGB(XYZ, invmat)
+        return sRGB_oetf(rgb)
+    else:
+        return XYZ_to_RGB(XYZ, invmat)
 
 
-def XYZ_to_RGB(XYZ, conversion_matrix):
+def XYZ_to_RGB(XYZ, conversion_matrix, XYZ_scale=100):
     ''' Converts xyz points to xy points.
 
     Args:
@@ -1152,6 +1311,9 @@ def XYZ_to_RGB(XYZ, conversion_matrix):
 
         conversion_matrix (`str`): conversion matrix to use to convert XYZ
             to RGB values.
+
+        XYZ_scale (`float`): maximum value of XYZ values; XYZ will be normalized
+            by this prior to conversion.
 
     Returns:
         `tuple` containing:
@@ -1163,7 +1325,7 @@ def XYZ_to_RGB(XYZ, conversion_matrix):
             `numpy.ndarray`: B coordinates.
 
     '''
-    XYZ = np.asarray(XYZ)
+    XYZ = np.asarray(XYZ) / XYZ_scale
     if len(XYZ.shape) == 1:
         return np.matmul(conversion_matrix, XYZ)
     else:
@@ -1185,3 +1347,31 @@ def spectrum_to_cct_duv(spectrum_dict):
     CCT = uvprime_to_CCT(upvp)
     Duv = uvprime_to_Duv(upvp)
     return (CCT, Duv)
+
+
+def sRGB_oetf(L):
+    ''' sRGB opto-electrical transfer function.  Similar to gamma.
+
+    Args:
+        L (`numpy.ndarray`): sRGB values.
+
+    Returns:
+        `numpy.ndarray`: V', V modulated by the oetf.
+
+    '''
+    L = np.asarray(L)
+    return np.where(L <= 0.0031308, L * 12.92, 1.055 * (L ** (1 / 2.4)) - 0.055)
+
+
+def sRGB_reverse_oetf(V):
+    ''' sRGB opto-electrical transfer function.  Similar to gamma.
+
+    Args:
+        V (`numpy.ndarray`): sRGB values.
+
+    Returns:
+        `numpy.ndarray`: V', V modulated by the oetf.
+
+    '''
+    V = np.asarray(V)
+    np.where(V <= sRGB_oetf(0.0031308), V / 12.92, ((V + 0.055) / 1.055) ** 2.4)
