@@ -152,8 +152,8 @@ def prepare_source_spd(source='D65'):
     if source[0:1].upper() == 'HP':
         file = CIE_ILLUMINANT_METADATA['HP']
     else:
-        file = CIE_ILLUMINANT_METADATA[source[0].upper()]
-    column = CIE_ILLUMINANT_METADATA[source.upper()]
+        file = CIE_ILLUMINANT_METADATA['files'][source[0].upper()]
+    column = CIE_ILLUMINANT_METADATA['columns'][source.upper()]
 
     tmp_list = []
     p = Path(__file__).parent / 'color_data' / file
@@ -552,20 +552,22 @@ def spectrum_to_XYZ_emissive(spectrum_dict, cmf='1931_2deg'):
         dat_interpf = interp1d(wvl, values, kind='linear', bounds_error=False, fill_value=0, assume_sorted=True)
         values = dat_interpf(wvl_cmf)
 
-    X = k * np.trapz(values * cmf['X'])
-    Y = k * np.trapz(values * cmf['Y'])
-    Z = k * np.trapz(values * cmf['Z'])
+    dw = wvl_cmf[1] - wvl_cmf[0]
+    k = 100 / (values * cmf['Y']).sum() / dw
+    Y = k * (values * cmf['Y']).sum()
+    Z = k * (values * cmf['Z']).sum()
+    X = k * (values * cmf['X']).sum()
     return (X, Y, Z)
 
 
-def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='bb_6500', cmf='1931_2deg'):
+def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'):
     ''' Converts a reflective or transmissive spectrum to XYZ coordinates.
 
     Args:
         spectrum_dict (`dict`): dictionary with wvl, values keys.  Wvl in units of nm.
 
-        illuminant (`str`): reference illuminant, of the form "bb_temperature".
-            TODO: add D65, D50, etc.
+        illuminant (`str`): reference illuminant, of the form "bb_[temperature]",
+            or a CIE standard illuminant, e.g. D65, A, F1, etc.
 
         cmf (`str`): which color matching function to use, defaults to
             CIE 1931 2 degree observer.
@@ -610,10 +612,11 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='bb_6500', cmf='1931_2
     else:
         ill_spectrum = np.zeros(wvl_cmf.shape)
 
-    k = 100 / np.trapz(ill_spectrum)
-    X = k * np.trapz(values * ill_spectrum * cmf['X'])
-    Y = k * np.trapz(values * ill_spectrum * cmf['Y'])
-    Z = k * np.trapz(values * ill_spectrum * cmf['Z'])
+    dw = wvl_cmf[1] - wvl_cmf[0]
+    k = 100 / (values * ill_spectrum * cmf['Y']).sum() / dw
+    Y = k * (values * ill_spectrum * cmf['Y']).sum()
+    Z = k * (values * ill_spectrum * cmf['Z']).sum()
+    X = k * (values * ill_spectrum * cmf['X']).sum()
     return (X, Y, Z)
 
 
@@ -1160,6 +1163,7 @@ def XYZ_to_RGB(XYZ, conversion_matrix):
             `numpy.ndarray`: B coordinates.
 
     '''
+    XYZ = np.asarray(XYZ)
     if len(XYZ.shape) == 1:
         return np.matmul(conversion_matrix, XYZ)
     else:
