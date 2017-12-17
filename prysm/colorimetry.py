@@ -2,7 +2,6 @@
     http://colour-science.org/
 '''
 import csv
-import warnings
 from functools import lru_cache
 from pathlib import Path
 
@@ -17,7 +16,7 @@ from scipy.constants import c, h, k
 from matplotlib.collections import LineCollection
 
 from prysm.conf import config
-from prysm.util import share_fig_ax
+from prysm.util import share_fig_ax, colorline, smooth
 from prysm.mathops import atan2, pi, cos, sin, exp, sqrt, arccos
 
 # some CIE constants
@@ -226,13 +225,16 @@ def prepare_cie_1964_10deg_observer():
     return value_array_to_tristimulus(tmp_list[1:])
 
 
-def plot_spectrum(spectrum_dict, xrange=None, yrange=(0, 100), fig=None, ax=None):
+def plot_spectrum(spectrum_dict, xrange=(370, 730), yrange=(0, 100), smoothing=None, fig=None, ax=None):
     ''' Plots the spectrum.
 
     Args:
         xrange (`iterable`): pair of lower and upper x bounds.
 
         yrange (`iterable`): pair of lower and upper y bounds.
+
+        smoothing (`float`): number of nanometers to smooth data by.  If None,
+            do no smoothing.
 
         fig (`matplotlib.figure.Figure`): figure to plot in.
 
@@ -246,10 +248,15 @@ def plot_spectrum(spectrum_dict, xrange=None, yrange=(0, 100), fig=None, ax=None
             `matplotlib.axes.Axis`: axis containing the plot.
 
     '''
+    wvl, values = spectrum_dict['wvl'], spectrum_dict['values']
+    if smoothing is not None:
+        dx = wvl[1] - wvl[0]
+        window_width = int(smoothing / dx)
+        values = smooth(values, window_width, window='flat')
 
+    lc = colorline(wvl, values, wvl, cmin=400, cmax=700, lw=5)
     fig, ax = share_fig_ax(fig, ax)
-
-    ax.plot(spectrum_dict['wvl'], spectrum_dict['values'])
+    ax.add_collection(lc)
     ax.set(xlim=xrange, xlabel=r'Wavelength $\lambda$ [nm]',
            ylim=yrange, ylabel='Transmission [%]')
 
@@ -994,7 +1001,7 @@ def xyY_to_xy(xyY):
     if shape[-1] is 2:
         return xyY
     else:
-        x, y, Y = xyY[..., 0], xyY[..., 1], xyY[..., 2]
+        x, y = xyY[..., 0], xyY[..., 1]
 
         shape = x.shape
         return np.stack((x, y), axis=len(shape))

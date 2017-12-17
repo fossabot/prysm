@@ -1,9 +1,11 @@
 ''' Utility functions
 '''
+from copy import copy
+from operator import itemgetter
+
 import numpy as np
 from matplotlib import pyplot as plt
-
-from operator import itemgetter
+from matplotlib.collections import LineCollection
 
 
 def is_odd(int):
@@ -270,3 +272,43 @@ def smooth(x, window_len=3, window='flat'):
 
     y = np.convolve(w / w.sum(), s, mode='valid')
     return y[(int(np.floor(window_len / 2)) - 1):-(int(np.ceil(window_len / 2)))]
+
+# for make_segments and colorline, see this SO answer:
+# https://stackoverflow.com/a/25941474/4999812
+
+
+def make_segments(x, y):
+    '''
+    Create list of line segments from x and y coordinates, in the correct format for LineCollection:
+    an array of the form   numlines x (points per line) x 2 (x and y) array
+    '''
+
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+    return segments
+
+
+def colorline(x, y, z=None, cmap=plt.get_cmap('Spectral_r'), cmin=None, cmax=None, lw=3):
+    '''
+    Plot a colored line with coordinates x and y
+    Optionally specify colors in the array z
+    Optionally specify a colormap, a norm function and a line width
+    '''
+
+    cmap = copy(cmap)
+    cmap.set_over('k')
+    cmap.set_under('k')
+
+    # Default colors equally spaced on [0,1]:
+    if z is None:
+        z = np.linspace(0.0, 1.0, len(x))
+
+    # Special case if a single number:
+    if not hasattr(z, "__iter__"):  # to check for numerical input -- this is a hack
+        z = np.array([z])
+
+    z = np.asarray(z)
+
+    segments = make_segments(x, y)
+    return LineCollection(segments, array=z, cmap=cmap, norm=plt.Normalize(vmin=cmin, vmax=cmax), linewidth=lw)
