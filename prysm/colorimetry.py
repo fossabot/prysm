@@ -225,6 +225,25 @@ def prepare_cie_1964_10deg_observer():
     return value_array_to_tristimulus(tmp_list[1:])
 
 
+def get_cmf(observer='1931_2deg'):
+    ''' Safely returns the color matching function dictionary for the specified
+        observer.
+
+    Args:
+        observer (`str): the observer to return.
+
+    Returns:
+        `dict`: cmf dict.
+
+    '''
+    if observer.lower() == '1931_2deg':
+        return prepare_cie_1931_2deg_observer()
+    elif observer.lower() == '1964_10deg':
+        return prepare_cie_1964_10deg_observer()
+    else:
+        raise ValueError('observer must be 1931_2deg or 1964_10deg')
+
+
 def plot_spectrum(spectrum_dict, xrange=(370, 730), yrange=(0, 100), smoothing=None, fig=None, ax=None):
     ''' Plots the spectrum.
 
@@ -664,28 +683,52 @@ def cie_1976_plankian_locust(trange=(2000, 10000), num_points=100,
     return fig, ax
 
 
-'''
-    Below here are color space conversions ported from colour to make them numpy
-    ufuncs supporting array vectorization.  For more information, see colour:
-    https://github.com/colour-science/colour/
-'''
-
-
-def get_cmf(observer='1931_2deg'):
-    ''' Safely returns the color matching function dictionary for the specified
-        observer.
+def cct_duv_diagram(samples=100, fig=None, ax=None):
+    ''' Creates a CCT-Duv diagram, for more information see Calculation of
+        CCT and Duv and Practical Conversion Formulae, Yoshi Ohno, 2011.
 
     Args:
-        observer (`str): the observer to return.
+        samples (`int`): number of samples on the background.
+
+        fig (`matplotlib.figure.Figure`): figure to plot in.
+
+        ax (`matplotlib.axes.Axis`): axis to plot in.
 
     Returns:
-        `dict`: cmf dict.
+        `tuple` containing:
+
+            `matplotlib.figure.Figure`: figure containing the plot.
+
+            `matplotlib.axes.Axis`: Axis containing the plot.
 
     '''
-    if observer.lower() == '1931_2deg':
-        return prepare_cie_1931_2deg_observer()
-    else:
-        raise ValueError('observer must be 1931_2deg')
+    xlim = (2000, 10000)
+    ylim = (-0.03, 0.03)
+
+    cct = np.linspace(xlim[0], xlim[1], samples)  # todo: even sampling along log, not linear
+    duv = np.linspace(ylim[0], ylim[1], samples)
+
+    upvp = np.empty((samples, samples, 2))
+    for i, cct_v in enumerate(cct):
+        for j, duv_v in enumerate(duv):
+            upvp[i, j, :] = CCT_Duv_to_uvprime(cct_v, duv_v)
+
+    xy = uvprime_to_xy(upvp)
+    xyz = xy_to_XYZ(xy)
+    dat = XYZ_to_sRGB(xyz)
+    maximum = np.max(dat, axis=-1)
+    dat /= maximum[..., np.newaxis]
+    dat = np.clip(dat, 0, 1)
+
+    fig, ax = share_fig_ax(fig, ax)
+
+    ax.imshow(dat,
+              extent=[*xlim, *ylim],
+              interpolation='bilinear',
+              origin='lower')
+    ax.set(xlim=xlim, xlabel='CCT', xscale='log',
+           ylim=ylim, ylabel='Duv')
+    return fig, ax
 
 
 def spectrum_to_XYZ_emissive(spectrum_dict, cmf='1931_2deg'):
@@ -720,11 +763,11 @@ def spectrum_to_XYZ_emissive(spectrum_dict, cmf='1931_2deg'):
         values = dat_interpf(wvl_cmf)
 
     dw = wvl_cmf[1] - wvl_cmf[0]
-    k = 100 / (values * cmf['Y']).sum() / dw
-    Y = k * (values * cmf['Y']).sum()
-    Z = k * (values * cmf['Z']).sum()
-    X = k * (values * cmf['X']).sum()
-    return (X, Y, Z)
+    k = 100 / (values * cmf['Y']).sum(axis=0) / dw
+    X = k * (values * cmf['X']).sum(axis=0)
+    Y = k * (values * cmf['Y']).sum(axis=0)
+    Z = k * (values * cmf['Z']).sum(axis=0)
+    return X, Y, Z
 
 
 def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'):
@@ -792,10 +835,10 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'
 
     dw = wvl_cmf[1] - wvl_cmf[0]
     k = 100 / (values * ill_spectrum * cmf['Y']).sum() / dw
+    X = k * (values * ill_spectrum * cmf['X']).sum()
     Y = k * (values * ill_spectrum * cmf['Y']).sum()
     Z = k * (values * ill_spectrum * cmf['Z']).sum()
-    X = k * (values * ill_spectrum * cmf['X']).sum()
-    return (X, Y, Z)
+    return X, Y, Z
 
 
 def wavelength_to_XYZ(wavelength, observer='1931_2deg'):
@@ -822,27 +865,6 @@ def wavelength_to_XYZ(wavelength, observer='1931_2deg'):
 
     shape = wavelength.shape
     return np.stack((x, y, z), axis=len(shape))
-
-
-def make_cieluv_isotemperature_line_points(temp, length=0.025):
-    ''' Computes the upper and lower (u',v') points for a given color
-        temperature.
-
-    Args:
-        temp (`float`): temperature to make isotemperature points for
-
-        length (`float`): total length of the isotemperature line.
-
-    Returns:
-        `numpy.ndarray` with last dim (u',v')
-
-    '''
-    cmf = get_cmf()
-    spectrum = blackbody_spectral_power_distribution(temp, cmf.wvl)
-    xyz = spectrum_to_XYZ_nonemissive(cmf.wvl, spectrum, illuminant=f'bb_{temp}')
-    uv = XYZ_to_uvprime(xyz)
-
-    pass
 
 
 def XYZ_to_xyY(XYZ, assume_nozeros=True, zero_ref_illuminant='D65'):
@@ -1241,8 +1263,86 @@ def uvprime_to_Duv(uv):
     return L_FP - L_BB
 
 
+def uvprime_to_CCT_Duv(uv):
+    ''' Computes CCT and Duv from u'v' coordiantes.
+
+    Args:
+        uv (`numpy.ndarray`): array with last dimensions corresponding to u, v
+
+    Returns:
+        `float`: CCT.
+
+    Notes:
+        see "Calculation of CCT and Duv and Practical Conversion Formulae", Yoshi Ohno
+        http://www.cormusa.org/uploads/CORM_2011_Calculation_of_CCT_and_Duv_and_Practical_Conversion_Formulae.PDF
+
+    '''
+    duv = uvprime_to_Duv(uv)
+    cct = uvprime_to_CCT(uv)
+    return cct, duv
+
+
+def CCT_Duv_to_uvprime(CCT, Duv, delta_t=0.01):
+    ''' Converts (CCT,Duv) coordinates to upvp coordinates.
+
+    Args:
+        CCT (`float` or `iterable`): CCT coordinate.
+
+        Duv (`float` or `iterable`): Duv coordinate.
+
+        delta_t (`float`): temperature differential used to compute the tangent
+            line to the plankian locust.  Default to 0.01, Ohno suggested (2011).
+
+    Returns:
+        `numpy.ndarray` with last two dimensions corresponding to (u',v')
+
+    '''
+    CCT, Duv = np.asarray(CCT), np.asarray(Duv)
+
+    wvl = np.arange(360, 835, 5)
+    bb_spec_0 = blackbody_spectral_power_distribution(CCT, wvl)
+    bb_spec_1 = blackbody_spectral_power_distribution(CCT + delta_t, wvl)
+    bb_spec_0 = {
+        'wvl': wvl,
+        'values': bb_spec_0,
+    }
+    bb_spec_1 = {
+        'wvl': wvl,
+        'values': bb_spec_1,
+    }
+
+    xyz_0 = spectrum_to_XYZ_emissive(bb_spec_0)
+    xyz_1 = spectrum_to_XYZ_emissive(bb_spec_1)
+    upvp_0 = XYZ_to_uvprime(xyz_0)
+    upvp_1 = XYZ_to_uvprime(xyz_1)
+
+    u0, v0 = upvp_0[..., 0], upvp_0[..., 1]
+    u1, v1 = upvp_1[..., 0], upvp_1[..., 1]
+    du, dv = u1 - u0, v1 - v0
+    u = u0 + Duv * dv / sqrt(du**2 + dv**2)
+    v = u0 + Duv * du / sqrt(du**2 + dv**2)
+    return u, v * 1.5  # factor of 1.5 converts v -> v'
+
+
+def spectrum_to_CCT_Duv(spectrum_dict):
+    ''' Computes the CCT and Duv values of a spectrum object.
+
+    Args:
+        spectrum_dict (`dict`): dictionary with keys wvl, values.
+
+    Returns:
+        `tuple` containing (CCT, Duv)
+
+    '''
+    XYZ = spectrum_to_XYZ_nonemissive(spectrum_dict)
+    upvp = XYZ_to_uvprime(XYZ)
+    CCT = uvprime_to_CCT(upvp)
+    Duv = uvprime_to_Duv(upvp)
+    return (CCT, Duv)
+
+
 def uvprime_to_Luv(uv):
-    ''' Converts u' v' points to xyY x,y points.
+    ''' Converts u' v' points to CIE L*u*v* points.
 
     Args:
         uv (`numpy.ndarray`): ndarray with last dimension corresponding to
@@ -1361,23 +1461,6 @@ def XYZ_to_RGB(XYZ, conversion_matrix, XYZ_scale=100):
         return np.matmul(conversion_matrix, XYZ)
     else:
         return np.tensordot(XYZ, conversion_matrix, axes=((2), (1)))
-
-
-def spectrum_to_cct_duv(spectrum_dict):
-    ''' Computes the CCT and duv values of a spectrum object.
-
-    Args:
-        spectrum_dict (`dict`): dictionary with keys wvl, values.
-
-    Returns:
-        `tuple` containing (CCT, Duv)
-
-    '''
-    XYZ = spectrum_to_XYZ_nonemissive(spectrum_dict)
-    upvp = XYZ_to_uvprime(XYZ)
-    CCT = uvprime_to_CCT(upvp)
-    Duv = uvprime_to_Duv(upvp)
-    return (CCT, Duv)
 
 
 def sRGB_oetf(L):
