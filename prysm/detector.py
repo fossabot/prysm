@@ -7,8 +7,22 @@ from prysm.psf import PSF
 from prysm.objects import Image
 from prysm.util import is_odd
 
+
 class Detector(object):
-    def __init__(self, pixel_size, resolution=(1024,1024), nbits=14):
+    def __init__(self, pixel_size, resolution=(1024, 1024), nbits=14):
+        ''' Creates a new Detector object.
+
+        Args:
+            pixel_size (`float`): size of pixels, in um.
+
+            resolution (`iterable`): x,y resolution in pixels.
+
+            nbits (`int`): number of bits to digitize to.
+
+        Returns:
+            `Detector`: new Detector object.
+
+        '''
         self.pixel_size = pixel_size
         self.resolution = resolution
         self.bit_depth = nbits
@@ -44,8 +58,8 @@ class Detector(object):
         if not is_odd(residual_x) and not is_odd(residual_y):
             samples_to_trim_x = residual_x // 2
             samples_to_trim_y = residual_y // 2
-            trimmed_data = psf.data[samples_to_trim_x:final_idx_x+samples_to_trim_x,
-                                    samples_to_trim_y:final_idx_y+samples_to_trim_y]
+            trimmed_data = psf.data[samples_to_trim_x:final_idx_x + samples_to_trim_x,
+                                    samples_to_trim_y:final_idx_y + samples_to_trim_y]
         # if not, trim more on the left.
         else:
             samples_tmp_x = (psf.samples_x - final_idx_x) // 2
@@ -54,8 +68,8 @@ class Detector(object):
             samples_bottom = int(np.ceil(samples_tmp_y))
             samples_left = int(np.ceil(samples_tmp_x))
             samples_right = int(np.floor(samples_tmp_x))
-            trimmed_data = psf.data[samples_bottom:final_idx_y+samples_top,
-                                    samples_left:final_idx_x+samples_right]
+            trimmed_data = psf.data[samples_bottom:final_idx_y + samples_top,
+                                    samples_left:final_idx_x + samples_right]
 
         intermediate_view = trimmed_data.reshape(total_samples_y, samples_per_pixel,
                                                  total_samples_x, samples_per_pixel)
@@ -70,7 +84,7 @@ class Detector(object):
             trim_x = 1
         if is_odd(px_y):
             trim_y = 1
-        self.captures.append(Image(data=output_data[:px_y-trim_y,:px_x-trim_x],
+        self.captures.append(Image(data=output_data[:px_y - trim_y, :px_x - trim_x],
                                    sample_spacing=self.pixel_size))
         return self.captures[-1]
 
@@ -135,6 +149,7 @@ class Detector(object):
             fig, ax = self.captures[which].show(fig=fig, ax=ax)
         return fig, ax
 
+
 class OLPF(PSF):
     ''' Optical Low Pass Filter.
         applies blur to an image to suppress high frequency MTF and aliasing
@@ -173,10 +188,10 @@ class OLPF(PSF):
 
         data = np.zeros((samples_x, samples_y))
 
-        data[center_y-shift_y, center_x-shift_x] = 1
-        data[center_y-shift_y, center_x+shift_x] = 1
-        data[center_y+shift_y, center_x-shift_x] = 1
-        data[center_y+shift_y, center_x+shift_x] = 1
+        data[center_y - shift_y, center_x - shift_x] = 1
+        data[center_y - shift_y, center_x + shift_x] = 1
+        data[center_y + shift_y, center_x - shift_x] = 1
+        data[center_y + shift_y, center_x + shift_x] = 1
         super().__init__(data=data, sample_spacing=sample_spacing)
 
     def analytic_ft(self, unit_x, unit_y):
@@ -194,6 +209,7 @@ class OLPF(PSF):
         xq, yq = np.meshgrid(unit_x, unit_y)
         return (np.cos(2 * xq * self.width_x / 1e3) *
                 np.cos(2 * yq * self.width_y / 1e3)).astype(config.precision)
+
 
 class PixelAperture(PSF):
     ''' The aperture of a pixel.
@@ -232,8 +248,8 @@ class PixelAperture(PSF):
         steps_y = int(half_height // sample_spacing)
 
         pixel_aperture = np.zeros((samples_x, samples_y))
-        pixel_aperture[self.center_y-steps_y:self.center_y+steps_y,
-                       self.center_x-steps_x:self.center_x+steps_x] = 1
+        pixel_aperture[self.center_y - steps_y:self.center_y + steps_y,
+                       self.center_x - steps_x:self.center_x + steps_x] = 1
         super().__init__(data=pixel_aperture, sample_spacing=sample_spacing)
 
     def analytic_ft(self, unit_x, unit_y):
@@ -249,8 +265,9 @@ class PixelAperture(PSF):
 
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.sinc(xq*self.size_x/1e3) *
-                np.sinc(yq*self.size_y/1e3)).astype(config.precision)
+        return (np.sinc(xq * self.size_x / 1e3) *
+                np.sinc(yq * self.size_y / 1e3)).astype(config.precision)
+
 
 def generate_mtf(pixel_aperture=1, azimuth=0, num_samples=128):
     ''' generates the 1D diffraction-limited MTF for a given pixel size and azimuth.
@@ -276,4 +293,4 @@ def generate_mtf(pixel_aperture=1, azimuth=0, num_samples=128):
     normalized_frequencies = np.linspace(0, 2, num_samples)
     otf = np.sinc(normalized_frequencies)
     mtf = np.abs(otf)
-    return normalized_frequencies/pitch_unit, mtf
+    return normalized_frequencies / pitch_unit, mtf
