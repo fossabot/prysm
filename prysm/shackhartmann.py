@@ -1,12 +1,12 @@
 ''' Shack Hartmann sensor modeling tools
 '''
 import numpy as np
-
+from collections import deque
 
 class ShackHartmann(object):
     ''' Shack Hartmann Wavefront Sensor object
     '''
-    def __init__(self, sensor_size=(24, 36), pixel_pitch=4, lenslet_pitch=350):
+    def __init__(self, sensor_size=(24, 36), pixel_pitch=4, lenslet_pitch=350, framebuffer=24):
         ''' Creates a new SHWFS object.
 
         Args:
@@ -15,6 +15,8 @@ class ShackHartmann(object):
             pixel_pitch (`float`): center-to-center pixel spacing in um.
 
             lenslet_pitch (`float`): center-to-center spacing of lenslets in um.
+
+            framebuffer (`int`): maximum number of frames of data to store.
 
         Returns:
             `ShackHartmann`: new Shack Hartmann wavefront sensor.
@@ -29,6 +31,8 @@ class ShackHartmann(object):
         self.num_lenslets = (sensor_size[0] / lenslet_pitch * 1e3,
                              sensor_size[1] / lenslet_pitch * 1e3)
         self.total_lenslets = self.num_lenslets[0] * self.num_lenslets[1]
+
+        self.captures = deque(maxlen=framebuffer)
 
     def __repr__(self):
         return ('Shack Hartmann Sensor with specs: \n'
