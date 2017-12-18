@@ -14,6 +14,7 @@ from scipy.constants import c, h, k
 # k - boltzman constant
 
 from matplotlib.collections import LineCollection
+from matplotlib import ticker
 
 from prysm.conf import config
 from prysm.util import share_fig_ax, colorline, smooth
@@ -702,6 +703,7 @@ def cct_duv_diagram(samples=100, fig=None, ax=None):
             `matplotlib.axes.Axis`: Axis containing the plot.
 
     '''
+    raise UserWarning('this type of plot is not yet properly implemented')
     xlim = (2000, 10000)
     ylim = (-0.03, 0.03)
 
@@ -716,6 +718,7 @@ def cct_duv_diagram(samples=100, fig=None, ax=None):
     xy = uvprime_to_xy(upvp)
     xyz = xy_to_XYZ(xy)
     dat = XYZ_to_sRGB(xyz)
+
     maximum = np.max(dat, axis=-1)
     dat /= maximum[..., np.newaxis]
     dat = np.clip(dat, 0, 1)
@@ -725,7 +728,12 @@ def cct_duv_diagram(samples=100, fig=None, ax=None):
     ax.imshow(dat,
               extent=[*xlim, *ylim],
               interpolation='bilinear',
-              origin='lower')
+              origin='lower',
+              aspect='auto')
+
+    tick = ticker.ScalarFormatter()
+    tick.set_powerlimits((-3, 20))
+    ax.xaxis.set_major_formatter(tick)
     ax.set(xlim=xlim, xlabel='CCT', xscale='log',
            ylim=ylim, ylabel='Duv')
     return fig, ax
