@@ -1,15 +1,18 @@
 ''' Detector-related simulations
 '''
+from collections import deque
+
 import numpy as np
 
 from prysm.conf import config
+from prysm.mathops import (floor, ceil)
 from prysm.psf import PSF
 from prysm.objects import Image
 from prysm.util import is_odd
 
 
 class Detector(object):
-    def __init__(self, pixel_size, resolution=(1024, 1024), nbits=14):
+    def __init__(self, pixel_size, resolution=(1024, 1024), nbits=14, framebuffer=24):
         ''' Creates a new Detector object.
 
         Args:
@@ -19,6 +22,8 @@ class Detector(object):
 
             nbits (`int`): number of bits to digitize to.
 
+            framebuffer (`int`): number of frames of data to store.
+
         Returns:
             `Detector`: new Detector object.
 
@@ -26,7 +31,7 @@ class Detector(object):
         self.pixel_size = pixel_size
         self.resolution = resolution
         self.bit_depth = nbits
-        self.captures = []
+        self.captures = deque(maxlen=framebuffer)
 
     def sample_psf(self, psf):
         '''Samples a PSF, mimics capturing a photo of an oversampled representation of an image
@@ -43,49 +48,14 @@ class Detector(object):
         '''
 
         # we assume the pixels are bigger than the samples in the PSF
-        samples_per_pixel = int(np.ceil(self.pixel_size / psf.sample_spacing))
-
-        # determine amount we need to trim the psf
-        total_samples_x = psf.samples_x // samples_per_pixel
-        total_samples_y = psf.samples_y // samples_per_pixel
-        final_idx_x = total_samples_x * samples_per_pixel
-        final_idx_y = total_samples_y * samples_per_pixel
-
-        residual_x = int(psf.samples_x - final_idx_x)
-        residual_y = int(psf.samples_y - final_idx_y)
-
-        # if the amount to trim is symmetric, trim symmetrically.
-        if not is_odd(residual_x) and not is_odd(residual_y):
-            samples_to_trim_x = residual_x // 2
-            samples_to_trim_y = residual_y // 2
-            trimmed_data = psf.data[samples_to_trim_x:final_idx_x + samples_to_trim_x,
-                                    samples_to_trim_y:final_idx_y + samples_to_trim_y]
-        # if not, trim more on the left.
+        samples_per_pixel = self.pixel_size / psf.sample_spacing
+        if samples_per_pixel < 1:
+            raise ValueError('Pixels smaller than samples, bindown not possible.')
         else:
-            samples_tmp_x = (psf.samples_x - final_idx_x) // 2
-            samples_tmp_y = (psf.samples_y - final_idx_y) // 2
-            samples_top = int(np.floor(samples_tmp_y))
-            samples_bottom = int(np.ceil(samples_tmp_y))
-            samples_left = int(np.ceil(samples_tmp_x))
-            samples_right = int(np.floor(samples_tmp_x))
-            trimmed_data = psf.data[samples_bottom:final_idx_y + samples_top,
-                                    samples_left:final_idx_x + samples_right]
+            samples_per_pixel = int(ceil(samples_per_pixel))
 
-        intermediate_view = trimmed_data.reshape(total_samples_y, samples_per_pixel,
-                                                 total_samples_x, samples_per_pixel)
-
-        output_data = intermediate_view.mean(axis=(1, 3))
-
-        # trim as needed to make even number of samples.
-        # TODO: allow work with images that are of odd dimensions
-        px_x, px_y = output_data.shape
-        trim_x, trim_y = 0, 0
-        if is_odd(px_x):
-            trim_x = 1
-        if is_odd(px_y):
-            trim_y = 1
-        self.captures.append(Image(data=output_data[:px_y - trim_y, :px_x - trim_x],
-                                   sample_spacing=self.pixel_size))
+        data = bindown(psf.data, samples_per_pixel)
+        self.captures.append(Image(data=data, sample_spacing=self.pixel_size))
         return self.captures[-1]
 
     def sample_image(self, image):
@@ -294,3 +264,71 @@ def generate_mtf(pixel_aperture=1, azimuth=0, num_samples=128):
     otf = np.sinc(normalized_frequencies)
     mtf = np.abs(otf)
     return normalized_frequencies / pitch_unit, mtf
+
+
+def bindown(array, nsamples_x, nsamples_y=None):
+    ''' Uses summation to bindown (resample) an array.
+
+    Args:
+        nsamples_x (`int`): number of samples in x axis to bin by.
+
+        nsamples_y (`int`): number of samples in y axis to bin by.  If None,
+            duplicates value from nsamples_x.
+
+    Returns:
+        `numpy.ndarray`: ndarray binned by given number of samples.
+
+    Notes:
+        Array should be 2D.  TODO: patch to allow 3D data.
+
+        If the size of `array` is not evenly divisible by the number of samples,
+        the algorithm will trim around the border of the array.  If the trim
+        length is odd, one extra sample will be lost on the left side as opposed
+        to the right side.
+
+    '''
+    if nsamples_y is None:
+        nsamples_y = nsamples_x
+
+    # determine amount we need to trim the array
+    samples_x, samples_y = array.shape
+    total_samples_x = samples_x // nsamples_x
+    total_samples_y = samples_y // nsamples_y
+    final_idx_x = total_samples_x * nsamples_x
+    final_idx_y = total_samples_y * nsamples_y
+
+    residual_x = int(samples_x - final_idx_x)
+    residual_y = int(samples_y - final_idx_y)
+
+    # if the amount to trim is symmetric, trim symmetrically.
+    if not is_odd(residual_x) and not is_odd(residual_y):
+        samples_to_trim_x = residual_x // 2
+        samples_to_trim_y = residual_y // 2
+        trimmed_data = array[samples_to_trim_x:final_idx_x + samples_to_trim_x,
+                             samples_to_trim_y:final_idx_y + samples_to_trim_y]
+    # if not, trim more on the left.
+    else:
+        samples_tmp_x = (samples_x - final_idx_x) // 2
+        samples_tmp_y = (samples_y - final_idx_y) // 2
+        samples_top = int(floor(samples_tmp_y))
+        samples_bottom = int(ceil(samples_tmp_y))
+        samples_left = int(ceil(samples_tmp_x))
+        samples_right = int(floor(samples_tmp_x))
+        trimmed_data = array[samples_left:final_idx_x + samples_right,
+                             samples_bottom:final_idx_y + samples_top]
+
+    intermediate_view = trimmed_data.reshape(total_samples_x, nsamples_x,
+                                             total_samples_y, nsamples_y)
+
+    output_data = intermediate_view.mean(axis=(1, 3))
+
+    # trim as needed to make even number of samples.
+    # TODO: allow work with images that are of odd dimensions
+    px_x, px_y = output_data.shape
+    trim_x, trim_y = 0, 0
+    if is_odd(px_x):
+        trim_x = 1
+    if is_odd(px_y):
+        trim_y = 1
+
+    return output_data[:px_y - trim_y, :px_x - trim_x]
