@@ -266,7 +266,7 @@ def generate_mtf(pixel_aperture=1, azimuth=0, num_samples=128):
     return normalized_frequencies / pitch_unit, mtf
 
 
-def bindown(array, nsamples_x, nsamples_y=None):
+def bindown(array, nsamples_x, nsamples_y=None, mode='avg'):
     ''' Uses summation to bindown (resample) an array.
 
     Args:
@@ -274,6 +274,8 @@ def bindown(array, nsamples_x, nsamples_y=None):
 
         nsamples_y (`int`): number of samples in y axis to bin by.  If None,
             duplicates value from nsamples_x.
+
+        mode (`str`): sum or avg, how to adjust the output signal.
 
     Returns:
         `numpy.ndarray`: ndarray binned by given number of samples.
@@ -320,7 +322,12 @@ def bindown(array, nsamples_x, nsamples_y=None):
     intermediate_view = trimmed_data.reshape(total_samples_x, nsamples_x,
                                              total_samples_y, nsamples_y)
 
-    output_data = intermediate_view.mean(axis=(1, 3))
+    if mode.lower() in ('avg', 'average', 'mean'):
+        output_data = intermediate_view.mean(axis=(1, 3))
+    elif mode.lower() == 'sum':
+        output_data = intermediate_view.sum(axis=(1, 3))
+    else:
+        raise ValueError('mode must be average of sum.')
 
     # trim as needed to make even number of samples.
     # TODO: allow work with images that are of odd dimensions
