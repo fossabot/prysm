@@ -1,10 +1,12 @@
 ''' Shack Hartmann sensor modeling tools
 '''
-import numpy as np
 from collections import deque
+
+import numpy as np
 
 from matplotlib import pyplot as plt
 
+from prysm.mathops import pi
 from prysm.detector import bindown
 from prysm.util import share_fig_ax
 
@@ -39,11 +41,12 @@ class ShackHartmann(object):
         Returns:
             `ShackHartmann`: new Shack Hartmann wavefront sensor.
         '''
-        # process lenslet array shape
+        # process lenslet array shape and lenslet offset
         if lenslet_array_shape.lower() == 'square':
             self.lenslet_array_shape = 'square'
         elif lenslet_array_shape.lower() in ('rectangular', 'rect'):
             self.lenslet_array_shape = 'rectangular'
+        lenslet_shift = lenslet_pitch // 2
 
         # store data related to the silicon
         self.sensor_size = sensor_size
@@ -52,7 +55,7 @@ class ShackHartmann(object):
                            int(sensor_size[1] // (pixel_pitch / 1e3)))
         self.megapixels = self.resolution[0] * self.resolution[1] / 1e6
 
-        # store lenslet metadata
+        # compute lenslet array shifts
         if self.lenslet_array_shape == 'square':
             xidx = 1
             sensor_extra_x = sensor_size[0] - sensor_size[1]
@@ -68,25 +71,28 @@ class ShackHartmann(object):
             xshift = 0
             yshift = 0
         yidx = 1
-        self.num_lenslets = (int(sensor_size[xidx] // (lenslet_pitch / 1e3) * lenslet_fillfactor),
-                             int(sensor_size[yidx] // (lenslet_pitch / 1e3) * lenslet_fillfactor))
+
+        # store lenslet metadata - TODO: figure out why I need the - 1
+        self.num_lenslets = (int(sensor_size[xidx] * lenslet_fillfactor // (lenslet_pitch / 1e3)) - 1,
+                             int(sensor_size[yidx] * lenslet_fillfactor // (lenslet_pitch / 1e3)) - 1)
         self.total_lenslets = self.num_lenslets[0] * self.num_lenslets[1]
         self.lenslet_pitch = lenslet_pitch
         self.lenslet_efl = lenslet_efl
 
-        # compute and store lenslet reference positions
+        # compute lenslet locations
         start_factor = (1 - lenslet_fillfactor) / 2
         end_factor = 1 - start_factor
         start_factor_x, end_factor_x = start_factor + xshift, end_factor - xshift
         start_factor_y, end_factor_y = start_factor + yshift, end_factor - yshift
 
-        lenslet_start_x = start_factor_x * sensor_size[0] * 1e3  # factors of 1e3 convert mm to um
-        lenslet_start_y = start_factor_y * sensor_size[1] * 1e3
-        lenslet_end_x = end_factor_x * sensor_size[0] * 1e3
-        lenslet_end_y = end_factor_y * sensor_size[1] * 1e3
+        # factors of 1e3 convert mm to um, and round to 0.1nm to avoid machine precision errors
+        lenslet_start_x = round(start_factor_x * sensor_size[0] * 1e3 + lenslet_shift, 4)
+        lenslet_start_y = round(start_factor_y * sensor_size[1] * 1e3 + lenslet_shift, 4)
+        lenslet_end_x = round(end_factor_x * sensor_size[0] * 1e3 - lenslet_shift, 4)
+        lenslet_end_y = round(end_factor_y * sensor_size[1] * 1e3 - lenslet_shift, 4)
 
-        lenslet_pos_x = np.arange(lenslet_start_x, lenslet_end_x + lenslet_pitch, lenslet_pitch)
-        lenslet_pos_y = np.arange(lenslet_start_y, lenslet_end_y + lenslet_pitch, lenslet_pitch)
+        lenslet_pos_x = np.linspace(lenslet_start_x, lenslet_end_x, self.num_lenslets[0])
+        lenslet_pos_y = np.linspace(lenslet_start_y, lenslet_end_y, self.num_lenslets[0])
         self.refx, self.refy = np.meshgrid(lenslet_pos_x, lenslet_pos_y)
 
         # initiate the frame buffer.
@@ -140,7 +146,10 @@ class ShackHartmann(object):
                 3.  Compute the x and y delta of each PSF in the image plane.
                 4.  Shift each spot by the corresponding delta
         '''
+        # grab the phase from the pupil and convert to units of length
+        # TODO: remove assumption that phase has units of waves
         data = pupil.phase
+        data = data * pupil.wavelength / 2 / pi
 
         # compute the gradient
         dx, dy = np.gradient(data)
@@ -148,11 +157,17 @@ class ShackHartmann(object):
         # bin to the lenslet area
         nlenslets_y = self.num_lenslets[1]
         npupilsamples_y = pupil.samples
+
         npx_bin = npupilsamples_y // nlenslets_y
         dx_binned = bindown(dx, npx_bin)
         dy_binned = bindown(dy, npx_bin)
+        shift_x, shift_y = psf_shift(self.lenslet_efl, dx_binned, dy_binned)
+        print(shift_x)
 
-        pass
+        fig, ax = plt.subplots()
+        ax.scatter(self.refx + shift_x, self.refy + shift_y)
+        #ax.quiver(self.refx, self.refy, shift_x, shift_y)
+        return fig, ax
 
 
 def psf_shift(lenslet_efl, dx, dy, mag=1):
@@ -170,5 +185,13 @@ def psf_shift(lenslet_efl, dx, dy, mag=1):
     Returns:
         `numpy.ndarray`: array of PSF shifts.
 
+    Notes:
+        see eq. 12 of Chanan, "Principles of Wavefront Sensing and Reconstruction"
+        delta = m * fl * grad(z)
+        m is magnification of SH system
+        fl is lenslet focal length
+        grad(z) is the x, y gradient of the opd, z, which is expressed in
+        physical units.
     '''
-    pass
+    coef = mag * lenslet_efl
+    return coef * dx, coef * dy
