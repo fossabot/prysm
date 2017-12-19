@@ -12,7 +12,7 @@ from prysm.util import share_fig_ax
 class ShackHartmann(object):
     ''' Shack Hartmann Wavefront Sensor object
     '''
-    def __init__(self, sensor_size=(36, 24), pixel_pitch=3.75,
+    def __init__(self, sensor_size=(36, 24), pixel_pitch=3.99999,
                  lenslet_pitch=375, lenslet_efl=2000, lenslet_fillfactor=0.9,
                  lenslet_array_shape='square', framebuffer=24):
         ''' Creates a new SHWFS object.
@@ -117,9 +117,10 @@ class ShackHartmann(object):
         '''
 
         fig, ax = share_fig_ax(fig, ax)
-        ax.scatter(self.refx / 1e3, self.refy / 1e3, c='k', s=4)
+        ax.scatter(self.refx / 1e3, self.refy / 1e3, c='k', s=8)
         ax.set(xlim=(0, self.sensor_size[0]), xlabel='Detector Position X [mm]',
-               ylim=(0, self.sensor_size[1]), ylabel='Detector Position Y [mm]')
+               ylim=(0, self.sensor_size[1]), ylabel='Detector Position Y [mm]',
+               aspect='equal')
         return fig, ax
 
     def sample_wavefront(self, pupil):
