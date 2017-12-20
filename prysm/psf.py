@@ -677,7 +677,7 @@ def _unequal_spacing_conv_core(psf1, psf2):
                sample_spacing=psf1.sample_spacing)
     return psf3._renorm()
 
-@vectorize
+
 def airydisk(unit_r, fno, wavelength):
     ''' Computes the airy disk function over a given spatial distance.
 
