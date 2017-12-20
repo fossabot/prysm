@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.axes_rgb import make_rgb_axes
 
 from prysm.conf import config
-from prysm.mathops import fft2, ifft2, fftshift, ifftshift, vectorize
+from prysm.mathops import pi, fft2, ifft2, fftshift, ifftshift, vectorize
 from prysm.fttools import pad2d, forward_ft_unit
 from prysm.coordinates import uniform_cart_to_polar, resample_2d_complex
 from prysm.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax
@@ -696,4 +696,23 @@ def airydisk(unit_r, fno, wavelength):
 
     '''
     u_eff = unit_r * pi / wvl / fno
-    return abs(2 * j1(u_eff) / (u_eff)) ** 2
+    return abs(2 * jinc(u_eff)) ** 2
+
+
+def jinc(r):
+    ''' The Jinc function.
+
+    Args:
+        r (`number`): radial distance.
+
+    Returns:
+        (`float`: the value of j1(x)/x for x != 0, 0.5 at 0.
+
+    '''
+    if r == 0:
+        return 0.5
+    else:
+        return j1(r) / r
+
+
+jinc = np.vectorize(jinc)
