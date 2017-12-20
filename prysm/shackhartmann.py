@@ -78,6 +78,7 @@ class ShackHartmann(object):
         self.total_lenslets = self.num_lenslets[0] * self.num_lenslets[1]
         self.lenslet_pitch = lenslet_pitch
         self.lenslet_efl = lenslet_efl
+        self.lenslet_fno = self.lenslet_efl / self.lenslet_pitch
 
         # compute lenslet locations
         start_factor = (1 - lenslet_fillfactor) / 2
@@ -129,7 +130,7 @@ class ShackHartmann(object):
                aspect='equal')
         return fig, ax
 
-    def sample_wavefront(self, pupil):
+    def sample_wavefront(self, pupil, fig=None, ax=None):
         ''' Samples a wavefront, producing a shack-hartmann spot grid.
 
         Args:
@@ -151,22 +152,27 @@ class ShackHartmann(object):
         data = pupil.phase
         data = data * pupil.wavelength / 2 / pi
 
-        # compute the gradient
-        dx, dy = np.gradient(data)
+        # compute the gradient - TODO: see why gradient is dy,dx not dx,dy
+        normalized_sample_spacing = 2 / pupil.samples
+        dy, dx = np.gradient(data, normalized_sample_spacing, normalized_sample_spacing)
 
         # bin to the lenslet area
         nlenslets_y = self.num_lenslets[1]
         npupilsamples_y = pupil.samples
 
         npx_bin = npupilsamples_y // nlenslets_y
-        dx_binned = bindown(dx, npx_bin)
-        dy_binned = bindown(dy, npx_bin)
-        shift_x, shift_y = psf_shift(self.lenslet_efl, dx_binned, dy_binned)
-        print(shift_x)
+        print(type(npx_bin))
 
-        fig, ax = plt.subplots()
-        ax.scatter(self.refx + shift_x, self.refy + shift_y)
-        #ax.quiver(self.refx, self.refy, shift_x, shift_y)
+        dx_binned = bindown(dx, npx_bin, mode='avg')
+        dy_binned = bindown(dy, npx_bin, mode='avg')
+        shift_x, shift_y = psf_shift(self.lenslet_fno, dx_binned, dy_binned)
+
+        fig, ax = share_fig_ax(fig, ax)
+        ax.scatter(self.refx, self.refy, s=2, c='r')
+        ax.scatter(self.refx - shift_x, self.refy - shift_y, s=4, c='k')
+        ax.set(xlim=(0, self.sensor_size[0] * 1e3), xlabel='Detector Position X [mm]',
+               ylim=(0, self.sensor_size[1] * 1e3), ylabel='Detector Position Y [mm]',
+               aspect='equal')
         return fig, ax
 
 
