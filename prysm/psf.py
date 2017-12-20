@@ -695,7 +695,7 @@ def airydisk(unit_r, fno, wavelength):
         will raise a runtime error if unit_r = 0, TODO: remove this issue.
 
     '''
-    u_eff = unit_r * pi / wvl / fno
+    u_eff = unit_r * pi / wavelength / fno
     return abs(2 * jinc(u_eff)) ** 2
 
 
