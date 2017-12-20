@@ -3,6 +3,7 @@
 import numpy as np
 
 from scipy import interpolate
+from scipy.special import j1
 
 from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.axes_rgb import make_rgb_axes
@@ -675,3 +676,24 @@ def _unequal_spacing_conv_core(psf1, psf2):
     psf3 = PSF(data=abs(ifftshift(ifft2(ft1 * ft3))),
                sample_spacing=psf1.sample_spacing)
     return psf3._renorm()
+
+@vectorize
+def airydisk(unit_r, fno, wavelength):
+    ''' Computes the airy disk function over a given spatial distance.
+
+    Args:
+        unit_r (`numpy.ndarray`): ndarray with units of um.
+
+        fno (`float`): F/# of the system.
+
+        wavelength (`float`): wavelength of light, in um.
+
+    Returns:
+        `numpy.ndarray`: ndarray containing the airy pattern.
+
+    Notes:
+        will raise a runtime error if unit_r = 0, TODO: remove this issue.
+
+    '''
+    u_eff = unit_r * pi / wvl / fno
+    return abs(2 * j1(u_eff) / (u_eff)) ** 2
