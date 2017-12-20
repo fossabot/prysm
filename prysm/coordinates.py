@@ -1,8 +1,10 @@
 ''' Coordinate conversions
 '''
 import numpy as np
-from numpy import power as npow
 from scipy import interpolate
+
+from prysm.mathops import pi, sqrt, atan2, cos, sin, exp
+
 
 def cart_to_polar(x, y):
     ''' Returns the (rho,phi) coordinates of the (x,y) input points.
@@ -20,9 +22,10 @@ def cart_to_polar(x, y):
             `float` or `numpy.ndarray`: azimuthal coordinate.
 
     '''
-    rho = np.sqrt(npow(x,2) + npow(y,2))
-    phi = np.arctan2(x, y)
+    rho = sqrt(x ** 2 + y ** 2)
+    phi = atan2(y, x)
     return rho, phi
+
 
 def polar_to_cart(rho, phi):
     ''' Returns the (x,y) coordinates of the (rho,phi) input points.
@@ -40,9 +43,10 @@ def polar_to_cart(rho, phi):
             `float` or `numpy.ndarray`: y coordinate.
 
     '''
-    x = rho * np.cos(phi)
-    y = rho * np.sin(phi)
+    x = rho * cos(phi)
+    y = rho * sin(phi)
     return x, y
+
 
 def uniform_cart_to_polar(x, y, data):
     ''' Interpolates data uniformly sampled in cartesian coordinates to polar
@@ -67,8 +71,8 @@ def uniform_cart_to_polar(x, y, data):
     # create a set of polar coordinates to interpolate onto
     xmax = x[-1]
     num_pts = len(x)
-    rho = np.linspace(0, xmax, num_pts/2)
-    phi = np.linspace(0, 2*np.pi, num_pts)
+    rho = np.linspace(0, xmax, num_pts / 2)
+    phi = np.linspace(0, 2 * pi, num_pts)
     rv, pv = np.meshgrid(rho, phi)
 
     # map points to x, y and make a grid for the original samples
@@ -77,6 +81,7 @@ def uniform_cart_to_polar(x, y, data):
     # interpolate the function onto the new points
     f = interpolate.RegularGridInterpolator((x, y), data)
     return rho, phi, f((xv, yv), method='linear')
+
 
 def resample_2d(array, sample_pts, query_pts):
     ''' Resamples 2D array to be sampled along queried points.
@@ -96,6 +101,7 @@ def resample_2d(array, sample_pts, query_pts):
     xq, yq = np.meshgrid(*query_pts)
     interpf = interpolate.RectBivariateSpline(*sample_pts, array)
     return interpf.ev(yq, xq)
+
 
 def resample_2d_complex(array, sample_pts, query_pts):
     ''' Resamples a 2D complex array by interpolating the magnitude and phase
@@ -123,4 +129,4 @@ def resample_2d_complex(array, sample_pts, query_pts):
     interp_mag = magfunc((yq, xq))
     interp_phase = phasefunc((yq, xq))
 
-    return interp_mag * np.exp(1j * interp_phase)
+    return interp_mag * exp(1j * interp_phase)

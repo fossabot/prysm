@@ -15,6 +15,7 @@ from numpy import (
     cos,
     tan,
     arctan2,
+    sinc,
     exp,
     log,
     arccos,

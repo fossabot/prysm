@@ -5,7 +5,7 @@ from collections import deque
 import numpy as np
 
 from prysm.conf import config
-from prysm.mathops import (floor, ceil)
+from prysm.mathops import (floor, ceil, cos, sinc)
 from prysm.psf import PSF
 from prysm.objects import Image
 from prysm.util import is_odd
@@ -177,8 +177,8 @@ class OLPF(PSF):
 
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.cos(2 * xq * self.width_x / 1e3) *
-                np.cos(2 * yq * self.width_y / 1e3)).astype(config.precision)
+        return (cos(2 * xq * self.width_x / 1e3) *
+                cos(2 * yq * self.width_y / 1e3)).astype(config.precision)
 
 
 class PixelAperture(PSF):
@@ -235,8 +235,8 @@ class PixelAperture(PSF):
 
         '''
         xq, yq = np.meshgrid(unit_x, unit_y)
-        return (np.sinc(xq * self.size_x / 1e3) *
-                np.sinc(yq * self.size_y / 1e3)).astype(config.precision)
+        return (sinc(xq * self.size_x / 1e3) *
+                sinc(yq * self.size_y / 1e3)).astype(config.precision)
 
 
 def generate_mtf(pixel_aperture=1, azimuth=0, num_samples=128):
@@ -291,6 +291,9 @@ def bindown(array, nsamples_x, nsamples_y=None, mode='avg'):
     '''
     if nsamples_y is None:
         nsamples_y = nsamples_x
+
+    if nsamples_x == 1 and nsamples_y == 1:
+        return array
 
     # determine amount we need to trim the array
     samples_x, samples_y = array.shape
