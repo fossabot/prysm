@@ -156,7 +156,7 @@ class Pupil(object):
         fig, ax = share_fig_ax(fig, ax)
         im = ax.imshow(convert_phase(self.phase, self),
                        extent=[-epd / 2, epd / 2, -epd / 2, epd / 2],
-                       cmap='Spectral',
+                       cmap='RdYlBu',
                        interpolation='lanczos',
                        origin='lower')
         cb = fig.colorbar(im, label=f'OPD [{self._opd_str}]', ax=ax, fraction=0.046)
