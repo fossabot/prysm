@@ -61,7 +61,7 @@ target/
 .ipynb_checkpoints
 
 # autres
-jpl
 .vscode
 .pypirc
 .idea
+.ropeproject
