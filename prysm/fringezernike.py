@@ -426,7 +426,7 @@ class FringeZernike(Pupil):
             base (`int`): 0 or 1, adjusts the base index of the polynomial
                 expansion.
 
-            Zx (`float`): xth fringe zernike coefficient, in range [0,48], 0-base.
+            Zx (`float`): xth fringe zernike coefficient, in range [0,48] or [1,49] if base 1
 
         Returns:
             FringeZernike.  A new :class:`FringeZernike` pupil instance.
@@ -473,8 +473,8 @@ class FringeZernike(Pupil):
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key[0].lower() == 'z':
-                    idx = int(key[1:]) # strip 'Z' from index
-                    self.coefs[idx-self.base] = value
+                    idx = int(key[1:])  # strip 'Z' from index
+                    self.coefs[idx - self.base] = value
                 elif key in ('rms_norm'):
                     self.normalize = True
                 elif key.lower() == 'base':
