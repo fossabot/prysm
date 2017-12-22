@@ -6,8 +6,9 @@ import numpy as np
 
 from matplotlib import pyplot as plt
 
-from prysm.mathops import pi
+from prysm.mathops import sinc
 from prysm.detector import bindown
+from prysm.units import waves_to_microns
 from prysm.util import share_fig_ax
 
 
@@ -16,7 +17,8 @@ class ShackHartmann(object):
     '''
     def __init__(self, sensor_size=(36, 24), pixel_pitch=3.99999,
                  lenslet_pitch=375, lenslet_efl=2000, lenslet_fillfactor=0.9,
-                 lenslet_array_shape='square', framebuffer=24):
+                 lenslet_array_shape='square', framebuffer=24,
+                 wavelength=0.5):
         ''' Creates a new SHWFS object.
 
         Args:
@@ -38,6 +40,8 @@ class ShackHartmann(object):
 
             framebuffer (`int`): maximum number of frames of data to store.
 
+            wavelength (`float`): wavelength of light, in microns.
+
         Returns:
             `ShackHartmann`: new Shack Hartmann wavefront sensor.
         '''
@@ -54,6 +58,8 @@ class ShackHartmann(object):
         self.resolution = (int(sensor_size[0] // (pixel_pitch / 1e3)),
                            int(sensor_size[1] // (pixel_pitch / 1e3)))
         self.megapixels = self.resolution[0] * self.resolution[1] / 1e6
+        self.pixel_locations_x = None
+        self.pixel_locations_y = None
 
         # compute lenslet array shifts
         if self.lenslet_array_shape == 'square':
@@ -96,9 +102,27 @@ class ShackHartmann(object):
         lenslet_pos_y = np.linspace(lenslet_start_y, lenslet_end_y, self.num_lenslets[0])
         self.refx, self.refy = np.meshgrid(lenslet_pos_x, lenslet_pos_y)
 
-        # initiate the frame buffer.
+        # initiate the frame buffer and store the wavelength
         self.buffer_depth = framebuffer
         self.captures = deque(maxlen=framebuffer)
+        self.captures_simple = deque(maxlen=framebuffer)
+        self.captures_wvl = deque(maxlen=framebuffer)
+        self.wavelength = wavelength
+
+    def _prep_pixel_grid(self):
+        ''' Prepare the pixel grid.  This function allows a new SH WFS object to
+            lazily compute its pixel coordinates only when necessary, as a high
+            resolution sensor will take a bit of time to prepare.
+        '''
+        if self.pixel_locations_x is None:
+            pp = self.pixel_pitch
+            pxx, pxy = self.resolution
+            pixextx, pixexty = pp * pxx, pp * pxy
+            x = np.arange(0, pixextx, pp)
+            y = np.arange(0, pixexty, pp)
+            self.pixel_locations_x, self.pixel_locations_y = np.meshgrid(x, y)
+
+        return self.pixel_locations_x, self.pixel_locations_y
 
     def __repr__(self):
         return ('Shack Hartmann sensor with: \n'
@@ -130,11 +154,15 @@ class ShackHartmann(object):
                aspect='equal')
         return fig, ax
 
-    def sample_wavefront(self, pupil, fig=None, ax=None):
-        ''' Samples a wavefront, producing a shack-hartmann spot grid.
+    def sample_wavefront(self, pupil, make_image=False, fig=None, ax=None):
+        ''' Samples a wavefront, producing a Shack-Hartmann spot grid.
 
         Args:
             pupil (`Pupil`): a pupil object.
+
+            make_image (`bool`): boolean, whether to simulate the actual detector
+                image.  This process will be quite slow, so it is disabled by
+                defaut.
 
         Returns:
             TODO: return type
@@ -145,33 +173,100 @@ class ShackHartmann(object):
                 2.  Bindown the wavefront such that each sample in the output
                     corresponds to the local wavefront gradient at a lenslet.
                 3.  Compute the x and y delta of each PSF in the image plane.
-                4.  Shift each spot by the corresponding delta
+                4.  Shift each spot by the corresponding delta.
+                    This is the end for make_image=False.
+
+                5.  If make_image=True, then the dots are painted onto the pixel
+                    grid and that array is convolved with a sinc function and
+                    deconvolved with a rect function.  The sinc is the PSF of the
+                    lenslets, which are assumed to all be the same and independent
+                    of the local wavefront they sampled, and the rect is to remove
+                    the finite width of the delta imposed by the pixel grid.
         '''
+
         # grab the phase from the pupil and convert to units of length
-        # TODO: remove assumption that phase has units of waves
-        data = pupil.phase
-        data = data * pupil.wavelength / 2 / pi
+        pupil._correct_phase_units()  # -> waves -> microns
+        data = pupil.phase * waves_to_microns(pupil.wavelength)
+        if pupil.wavelength != self.wavelength:
+            self.wavelength = pupil.wavelength
+
+        # convert the phase error to radians in the paraxial approximation
+        data /= self.lenslet_pitch  # epd
 
         # compute the gradient - TODO: see why gradient is dy,dx not dx,dy
         normalized_sample_spacing = 2 / pupil.samples
         dy, dx = np.gradient(data, normalized_sample_spacing, normalized_sample_spacing)
 
+        # convert the gradient from waves to radians -- angle alpha is made as:
+        '''
+          dz
+        ______
+        \    |
+         \   |
+          \ a| rho
+           \ |
+            \|
+             \
+            a = tan(dz/rho)
+            can either compute "one sided" a, using the vertex to radius as rho
+            and the vertex to radius phase error, or compute "two sided" a using
+            the epd and the full wavefront error (PV) as dz.
+        '''
+
         # bin to the lenslet area
         nlenslets_y = self.num_lenslets[1]
         npupilsamples_y = pupil.samples
-
         npx_bin = npupilsamples_y // nlenslets_y
-        print(type(npx_bin))
-
         dx_binned = bindown(dx, npx_bin, mode='avg')
         dy_binned = bindown(dy, npx_bin, mode='avg')
-        shift_x, shift_y = psf_shift(self.lenslet_fno, dx_binned, dy_binned)
+
+        # compute the lenslet PSF shift
+        shift_x, shift_y = psf_shift(self.lenslet_efl, dx_binned, dy_binned)
+        psf_centers_x, psf_centers_y = self.refx + shift_x, self.refy + shift_y
+        self.captures_simple.append({
+            'x': psf_centers_x,
+            'y': psf_centers_y})
+        self.captures_wvl.append(pupil.wavelength)
+        if make_image:
+            pass  # TODO: write image simulation
+        else:
+            self.captures.append(None)
+            return psf_centers_x, psf_centers_y
+
+    def plot_simple_result(self, result_index=-1, type='quiver', fig=None, ax=None):
+        ''' Plots the simple version of the most recent result.
+
+        Args:
+            result_index (`int`): which capture to plot, defaults to most recent.
+
+            type (`str`): what type of plot to make.  Either "quiver" or "dots".
+
+            fig (`matplotlib.figure.Figure`): figure to plot in.
+
+            ax (`matplotlib.axes.Axis`): axis to plot in.
+
+        Returns:
+            `tuple` containing:
+
+                `matplotlib.figure.Figure`: figure containing the plot.
+
+                `matplotlib.axes.Axis`: axis containing the plot.
+
+        '''
+        idx = result_index
 
         fig, ax = share_fig_ax(fig, ax)
-        ax.scatter(self.refx, self.refy, s=2, c='r')
-        ax.scatter(self.refx - shift_x, self.refy - shift_y, s=4, c='k')
-        ax.set(xlim=(0, self.sensor_size[0] * 1e3), xlabel='Detector Position X [mm]',
-               ylim=(0, self.sensor_size[1] * 1e3), ylabel='Detector Position Y [mm]',
+
+        mx, my = self.captures_simple[idx]['x'], self.captures_simple[idx]['y']
+        if type.lower() in ('q', 'quiver'):
+            dx, dy = mx - self.refx, my - self.refy
+            ax.quiver(self.refx, self.refy, dx, dy, scale=1, units='xy', scale_units='xy')
+        elif type.lower() in ('d', 'dots'):
+            ax.scatter(self.refx, self.refy, c='k', s=8)
+            ax.scatter(mx, my, c='r', s=8)
+
+        ax.set(xlim=(0, self.sensor_size[0] * 1e3), xlabel=r'Detector X [$\mu m$]',
+               ylim=(0, self.sensor_size[1] * 1e3), ylabel=r'Detector Y [$\mu m$]',
                aspect='equal')
         return fig, ax
 
@@ -197,7 +292,8 @@ def psf_shift(lenslet_efl, dx, dy, mag=1):
         m is magnification of SH system
         fl is lenslet focal length
         grad(z) is the x, y gradient of the opd, z, which is expressed in
-        physical units.
+        radians.
+
     '''
-    coef = mag * lenslet_efl
+    coef = -mag * lenslet_efl
     return coef * dx, coef * dy
