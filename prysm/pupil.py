@@ -97,7 +97,7 @@ class Pupil(object):
         if opd_unit.lower() in ('$\lambda$', 'waves'):
             self._opd_unit = 'waves'
             self._opd_str = '$\lambda$'
-        elif opd_unit.lower() in ('$\mu m$', 'microns', 'um'):
+        elif opd_unit.lower() in ('$\mu m$', 'microns', 'micrometers', 'um'):
             self._opd_unit = 'microns'
             self._opd_str = '$\mu m$'
         elif opd_unit.lower() in ('nm', 'nanometers'):
