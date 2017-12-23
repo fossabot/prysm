@@ -2,6 +2,7 @@
 '''
 from prysm import Pupil
 
+
 class TestPupil(object):
     def test_create(self):
         p = Pupil()

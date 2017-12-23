@@ -1,24 +1,16 @@
 ''' Object to convolve lens PSFs with
 '''
 
-# pathos MP pools are a bit better than stock python pools, but the interfaces
-# are compatible.
 from multiprocessing import Pool
 
-from functools import lru_cache, partial
+from functools import lru_cache
 
 import numpy as np
-from numpy.fft import fftshift, ifftshift
-
-from scipy.misc import imsave, imread
 
 from prysm.conf import config
 from prysm.mathops import (
-    jit,
     fft2,
-    ifft2,
     fftshift,
-    ifftshift,
     sin,
     cos,
 )
@@ -26,6 +18,7 @@ from prysm.coordinates import cart_to_polar
 from prysm.psf import PSF, _unequal_spacing_conv_core
 from prysm.fttools import forward_ft_unit, pad2d
 from prysm.util import share_fig_ax, is_odd
+
 
 class Image(object):
     ''' Images of an object
@@ -65,7 +58,7 @@ class Image(object):
                 `matplotlib.axis`: axis containing the plot.
 
         '''
-        lims = (0,1)
+        lims = (0, 1)
         fig, ax = share_fig_ax(fig, ax)
 
         ax.imshow(self.data,
@@ -131,7 +124,7 @@ class Image(object):
         '''
         img_psf = self.as_psf()
         conved_image = _unequal_spacing_conv_core(img_psf, psf)
-        #return conved_image
+        # return conved_image
         return Image(data=conved_image.data,
                      sample_spacing=self.sample_spacing,
                      synthetic=self.synthetic)
@@ -172,7 +165,8 @@ class Image(object):
         '''
         imgarr = imread(path, flatten=True, mode='F')
 
-        return Image(data=np.flip(imgarr, axis=0)/255, sample_spacing=scale, synthetic=False)
+        return Image(data=np.flip(imgarr, axis=0) / 255, sample_spacing=scale, synthetic=False)
+
 
 class RGBImage(object):
     ''' RGB images
@@ -229,8 +223,7 @@ class RGBImage(object):
                 `matplotlib.axis`: axis containing the plot.
 
         '''
-        ex, ey = self.ext_x, self.ext_y
-        lims = (0,1)
+        lims = (0, 1)
         fig, ax = share_fig_ax(fig, ax)
 
         dat = rgbimage_to_datacube(self)
@@ -336,13 +329,14 @@ class RGBImage(object):
 
         # crop the image if it has an odd dimension.
         # TODO: change this an understand why it is an issue
-        ## fftshift vs ifftshift?
+        # fftshift vs ifftshift?
         if is_odd(img.shape[0]):
             img = img[0:-1, :, :]
         if is_odd(img.shape[1]):
             img = img[:, 0:-1, :]
         return RGBImage(r=img[:, :, 0], g=img[:, :, 1], b=img[:, :, 2],
                         sample_spacing=scale, synthetic=False)
+
 
 def rgbimage_to_datacube(rgbimage):
     ''' Creates an mxnx3 array from an RGBImage
@@ -358,6 +352,7 @@ def rgbimage_to_datacube(rgbimage):
     dat[:, :, 1] = rgbimage.G * 255
     dat[:, :, 2] = rgbimage.B * 255
     return dat
+
 
 class Slit(Image):
     ''' Representation of a slit or pair of slits.
@@ -402,6 +397,7 @@ class Slit(Image):
 
         super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)
 
+
 class Pinhole(Image):
     ''' Representation of a pinhole object.
     '''
@@ -427,8 +423,9 @@ class Pinhole(Image):
 
         # paint a circle on a black background
         arr = np.zeros((samples, samples))
-        arr[np.sqrt(xv**2 + yv**2) < w] = 1
+        arr[sqrt(xv**2 + yv**2) < w] = 1
         super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)
+
 
 class SiemensStar(Image):
     ''' Representation of a Siemen's star object.
@@ -460,14 +457,14 @@ class SiemensStar(Image):
         rv, pv = cart_to_polar(xx, yy)
 
         # generate the siemen's star as a (rho,phi) polynomial
-        arr = np.cos(num_spokes/2*pv)
+        arr = cos(num_spokes / 2 * pv)
 
-        if not sinusoidal: # make binary
+        if not sinusoidal:  # make binary
             arr[arr < 0] = -1
             arr[arr > 0] = 1
 
         # scale to (0,1) and clip into a disk
-        arr = (arr+1)/2
+        arr = (arr + 1) / 2
         if background.lower() in ('b', 'black'):
             arr[rv > relative_width] = 0
         elif background.lower() in ('w', 'white'):
@@ -476,6 +473,7 @@ class SiemensStar(Image):
             raise ValueError('invalid background color')
 
         super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)
+
 
 class TiltedSquare(Image):
     ''' Describes a tilted square for e.g. slanted-edge
@@ -515,6 +513,6 @@ class TiltedSquare(Image):
         angle = np.radians(angle)
         xp = xx * cos(angle) - yy * sin(angle)
         yp = xx * sin(angle) + yy * cos(angle)
-        mask = (np.abs(xp) < radius) * (np.abs(yp) < radius)
+        mask = (abs(xp) < radius) * (abs(yp) < radius)
         arr[mask] = fill_with
         super().__init__(data=arr, sample_spacing=sample_spacing, synthetic=True)

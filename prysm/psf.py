@@ -74,9 +74,9 @@ class PSF(object):
         # compute ordinate axis
         ext_x = self.sample_spacing * self.samples_x / 2
         ext_y = self.sample_spacing * self.samples_y / 2
-        self.unit_x = np.linspace(-ext_x, ext_x-sample_spacing,
+        self.unit_x = np.linspace(-ext_x, ext_x - sample_spacing,
                                   self.samples_x, dtype=config.precision)
-        self.unit_y = np.linspace(-ext_y, ext_y-sample_spacing,
+        self.unit_y = np.linspace(-ext_y, ext_y - sample_spacing,
                                   self.samples_y, dtype=config.precision)
 
     # quick-access slices ------------------------------------------------------
@@ -335,6 +335,7 @@ class PSF(object):
         psf = abs(impulse_response)**2
         return PSF(psf / np.max(psf), sample_spacing)
 
+
 class MultispectralPSF(PSF):
     ''' A PSF which includes multiple wavelength components.
     '''
@@ -383,6 +384,7 @@ class MultispectralPSF(PSF):
         super().__init__(merge_data.sum(axis=2), min_spacing)
         self._renorm()
 
+
 class RGBPSF(object):
     ''' Trichromatic PSF, intended to show chromatic aberrations.
     '''
@@ -400,10 +402,10 @@ class RGBPSF(object):
             RGBPSF: A new `RGBPSF` instance.
 
         '''
-        if ( np.array_equal(r_psf.unit_x, g_psf.unit_x) and \
-             np.array_equal(g_psf.unit_x, b_psf.unit_x) and \
-             np.array_equal(r_psf.unit_y, g_psf.unit_y) and \
-             np.array_equal(g_psf.unit_y, b_psf.unit_y) ):
+        if np.array_equal(r_psf.unit_x, g_psf.unit_x) and \
+           np.array_equal(g_psf.unit_x, b_psf.unit_x) and \
+           np.array_equal(r_psf.unit_y, g_psf.unit_y) and \
+           np.array_equal(g_psf.unit_y, b_psf.unit_y):
             # do not need to interpolate the arrays
             self.R = r_psf.data
             self.G = g_psf.data
@@ -505,7 +507,7 @@ class RGBPSF(object):
         if log:
             fcn = 20 * np.log10(1e-100 + dat)
             label_str = 'Normalized Intensity [dB]'
-            lims = (-100, 0) # show first 100dB -- range from (1e-6, 1) in linear scale
+            lims = (-100, 0)  # show first 100dB -- range from (1e-6, 1) in linear scale
         else:
             fcn = correct_gamma(dat)
             label_str = 'Normalized Intensity [a.u.]'
@@ -528,7 +530,7 @@ class RGBPSF(object):
         if pix_grid is not None:
             # if pixel grid is desired, add it
             mult = np.floor(axlim / pix_grid)
-            gmin, gmax = -mult * pix_grid, mult*pix_grid
+            gmin, gmax = -mult * pix_grid, mult * pix_grid
             pts = np.arange(gmin, gmax, pix_grid)
             ax.set_yticks(pts, minor=True)
             ax.set_xticks(pts, minor=True)
@@ -606,17 +608,18 @@ class RGBPSF(object):
             if pix_grid is not None:
                 # if pixel grid is desired, add it
                 mult = np.floor(axlim / pix_grid)
-                gmin, gmax = -mult * pix_grid, mult*pix_grid
+                gmin, gmax = -mult * pix_grid, mult * pix_grid
                 pts = np.arange(gmin, gmax, pix_grid)
                 ax.set_yticks(pts, minor=True)
                 ax.set_xticks(pts, minor=True)
                 ax.yaxis.grid(True, which='minor')
                 ax.xaxis.grid(True, which='minor')
         ax.set(xlabel=r'Image Plane X [$\mu m$]', ylabel=r'Image Plane Y [$\mu m$]')
-        axr.text(-axlim+0.1*ax_width, axlim-0.2*ax_width, 'R', color='white')
-        axg.text(-axlim+0.1*ax_width, axlim-0.2*ax_width, 'G', color='white')
-        axb.text(-axlim+0.1*ax_width, axlim-0.2*ax_width, 'B', color='white')
+        axr.text(-axlim + 0.1 * ax_width, axlim - 0.2 * ax_width, 'R', color='white')
+        axg.text(-axlim + 0.1 * ax_width, axlim - 0.2 * ax_width, 'G', color='white')
+        axb.text(-axlim + 0.1 * ax_width, axlim - 0.2 * ax_width, 'B', color='white')
         return fig, ax
+
 
 def convpsf(psf1, psf2):
     '''Convolves two PSFs.
@@ -636,9 +639,9 @@ def convpsf(psf1, psf2):
             sampling grid of the PSF with a lower nyquist.
 
     '''
-    if ( psf2.samples_x == psf1.samples_x and
-         psf2.samples_y == psf1.samples_y and
-         psf2.sample_spacing == psf1.sample_spacing ):
+    if psf2.samples_x == psf1.samples_x and \
+       psf2.samples_y == psf1.samples_y and \
+       psf2.sample_spacing == psf1.sample_spacing:
         # no need to interpolate, use FFTs to convolve
         psf3 = PSF(data=abs(ifftshift(ifft2(fft2(psf1.data) * fft2(psf2.data)))),
                    sample_spacing=psf1.sample_spacing)
@@ -651,6 +654,7 @@ def convpsf(psf1, psf2):
         else:
             # psf2 has lower nyquist, resample psf1 in the fourier domain to match psf2
             return _unequal_spacing_conv_core(psf2, psf1)
+
 
 def _unequal_spacing_conv_core(psf1, psf2):
     '''Interpolates psf2 before using fft-based convolution
