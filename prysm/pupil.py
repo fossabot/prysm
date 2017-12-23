@@ -222,8 +222,8 @@ class Pupil(object):
                        clim=(-1, 1),
                        origin='lower')
         fig.colorbar(im, label=r'Wrapped Phase [$\lambda$]', ax=ax, fraction=0.046)
-        ax.set(xlabel='Pupil X [mm]',
-               ylabel='Pupil Y [mm]')
+        ax.set(xlabel=r'Pupil $\xi$ [mm]',
+               ylabel=r'Pupil $\eta$ [mm]')
         return fig, ax
 
     # meat 'n potatoes ---------------------------------------------------------
