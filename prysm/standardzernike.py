@@ -65,197 +65,246 @@ _names = (
     'Z47 - Tertiary Pentafoil X',
 )
 
-@jit(cache=True)
+
+@jit
 def Z0(rho, phi):
     return np.ones(rho.shape)
+
 
 @vectorize
 def Z1(rho, phi):
     return rho * cos(phi)
 
+
 @vectorize
 def Z2(rho, phi):
     return rho * sin(phi)
 
+
 @vectorize
 def Z3(rho, phi):
-    return rho**2 * cos(2*phi)
+    return rho**2 * cos(2 * phi)
+
 
 @vectorize
 def Z4(rho, phi):
     return 2 * rho ** 2 - 1
 
+
 @vectorize
 def Z5(rho, phi):
-    return rho**2 * sin(2*phi)
+    return rho**2 * sin(2 * phi)
+
 
 @vectorize
 def Z6(rho, phi):
-    return rho**3 * cos(3*phi)
+    return rho**3 * cos(3 * phi)
+
 
 @vectorize
 def Z7(rho, phi):
     return (3 * rho**3 - 2 * rho) * cos(phi)
 
+
 @vectorize
 def Z8(rho, phi):
     return (3 * rho**3 - 2 * rho) * sin(phi)
 
+
 @vectorize
 def Z9(rho, phi):
-    return rho**3 * sin(3*phi)
+    return rho**3 * sin(3 * phi)
+
 
 @vectorize
 def Z10(rho, phi):
-    return rho**4 * cos(4*phi)
+    return rho**4 * cos(4 * phi)
+
 
 @vectorize
 def Z11(rho, phi):
-    return (4 * rho**4 - 3 * rho**2) * cos(2*phi)
+    return (4 * rho**4 - 3 * rho**2) * cos(2 * phi)
+
 
 @vectorize
 def Z12(rho, phi):
     return -6 * rho**2 + 6 * rho**4 + 1
 
+
 @vectorize
 def Z13(rho, phi):
-    return (4 * rho**4 - 3 * rho**2) * sin(2*phi)
+    return (4 * rho**4 - 3 * rho**2) * sin(2 * phi)
+
 
 @vectorize
 def Z14(rho, phi):
-    return rho**4 * sin(4*phi)
+    return rho**4 * sin(4 * phi)
+
 
 @vectorize
 def Z15(rho, phi):
-    return rho**5 * cos(5*phi)
+    return rho**5 * cos(5 * phi)
+
 
 @vectorize
 def Z16(rho, phi):
-    return (5 * rho**5 - 4 * rho**3) * cos(3*phi)
+    return (5 * rho**5 - 4 * rho**3) * cos(3 * phi)
+
 
 @vectorize
 def Z17(rho, phi):
     return (10 * rho**5 - 12 * rho**3 + 3 * rho) * cos(phi)
 
+
 @vectorize
 def Z18(rho, phi):
     return (10 * rho**5 - 12 * rho**3 + 3 * rho) * sin(phi)
 
+
 @vectorize
 def Z19(rho, phi):
-    return (5 * rho**5 - 4 * rho**3) * sin(3*phi)
+    return (5 * rho**5 - 4 * rho**3) * sin(3 * phi)
+
 
 @vectorize
 def Z20(rho, phi):
-    return rho**5 * cos(5*phi)
+    return rho**5 * cos(5 * phi)
+
 
 @vectorize
 def Z21(rho, phi):
-    return rho**6 * cos(6*phi)
+    return rho**6 * cos(6 * phi)
+
 
 @vectorize
 def Z22(rho, phi):
-    return (6 * rho**6 - 5 * rho**4) * cos(4*phi)
+    return (6 * rho**6 - 5 * rho**4) * cos(4 * phi)
+
 
 @vectorize
 def Z23(rho, phi):
-    return (15 * rho**6 - 20 * rho**4 + 6 * rho**2) * cos(2*phi)
+    return (15 * rho**6 - 20 * rho**4 + 6 * rho**2) * cos(2 * phi)
+
 
 @vectorize
 def Z24(rho, phi):
     return 20 * rho**6 - 30 * rho**4 + 12 * rho**2 - 1
 
+
 @vectorize
 def Z25(rho, phi):
-    return (15 * rho**6 - 20 * rho**4 + 6 * rho**2) * sin(2*phi)
+    return (15 * rho**6 - 20 * rho**4 + 6 * rho**2) * sin(2 * phi)
+
 
 @vectorize
 def Z26(rho, phi):
-    return (6 * rho**6 - 5 * rho**4) * sin(4*phi)
+    return (6 * rho**6 - 5 * rho**4) * sin(4 * phi)
+
 
 @vectorize
 def Z27(rho, phi):
-    return rho**6 * sin(6*phi)
+    return rho**6 * sin(6 * phi)
+
 
 @vectorize
 def Z28(rho, phi):
-    return rho**6 * cos(7*phi)
+    return rho**6 * cos(7 * phi)
+
 
 @vectorize
 def Z29(rho, phi):
-    return (7 * rho**7 - 6 * rho**5) * cos(5*phi)
+    return (7 * rho**7 - 6 * rho**5) * cos(5 * phi)
+
 
 @vectorize
 def Z30(rho, phi):
-    return (21 * rho**7 - 30 * rho**5 + 10 * rho**3) * cos(3*phi)
+    return (21 * rho**7 - 30 * rho**5 + 10 * rho**3) * cos(3 * phi)
+
 
 @vectorize
 def Z31(rho, phi):
     return (35 * rho**7 - 60 * rho**5 + 30 * rho**3 - 4 * rho) * cos(phi)
 
+
 @vectorize
 def Z32(rho, phi):
     return (35 * rho**7 - 60 * rho**5 + 30 * rho**3 - 4 * rho) * sin(phi)
 
+
 @vectorize
 def Z33(rho, phi):
-    return (21 * rho**7 - 30 * rho**5 + 10 * rho**3) * sin(3*phi)
+    return (21 * rho**7 - 30 * rho**5 + 10 * rho**3) * sin(3 * phi)
+
 
 @vectorize
 def Z34(rho, phi):
-    return (7 * rho**7 - 6 * rho**5) * sin(5*phi)
+    return (7 * rho**7 - 6 * rho**5) * sin(5 * phi)
+
 
 @vectorize
 def Z35(rho, phi):
-    return rho**7 * sin(7*phi)
+    return rho**7 * sin(7 * phi)
+
 
 @vectorize
 def Z36(rho, phi):
-    return rho**8 * cos(8*phi)
+    return rho**8 * cos(8 * phi)
+
 
 @vectorize
 def Z37(rho, phi):
-    return (8 * rho**8 - 7 * rho**6) * cos(6*phi)
+    return (8 * rho**8 - 7 * rho**6) * cos(6 * phi)
+
 
 @vectorize
 def Z38(rho, phi):
-    return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * cos(4*phi)
+    return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * cos(4 * phi)
+
 
 @vectorize
 def Z39(rho, phi):
-    return (56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2*phi)
+    return (56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2 * phi)
+
 
 @vectorize
 def Z40(rho, phi):
     return 70 * rho**8 - 140 * rho**7 + 90 * rho**4 - 20 * rho**2 + 1
 
+
 @vectorize
 def Z41(rho, phi):
-    return (56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2*phi)
+    return (56 * rho**8 - 105 * rho**6 + 60 * rho**4 - 10 * rho**2) * cos(2 * phi)
+
 
 @vectorize
 def Z42(rho, phi):
-    return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * sin(4*phi)
+    return (28 * rho**8 - 42 * rho**6 + 15 * rho**4) * sin(4 * phi)
+
 
 @vectorize
 def Z43(rho, phi):
-    return (8 * rho**8 - 7 * rho**6) * sin(6*phi)
+    return (8 * rho**8 - 7 * rho**6) * sin(6 * phi)
+
 
 @vectorize
 def Z44(rho, phi):
-    return rho**8 * sin(8*phi)
+    return rho**8 * sin(8 * phi)
+
 
 @vectorize
 def Z45(rho, phi):
-    return rho**9 * cos(9*phi)
+    return rho**9 * cos(9 * phi)
+
 
 @vectorize
 def Z46(rho, phi):
-    return (9 * rho**9 - 8 * rho**7) * cos(7*phi)
+    return (9 * rho**9 - 8 * rho**7) * cos(7 * phi)
+
 
 @vectorize
 def Z47(rho, phi):
-    return (36 * rho**9 - 56 * rho**7 + 21 * rho**5) * cos(5*phi)
+    return (36 * rho**9 - 56 * rho**7 + 21 * rho**5) * cos(5 * phi)
+
 
 zernfcns = {
     0.0: Z0,
@@ -308,10 +357,12 @@ zernfcns = {
     47.0: Z47,
 }
 
+
 def zernwrapper(term, rho, phi):
     ''' Wraps the Z0..Z48 functions.
     '''
     return zernfcns[term](rho, phi)
+
 
 class StandardZernike(Pupil):
     '''Standard Zernike pupil description
@@ -369,11 +420,11 @@ class StandardZernike(Pupil):
 
         if args is not None:
             if len(args) is 0:
-                self.coefs = [0] * len(_eqns)
+                self.coefs = [0] * len(zernfcns)
             else:
                 self.coefs = [*args[0]]
         else:
-            self.coefs = [0] * len(_eqns)
+            self.coefs = [0] * len(zernfcns)
 
         pass_args = {}
 
@@ -390,8 +441,8 @@ class StandardZernike(Pupil):
         if kwargs is not None:
             for key, value in kwargs.items():
                 if key[0].lower() == 'z':
-                    idx = int(key[1:]) # strip 'Z' from index
-                    self.coefs[idx-self.base] = value
+                    idx = int(key[1:])  # strip 'Z' from index
+                    self.coefs[idx - self.base] = value
                 elif key.lower() == 'base':
                     self.base = value
                 else:
@@ -436,7 +487,7 @@ class StandardZernike(Pupil):
 
             # adjust term numbers
             if self.base is 1:
-                if number > 9: # two-digit term
+                if number > 9:  # two-digit term
                     name_lcl = ''.join([name[0],
                                         str(int(name[1:3]) + 1),
                                         name[3:]])
@@ -453,7 +504,8 @@ class StandardZernike(Pupil):
         footer = f'\n\t{self.pv:.3f} PV, {self.rms:.3f} RMS'
         return f'{header}{body}{footer}'
 
-def fit(data, num_terms=16, normalize=False, round_at=6):
+
+def fit(data, num_terms=16, rms_norm=False, round_at=6):
     ''' Fits a number of zernike coefficients to provided data by minimizing
         the root sum square between each coefficient and the given data.  The
         data should be uniformly sampled in an x,y grid.
@@ -464,7 +516,7 @@ def fit(data, num_terms=16, normalize=False, round_at=6):
 
         num_terms (`int`): number of terms to fit, fits terms 0~num_terms.
 
-        normalize (`bool`): if true, normalize coefficients to unit RMS value.
+        rms_norm (`bool`): if true, normalize coefficients to unit RMS value.
 
         round_at (`int`): decimal place to round values at.
 
@@ -487,7 +539,7 @@ def fit(data, num_terms=16, normalize=False, round_at=6):
     # compute each zernike term
     zernikes = []
     for i in range(num_terms):
-        zernikes.append(zernwrapper(i, True, normalize, rho, phi))
+        zernikes.append(zernwrapper(i, rms_norm, rho, phi))
     zerns = np.asarray(zernikes).T
 
     # use least squares to compute the coefficients
