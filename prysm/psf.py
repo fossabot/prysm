@@ -9,7 +9,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.axes_grid1.axes_rgb import make_rgb_axes
 
 from prysm.conf import config
-from prysm.mathops import pi, fft2, ifft2, fftshift, ifftshift
+from prysm.mathops import pi, fft2, ifft2, fftshift, ifftshift, floor
 from prysm.fttools import pad2d, forward_ft_unit
 from prysm.coordinates import uniform_cart_to_polar, resample_2d_complex
 from prysm.util import pupil_sample_to_psf_sample, correct_gamma, share_fig_ax
@@ -67,7 +67,7 @@ class PSF(object):
 
         self.data = data
         self.sample_spacing = sample_spacing
-        self.samples_y, self.samples_x = data.shape
+        self.samples_x, self.samples_y = data.shape
         self.center_x = self.samples_x // 2
         self.center_y = self.samples_y // 2
 
@@ -85,13 +85,13 @@ class PSF(object):
     def slice_x(self):
         ''' Retrieves a slice through the x axis of the PSF.
         '''
-        return self.unit_x, self.data[self.center_x, :]
+        return self.unit_x, self.data[:, self.center_y]
 
     @property
     def slice_y(self):
         ''' Retrieves a slices through the y axis of the PSF.
         '''
-        return self.unit_y, self.data[:, self.center_y]
+        return self.unit_y, self.data[self.center_x, :]
 
     def encircled_energy(self, azimuth=None):
         ''' Returns the encircled energy at the requested azumith.  If azimuth
@@ -106,11 +106,11 @@ class PSF(object):
         '''
 
         # interp_dat is shaped with axis0=phi, axis1=rho
-        rho, phi, interp_dat = uniform_cart_to_polar(self.unit_y, self.unit_x, self.data)
+        rho, phi, interp_dat = uniform_cart_to_polar(self.unit_x, self.unit_y, self.data)
 
         if azimuth is None:
             # take average of all azimuths as input data
-            dat = np.average(interp_dat, axis=0)
+            dat = interp_dat.mean(axis=0)
         else:
             index = np.searchsorted(phi, np.radians(azimuth))
             dat = interp_dat[index, :]
@@ -153,7 +153,7 @@ class PSF(object):
             pyplot.fig, pyplot.axis.  Figure and axis containing the plot.
 
         '''
-        fcn = correct_gamma(self.data**power)
+        fcn = correct_gamma(self.data ** power)
         label_str = 'Normalized Intensity [a.u.]'
         lims = (0, 1)
 
@@ -162,7 +162,6 @@ class PSF(object):
 
         fig, ax = share_fig_ax(fig, ax)
 
-        # TODO: check bottom/top
         im = ax.imshow(fcn,
                        extent=[left, right, bottom, top],
                        origin='lower',
@@ -182,7 +181,7 @@ class PSF(object):
 
         if pix_grid is not None:
             # if pixel grid is desired, add it
-            mult = np.floor(axlim / pix_grid)
+            mult = floor(axlim / pix_grid)
             gmin, gmax = -mult * pix_grid, mult * pix_grid
             pts = np.arange(gmin, gmax, pix_grid)
             ax.set_yticks(pts, minor=True)
@@ -370,15 +369,15 @@ class MultispectralPSF(PSF):
                 ref_samples_x = psf.samples_x
                 ref_samples_y = psf.samples_y
 
-        merge_data = np.zeros((ref_samples_y, ref_samples_x, len(psfs)))
+        merge_data = np.zeros((ref_samples_x, ref_samples_y, len(psfs)))
         for idx, psf in enumerate(psfs):
             # don't do anything to our reference PSF
             if idx is ref_idx:
                 merge_data[:, :, idx] = psf.data * weights[idx]
             else:
                 xv, yv = np.meshgrid(ref_unit_x, ref_unit_y)
-                interpf = interpolate.RegularGridInterpolator((psf.unit_y, psf.unit_x), psf.data)
-                merge_data[:, :, idx] = interpf((yv, xv), method='linear') * weights[idx]
+                interpf = interpolate.RegularGridInterpolator((psf.unit_x, psf.unit_y), psf.data)
+                merge_data[:, :, idx] = interpf((xv, yv), method='linear') * weights[idx]
 
         self.weights = weights
         super().__init__(merge_data.sum(axis=2), min_spacing)
@@ -506,11 +505,9 @@ class RGBPSF(object):
 
         if log:
             fcn = 20 * np.log10(1e-100 + dat)
-            label_str = 'Normalized Intensity [dB]'
             lims = (-100, 0)  # show first 100dB -- range from (1e-6, 1) in linear scale
         else:
             fcn = correct_gamma(dat)
-            label_str = 'Normalized Intensity [a.u.]'
             lims = (0, 1)
 
         left, right = self.unit_x[0], self.unit_x[-1]
@@ -518,10 +515,10 @@ class RGBPSF(object):
 
         fig, ax = share_fig_ax(fig, ax)
 
-        im = ax.imshow(fcn,
-                       extent=[left, right, bottom, top],
-                       interpolation=interp_method,
-                       origin='lower')
+        ax.imshow(fcn,
+                  extent=[left, right, bottom, top],
+                  interpolation=interp_method,
+                  origin='lower')
         ax.set(xlabel=r'Image Plane X [$\mu m$]',
                ylabel=r'Image Plane Y [$\mu m$]',
                xlim=(-axlim, axlim),
@@ -529,7 +526,7 @@ class RGBPSF(object):
 
         if pix_grid is not None:
             # if pixel grid is desired, add it
-            mult = np.floor(axlim / pix_grid)
+            mult = floor(axlim / pix_grid)
             gmin, gmax = -mult * pix_grid, mult * pix_grid
             pts = np.arange(gmin, gmax, pix_grid)
             ax.set_yticks(pts, minor=True)
