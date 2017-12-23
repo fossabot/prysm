@@ -5,6 +5,7 @@ import numpy as np
 
 from prysm.pupil import Pupil
 
+
 class SurfaceFinish(Pupil):
     '''A class for adding OPD to a pupil to represent surface finish errors
 
@@ -49,8 +50,6 @@ class SurfaceFinish(Pupil):
             for key, value in kwargs.items():
                 if key.lower() in ('amplitude', 'amp'):
                     self.amplitude = value
-                #elif key in ('rms_norm'):
-                #    self.normalize = True
                 else:
                     pass_args[key] = value
 

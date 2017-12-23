@@ -4,11 +4,10 @@ optical systems.
 from functools import lru_cache
 
 import numpy as np
-from numpy import arctan2, exp, cos, sin, pi, sqrt, nan
-from numpy import power as npow
 
 from prysm.conf import config
 from prysm.pupil import Pupil
+
 
 class Seidel(Pupil):
     '''Seidel pupil description
@@ -85,8 +84,8 @@ class Seidel(Pupil):
             mathexprs.append(str(coef) + '*(' + term + ')')
 
         # pull the field point into the namespace our expression wants
-        H = self.field
         self._gengrid()
+        H = self.field
         rho, phi = self.rho, self.phi
 
         # compute the pupil phase and wave function
@@ -97,6 +96,7 @@ class Seidel(Pupil):
 
     def __repr__(self):
         return str(self.__dict__)
+
 
 @lru_cache()
 def wexpr_to_opd_expr(Wxxx):

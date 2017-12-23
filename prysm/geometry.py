@@ -10,6 +10,7 @@ from prysm.mathops import (
     pi,
 )
 
+
 def gaussian(sigma=0.5, samples=128):
     ''' Generates a gaussian mask with a given sigma
 
@@ -30,7 +31,8 @@ def gaussian(sigma=0.5, samples=128):
 
     # // is floor division in python
     x0 = y0 = samples // 2
-    return exp(-4 * log(2) * ((x-x0() ** 2) + (y-y0) ** 2) / (s * samples) ** 2)
+    return exp(-4 * log(2) * ((x - x0() ** 2) + (y - y0) ** 2) / (s * samples) ** 2)
+
 
 def rotated_ellipse(width_major, width_minor, major_axis_angle=0, samples=128):
     ''' Generates a binary mask for an ellipse, centered at the origin.  The
@@ -82,60 +84,72 @@ def rotated_ellipse(width_major, width_minor, major_axis_angle=0, samples=128):
     arr[major_axis_term + minor_axis_term > 1] = 0
     return arr
 
+
 def triangle(samples=128):
     ''' Creates a triangular mask.
     '''
     return regular_polygon_mask(3, samples)
+
 
 def square(samples=128):
     ''' Creates a square mask.
     '''
     return regular_polygon_mask(4, samples)
 
+
 def pentagon(samples=128):
     ''' Creates a pentagonal mask.
     '''
     return regular_polygon_mask(5, samples)
+
 
 def hexagon(samples=128):
     ''' Creates a hexagonal mask.
     '''
     return regular_polygon_mask(6, samples)
 
+
 def heptagon(samples=128):
     ''' Creates a heptagonal mask.
     '''
     return regular_polygon_mask(7, samples)
+
 
 def octagon(samples=128):
     ''' Creates an octagonal mask.
     '''
     return regular_polygon_mask(8, samples)
 
+
 def nonagon(samples=128):
     ''' Creates a nonagonal mask.
     '''
     return regular_polygon_mask(9, samples)
+
 
 def decagon(samples=128):
     ''' Creates a decagonal mask.
     '''
     return regular_polygon_mask(10, samples)
 
+
 def hendecagon(samples=128):
     ''' Creates a hendecagonal mask.
     '''
     return regular_polygon_mask(11, samples)
+
 
 def dodecagon(samples=128):
     ''' Creates a dodecagonal mask.
     '''
     return regular_polygon_mask(12, samples)
 
+
 def trisdecagon(samples=128):
     ''' Creates a trisdecagonal mask.
     '''
     return regular_polygon_mask(13, samples)
+
 
 def regular_polygon_mask(num_sides, num_samples):
     ''' Generates a regular polygon mask with the given number of sides and
@@ -152,9 +166,10 @@ def regular_polygon_mask(num_sides, num_samples):
 
     '''
     verts = generate_vertices(num_sides, num_samples // 2)
-    verts[:, 0] += num_samples // 2 # shift y to center
-    verts[:, 1] += num_samples // 2 # shift x to center
+    verts[:, 0] += num_samples // 2  # shift y to center
+    verts[:, 1] += num_samples // 2  # shift x to center
     return generate_mask(verts, num_samples)
+
 
 def check(p1, p2, base_array):
     ''' Checks if the values in the base array fall inside of the triangle
@@ -183,6 +198,7 @@ def check(p1, p2, base_array):
     sign = np.sign(p2[0] - p1[0])
     return idxs[1] * sign <= max_col_idx * sign
 
+
 def generate_mask(vertices, num_samples=128):
     ''' Creates a filled convex polygon mask based on the given vertices.
 
@@ -207,12 +223,13 @@ def generate_mask(vertices, num_samples=128):
 
     # Create check array for each edge segment, combine into fill array
     for k in range(vertices.shape[0]):
-        fill = np.all([fill, check(vertices[k-1], vertices[k], base_array)], axis=0)
+        fill = np.all([fill, check(vertices[k - 1], vertices[k], base_array)], axis=0)
 
     # Set all values inside polygon to one
     base_array[fill] = 1
 
     return base_array
+
 
 def generate_vertices(num_sides, radius=1):
     ''' Generates a list of vertices for a convex regular polygon with the given

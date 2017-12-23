@@ -14,14 +14,15 @@ try:
 except ImportError:
     pass
 
+
 class Config(object):
     ''' global configuration of prysm.
     '''
     def __init__(self,
-        precision=_precision,
-        parallel_rgb=_parallel_rgb,
-        backend=_backend,
-        zernike_base=_zernike_base):
+                 precision=_precision,
+                 parallel_rgb=_parallel_rgb,
+                 backend=_backend,
+                 zernike_base=_zernike_base):
         '''Tells prysm to use a given precision
 
         Args:

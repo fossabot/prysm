@@ -2,6 +2,7 @@
 '''
 from prysm.util import share_fig_ax
 
+
 def plot_fourier_chain(pupil, psf, mtf, fig=None, axs=None, sizex=12, sizey=6):
     '''Plots a :class:`Pupil`, :class:`PSF`, and :class:`MTF`
         demonstrating the process of fourier optics simulation
@@ -23,7 +24,7 @@ def plot_fourier_chain(pupil, psf, mtf, fig=None, axs=None, sizex=12, sizey=6):
 
     Returns:
         fig, axs.  A figure and axes containing the plot.
-    
+
     '''
 
     fig, axs = share_fig_ax(fig, axs, numax=3)
@@ -38,11 +39,11 @@ def plot_fourier_chain(pupil, psf, mtf, fig=None, axs=None, sizex=12, sizey=6):
 
     bbox_props = dict(boxstyle="rarrow", fill=None, lw=1)
     axs[0].text(1.385, 1.07, r'|Fourier Transform|$^2$',
-        ha='center', va='center', bbox=bbox_props,
-        transform=axs[0].transAxes)
+                ha='center', va='center', bbox=bbox_props,
+                transform=axs[0].transAxes)
     axs[0].text(3.15, 1.07, r'|Fourier Transform|',
-        ha='center', va='center', bbox=bbox_props,
-        transform=axs[0].transAxes)
+                ha='center', va='center', bbox=bbox_props,
+                transform=axs[0].transAxes)
     fig.set_size_inches(sizex, sizey)
     fig.tight_layout()
     return fig, axs

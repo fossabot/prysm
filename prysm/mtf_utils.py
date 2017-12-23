@@ -7,6 +7,7 @@ import pandas as pd
 from prysm.mathops import floor, ceil
 from prysm.util import correct_gamma, share_fig_ax
 
+
 class MTFvFvF(object):
     ''' abstract object representing a cube of MTF vs Field vs Focus data
     '''
@@ -131,7 +132,7 @@ class MTFvFvF(object):
         if algorithm == '0.5':
             # locate the frequency index on axis
             idx_axis = np.searchsorted(self.field, 0)
-            idx_freq = abs(self.data[:, idx_axis, :].max(axis=0)-0.5).argmin(axis=1)
+            idx_freq = abs(self.data[:, idx_axis, :].max(axis=0) - 0.5).argmin(axis=1)
             focus_idx = self.data[:, np.arange(self.data.shape[1]), idx_freq].argmax(axis=0)
             return self.focus[focus_idx], self.field
         elif algorithm.lower() in ('avg', 'average'):
@@ -146,9 +147,9 @@ class MTFvFvF(object):
             for i, idx in enumerate(avg_idxs):
                 li, ri = floor(idx), ceil(idx)
                 lf, rf = self.focus[li], self.focus[ri]
-                diff = rf-lf
+                diff = rf - lf
                 part = idx % 1
-                focus_out[i] = lf + diff*part
+                focus_out[i] = lf + diff * part
 
             return focus_out, self.field
         else:
@@ -187,12 +188,14 @@ class MTFvFvF(object):
         s_cube = MTFvFvF(data=s_mat, focus=focus, field=fields, freq=freqs, azimuth='Sag')
         return t_cube, s_cube
 
+
 def mtf_ts_extractor(mtf, freqs):
     ''' Extracts the T and S MTF from a PSF object.
     '''
     tan = mtf.exact_polar(freqs=freqs, azimuths=0)
     sag = mtf.exact_polar(freqs=freqs, azimuths=90)
     return tan, sag
+
 
 def mtf_ts_to_dataframe(tan, sag, freqs, field=0, focus=0):
     ''' Creates a Pandas dataframe from tangential and sagittal MTF data.
@@ -222,9 +225,9 @@ def mtf_ts_to_dataframe(tan, sag, freqs, field=0, focus=0):
         rows.append({**base_dict, **{
             'Azimuth': 'Tan',
             'MTF': t,
-            }})
+        }})
         rows.append({**base_dict, **{
             'Azimuth': 'Sag',
             'MTF': s,
-            }})
+        }})
     return pd.DataFrame(data=rows)

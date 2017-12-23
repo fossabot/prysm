@@ -13,6 +13,7 @@ from prysm.mathops import (
     fftshift,
     sin,
     cos,
+    sqrt,
 )
 from prysm.coordinates import cart_to_polar
 from prysm.psf import PSF, _unequal_spacing_conv_core
@@ -297,7 +298,7 @@ class RGBImage(object):
             imgs = [img_r, img_g, img_b]
             psfs = [psf_r, psf_g, psf_b]
             with Pool(3) as pool:
-                r_conv, g_conv, b_conv = pool.map(unequal_spacing_conv_core, imgs, psfs)
+                r_conv, g_conv, b_conv = pool.map(_unequal_spacing_conv_core, imgs, psfs)
         else:
             r_conv = _unequal_spacing_conv_core(img_r, rgbpsf.r_psf._renorm(to='total'))
             g_conv = _unequal_spacing_conv_core(img_g, rgbpsf.g_psf._renorm(to='total'))

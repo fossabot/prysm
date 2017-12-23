@@ -2,6 +2,8 @@
 '''
 import numpy as np
 
+from prysm.mathops import (floor, exp, sqrt)
+
 def pad2d(array, factor=1, value=0):
     ''' Symmetrically pads a 2D array with a value.
 
@@ -17,8 +19,9 @@ def pad2d(array, factor=1, value=0):
 
     '''
     x, y = array.shape
-    pad_shape = ((int(x*factor), int(x*factor)), (int(y*factor), int(y*factor)))
+    pad_shape = ((int(x * factor), int(x * factor)), (int(y * factor), int(y * factor)))
     return np.pad(array, pad_width=pad_shape, mode='constant', constant_values=value)
+
 
 def forward_ft_unit(sample_spacing, samples):
     ''' Computes the units resulting from a fourier transform.
@@ -32,7 +35,8 @@ def forward_ft_unit(sample_spacing, samples):
         `numpy.ndarray`: array of sample frequencies in the output of an fft.
 
     '''
-    return np.fft.ifftshift(np.fft.fftfreq(samples, sample_spacing/1e3))
+    return np.fft.ifftshift(np.fft.fftfreq(samples, sample_spacing / 1e3))
+
 
 def matrix_dft(f, alpha, npix, shift=None, unitary=False):
     '''
@@ -59,18 +63,18 @@ def matrix_dft(f, alpha, npix, shift=None, unitary=False):
 
     # Y and X are (r,c) coordinates in the (m x n) input plane, f
     # V and U are (r,c) coordinates in the (M x N) output plane, F
-    X = np.arange(n) - np.floor(n/2) - sx
-    Y = np.arange(m) - np.floor(m/2) - sy
-    U = np.arange(N) - np.floor(N/2) - sx
-    V = np.arange(M) - np.floor(M/2) - sy
+    X = np.arange(n) - floor(n / 2) - sx
+    Y = np.arange(m) - floor(m / 2) - sy
+    U = np.arange(N) - floor(N / 2) - sx
+    V = np.arange(M) - floor(M / 2) - sy
 
-    E1 = np.exp(1j * -2 * np.pi * (ay/m) * np.outer(Y, V).T)
-    E2 = np.exp(1j * -2 * np.pi * (ax/m) * np.outer(X, U))
+    E1 = exp(1j * -2 * np.pi * (ay / m) * np.outer(Y, V).T)
+    E2 = exp(1j * -2 * np.pi * (ax / m) * np.outer(X, U))
 
     F = E1.dot(f).dot(E2)
 
     if unitary is True:
-        norm_coef = np.sqrt((ay * ax)/(m * n * M * N))
+        norm_coef = sqrt((ay * ax) / (m * n * M * N))
         return F * norm_coef
     else:
         return F

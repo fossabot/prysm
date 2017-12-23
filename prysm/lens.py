@@ -15,6 +15,7 @@ from prysm.util import share_fig_ax
 from prysm.thinlens import image_displacement_to_defocus
 from prysm.mtf_utils import MTFvFvF
 
+
 class Lens(object):
     ''' Represents a lens or optical system.
     '''
@@ -218,13 +219,13 @@ class Lens(object):
             show_colorbar = False
             if idx == 0:
                 show_labels = True
-            elif idx == num_pts-1:
+            elif idx == num_pts - 1:
                 show_colorbar = True
             psf.plot2d(fig=fig, ax=axis, axlim=axlim,
                        show_axlabels=show_labels, show_colorbar=show_colorbar)
 
         fig_width = 15
-        fig.set_size_inches(fig_width, fig_width/num_pts)
+        fig.set_size_inches(fig_width, fig_width / num_pts)
         fig.tight_layout()
         return fig, axes
 
@@ -252,19 +253,19 @@ class Lens(object):
         flds_abs = np.linspace(0, self.fov_y, num_pts)
         fig, ax = share_fig_ax(fig, ax)
         for i in range(len(freqs)):
-            ln, = ax.plot(flds_abs, data_s[:,i], lw=3, ls='--')
-            ax.plot(flds_abs, data_t[:,i], lw=3, color=ln.get_color(), label=f'{freqs[i]}lp/mm')
+            ln, = ax.plot(flds_abs, data_s[:, i], lw=3, ls='--')
+            ax.plot(flds_abs, data_t[:, i], lw=3, color=ln.get_color(), label=f'{freqs[i]}lp/mm')
 
-        ax.plot(0,0, color='k', ls='--', label='Sag')
-        ax.plot(0,0, color='k', label='Tan')
+        ax.plot(0, 0, color='k', ls='--', label='Sag')
+        ax.plot(0, 0, color='k', label='Tan')
         # todo: respect units of `self`
 
         if minorgrid is True:
             ax.set_yticks([0.1, 0.3, 0.5, 0.7, 0.9], minor=True)
             ax.grid(True, which='minor')
 
-        ax.set(xlim=(0,self.fov_y), xlabel='Image Height [mm]',
-               ylim=(0,1), ylabel='MTF [Rel. 1.0]',
+        ax.set(xlim=(0, self.fov_y), xlabel='Image Height [mm]',
+               ylim=(0, 1), ylabel='MTF [Rel. 1.0]',
                title=title)
         ax.legend()
 
@@ -289,6 +290,7 @@ class Lens(object):
                title='Through Focus MTF')
 
         return fig, ax
+
     ####### plotting -----------------------------------------------------------
 
     ####### helpers ------------------------------------------------------------
@@ -420,8 +422,9 @@ class Lens(object):
                 f'efl: {self.efl}\n\t'
                 f'f/#: {self.fno}\n\t'
                 f'pupil mag: {self.pupil_magnification}\n\t'
-                 'Aberrations:\n\t\t'
+                'Aberrations:\n\t\t'
                 f'{str(self.aberrations)}')
+
 
 def _spherical_defocus_from_monochromatic_mtf(lens, frequencies, mtf_s, mtf_t):
     ''' Uses nonlinear optimization to set the W020, W040, W060, and W080
@@ -450,13 +453,14 @@ def _spherical_defocus_from_monochromatic_mtf(lens, frequencies, mtf_s, mtf_t):
     fcn = partial(_spherical_cost_fcn_raw, frequencies,
                   mtf_s, mtf_t, work_lens)
 
-    results = minimize(fcn, [0,0,0,0], method='Powell')
+    results = minimize(fcn, [0, 0, 0, 0], method='Powell')
     W020, W040, W060, W080 = results['x']
     work_lens.aberrations['W020'] = W020
     work_lens.aberrations['W040'] = W040
     work_lens.aberrations['W060'] = W060
     work_lens.aberrations['W080'] = W080
     return work_lens
+
 
 def _spherical_cost_fcn_raw(frequencies, truth_s, truth_t, lens, abervalues):
     ''' TODO - document.  partial() should be used on this and scipy.minimize'd
@@ -476,4 +480,4 @@ def _spherical_cost_fcn_raw(frequencies, truth_s, truth_t, lens, abervalues):
     truth = np.stack((truth_s, truth_t))
     synth = np.stack((synth_s, synth_t))
 
-    return ((truth-synth)**2).sum()
+    return ((truth - synth) ** 2).sum()

@@ -1,10 +1,10 @@
 ''' A collection of thin lens equations for system modeling
 '''
 import numpy as np
-from numpy import sin, arctan, absolute, sqrt, pi
 
 from prysm.util import guarantee_array
 from prysm.fringezernike import _normalizations
+
 
 def object_to_image_dist(efl, object_distance):
     '''computes the image distance from the object distance
@@ -29,6 +29,7 @@ def object_to_image_dist(efl, object_distance):
     ret = 1 / efl - 1 / object_distance
     return 1 / ret
 
+
 def image_dist_epd_to_na(image_distance, epd):
     '''Computes the NA from an image distance and entrance pupil diameter
 
@@ -44,8 +45,9 @@ def image_dist_epd_to_na(image_distance, epd):
     image_distance = guarantee_array(image_distance)
 
     rho = epd / 2
-    marginal_ray_angle = absolute(arctan(rho/image_distance))
+    marginal_ray_angle = abs(arctan(rho/image_distance))
     return marginal_ray_angle
+
 
 def image_dist_epd_to_fno(image_distance, epd):
     '''Computes the f/# from an image distance and entrance pupil diameter
@@ -61,6 +63,7 @@ def image_dist_epd_to_fno(image_distance, epd):
     na = image_dist_epd_to_na(image_distance, epd)
     return na_to_fno(na)
 
+
 def fno_to_na(fno):
     '''Converts an fno to an NA
 
@@ -73,6 +76,7 @@ def fno_to_na(fno):
     '''
     return 1 / (2 * fno)
 
+
 def na_to_fno(na):
     '''Converts an NA to an f/#
 
@@ -84,6 +88,7 @@ def na_to_fno(na):
 
     '''
     return 1 / (2 * sin(na))
+
 
 def object_dist_to_mag(efl, object_dist):
     '''Computes the linear magnification from the object distance and focal length
@@ -99,6 +104,7 @@ def object_dist_to_mag(efl, object_dist):
     object_dist = guarantee_array(object_dist)
     return efl / (efl - object_dist)
 
+
 def linear_to_long_mag(lateral_mag):
     '''Computes the longitudinal (along optical axis) magnification from the lateral mag
 
@@ -110,6 +116,7 @@ def linear_to_long_mag(lateral_mag):
 
     '''
     return lateral_mag**2
+
 
 def mag_to_fno(mag, infinite_fno, pupil_mag=1):
     '''Computes the working f/# from the magnification and infinite f/#
@@ -125,6 +132,7 @@ def mag_to_fno(mag, infinite_fno, pupil_mag=1):
     '''
     mag = guarantee_array(mag)
     return (1 + abs(mag) / pupil_mag) * infinite_fno
+
 
 def defocus_to_image_displacement(defocus, fno, wavelength, zernike=False, rms_norm=False):
     '''Computes image displacment from wavefront defocuse xpressed in waves 0-P to
@@ -154,6 +162,7 @@ def defocus_to_image_displacement(defocus, fno, wavelength, zernike=False, rms_n
             defocus /= 2
     return 8 * fno**2 * wavelength * defocus
 
+
 def image_displacement_to_defocus(image_displacement, fno, wavelength, zernike=False, rms_norm=False):
     '''Computes the wavefront defocus from image shift, expressed in the same units as the shift
 
@@ -173,7 +182,7 @@ def image_displacement_to_defocus(image_displacement, fno, wavelength, zernike=F
 
     '''
     image_displacement = guarantee_array(image_displacement)
-    defocus = image_displacement / (8 * np.power(fno,2) * wavelength)
+    defocus = image_displacement / (8 * fno ** 2 * wavelength)
     if zernike is True:
         if rms_norm is True:
             return defocus / 2 / _normalizations[4]
@@ -181,6 +190,7 @@ def image_displacement_to_defocus(image_displacement, fno, wavelength, zernike=F
             return defocus / 2
     else:
         return defocus
+
 
 def twolens_efl(efl1, efl2, separation):
     ''' uses thick lens equations to compute the focal length for two elements
@@ -196,9 +206,10 @@ def twolens_efl(efl1, efl2, separation):
     Returns:
         float. focal length of the two lens system.
     '''
-    phi1, phi2, t = 1/efl1, 1/efl2, separation
-    phi_tot = phi1 + phi2 - t*phi1*phi2
-    return 1/phi_tot
+    phi1, phi2, t = 1 / efl1, 1 / efl2, separation
+    phi_tot = phi1 + phi2 - t * phi1 * phi2
+    return 1 / phi_tot
+
 
 def twolens_bfl(efl1, efl2, separation):
     ''' uses thick lens equations to compute the back focal length for two elements
@@ -214,7 +225,7 @@ def twolens_bfl(efl1, efl2, separation):
     Returns:
         float. back focal length of the two lens system.
     '''
-    phi1 = 1/efl1
-    numerator = 1 - t*phi1
+    phi1 = 1 / efl1
+    numerator = 1 - separation * phi1
     denomenator = twolens_efl(efl1, efl2, separation)
-    return numerator/denomenator
+    return numerator / denomenator
