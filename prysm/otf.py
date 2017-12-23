@@ -6,7 +6,7 @@ from scipy import interpolate
 
 from matplotlib import pyplot as plt
 
-from prysm.mathops import fft2, fftshift
+from prysm.mathops import fft2, fftshift, pi, sqrt
 from prysm.psf import PSF
 from prysm.fttools import forward_ft_unit
 from prysm.util import correct_gamma, share_fig_ax
@@ -47,9 +47,11 @@ class MTF(object):
         '''Creates an MTF object
 
         Args:
-            data (:class:`numpy.ndarray`): MTF values on 2D grid.
+            data (`numpy.ndarray`): MTF values on 2D grid.
 
-            unit_x ()
+            unit_x (`numpy.ndarray`): array of x units.
+
+            unit_y (`numpy.ndarray`): array of y units.
 
         Returns:
             `MTF`: a new :class:`MTF` instance.
@@ -74,7 +76,7 @@ class MTF(object):
             Assumes the object is extended in y.  If the object is extended
             along a different azimuth, this will not return the tangential MTF.
         '''
-        return self.unit_x[self.center_x:], self.data[self.center_y, self.center_x:]
+        return self.unit_x[self.center_x:], self.data[self.center_x:, self.center_y]
 
     @property
     def sag(self):
@@ -84,7 +86,7 @@ class MTF(object):
             Assumes the object is extended in y.  If the object is extended along a different
             azimuth, this will not return the sagittal MTF.
         '''
-        return self.unit_y[self.center_y:], self.data[self.center_y:, self.center_x]
+        return self.unit_y[self.center_y:], self.data[self.center_x, self.center_y:]
 
     def exact_polar(self, freqs, azimuths=None):
         '''Retrieves the MTF at the specified frequency-azimuth pairs
@@ -190,11 +192,11 @@ class MTF(object):
 
         fig, ax = share_fig_ax(fig, ax)
 
-        im = ax.imshow(fcn,
+        im = ax.imshow(fcn.T,
                        extent=[left, right, bottom, top],
                        origin='lower',
                        cmap='Greys_r',
-                       interpolation='lanczos',
+                       interpolation='lanczo',
                        clim=lims)
         cb = fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         cb.outline.set_edgecolor('k')
@@ -254,7 +256,7 @@ class MTF(object):
 
         '''
         if not hasattr(self, 'interpf'):
-            self.interpf = interpolate.RegularGridInterpolator((self.unit_y, self.unit_x), self.data)
+            self.interpf = interpolate.RegularGridInterpolator((self.unit_x, self.unit_y), self.data)
 
         return self
 
@@ -272,7 +274,7 @@ class MTF(object):
         dat = abs(fftshift(fft2(psf.data)))
         unit_x = forward_ft_unit(psf.sample_spacing, psf.samples_x)
         unit_y = forward_ft_unit(psf.sample_spacing, psf.samples_y)
-        return MTF(dat / dat[psf.center_y, psf.center_x], unit_x, unit_y)
+        return MTF(dat / dat[psf.center_x, psf.center_y], unit_x, unit_y)
 
     @staticmethod
     def from_pupil(pupil, efl, padding=1):
@@ -312,7 +314,7 @@ def diffraction_limited_mtf(fno, wavelength=0.55, num_pts=128):
     '''
     normalized_frequency = np.linspace(0, 1, num_pts)
     extinction = 1 / (wavelength / 1000 * fno)
-    mtf = (2 / np.pi) * \
+    mtf = (2 / pi) * \
           (np.arccos(normalized_frequency) - normalized_frequency *
-           np.sqrt(1 - normalized_frequency ** 2))
+           sqrt(1 - normalized_frequency ** 2))
     return normalized_frequency * extinction, mtf
