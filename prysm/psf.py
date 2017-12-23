@@ -696,9 +696,6 @@ def airydisk(unit_r, fno, wavelength):
     Returns:
         `numpy.ndarray`: ndarray containing the airy pattern.
 
-    Notes:
-        will raise a runtime error if unit_r = 0, TODO: remove this issue.
-
     '''
     u_eff = unit_r * pi / wavelength / fno
     return abs(2 * jinc(u_eff)) ** 2
@@ -711,7 +708,7 @@ def jinc(r):
         r (`number`): radial distance.
 
     Returns:
-        (`float`: the value of j1(x)/x for x != 0, 0.5 at 0.
+        `float`: the value of j1(x)/x for x != 0, 0.5 at 0.
 
     '''
     if r == 0:
