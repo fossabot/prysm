@@ -62,7 +62,7 @@ class Pupil(object):
         none
 
     Notes:
-        subclasses should implement a build() function and their own way of
+        subclasses should implement a build() method and their own way of
             expressing OPD.
 
     '''
@@ -115,13 +115,13 @@ class Pupil(object):
     def slice_x(self):
         ''' Retrieves a slice through the X axis of the pupil
         '''
-        return self.unit, self.phase[self.center, :]
+        return self.unit, self.phase[:, self.center]
 
     @property
     def slice_y(self):
         ''' Retrieves a slice through the Y axis of the pupil
         '''
-        return self.unit, self.phase[:, self.center]
+        return self.unit, self.phase[self.center, :]
 
     @property
     def pv(self):
@@ -154,7 +154,7 @@ class Pupil(object):
         epd = self.epd
 
         fig, ax = share_fig_ax(fig, ax)
-        im = ax.imshow(convert_phase(self.phase, self),
+        im = ax.imshow(convert_phase(self.phase, self).T,
                        extent=[-epd / 2, epd / 2, -epd / 2, epd / 2],
                        cmap='RdYlBu',
                        interpolation='lanczos',
@@ -215,7 +215,7 @@ class Pupil(object):
 
         fig, ax = share_fig_ax(fig, ax)
         plotdata = (visibility * sin(2 * pi * passes * self.phase))
-        im = ax.imshow(plotdata,
+        im = ax.imshow(plotdata.T,  # transpose for img vs matrix x, y convention
                        extent=[-epd / 2, epd / 2, -epd / 2, epd / 2],
                        cmap='Greys_r',
                        interpolation='lanczos',
@@ -309,13 +309,13 @@ class Pupil(object):
             for radial polynomials.
 
             Note:
-                angle is done via cart_to_polar(xv, yv) which yields angles
+                angle is done via cart_to_polar(yv, xv) which yields angles
                 w.r.t. the y axis.  This is the convention of optics and not a
                 typo.
         '''
         x = y = linspace(-1, 1, self.samples, dtype=config.precision)
         xv, yv = meshgrid(x, y)
-        self.rho, self.phi = cart_to_polar(xv, yv)
+        self.rho, self.phi = cart_to_polar(yv, xv)
         return self.rho, self.phi
 
     def _correct_phase_units(self):
