@@ -65,4 +65,4 @@ target/
 .pypirc
 .idea
 .ropeproject
-Examples/testing.ipnb
+Examples/testing.ipynb
