@@ -82,10 +82,10 @@ def correct_gamma(img, encoding=2.2):
     Args:
         img (`numpy.ndarray`): array of image data, floats avoid quantization error.
 
-        encoding (`float`): gamma the data is encoded in (1.0 is linear).
+        encoding (`float`): gamma to encode that data to (1.0 is linear).
 
     Returns:
-        numpy.ndarray:  Array of corrected data.
+        `numpy.ndarray`:  Array of corrected data.
 
     '''
     if encoding is 1:
@@ -124,7 +124,7 @@ def fold_array(array, axis=1):
                                        np.flip(np.flip(top_chunk, axis=1),
                                                axis=0)[:, :, np.newaxis]),
                                       axis=2)
-    return np.average(folded_array, axis=2)
+    return folded_array.mean(axis=2)
 
 
 def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
@@ -165,7 +165,7 @@ def rms(array):
 
     '''
     non_nan = np.isfinite(array)
-    return np.sqrt(np.mean(np.square(array[non_nan])))
+    return sqrt((array[non_nan] ** 2).mean())
 
 
 def guarantee_array(variable):
@@ -178,7 +178,7 @@ def guarantee_array(variable):
         (type).  Which supports * / and other operations with arrays
 
     '''
-    if type(variable) in [float, np.ndarray, np.int32, np.int64, np.float32, np.float64]:
+    if type(variable) in [float, np.ndarray, np.int32, np.int64, np.float32, np.float64, np.complex64, np.complex128]:
         return variable
     elif type(variable) is int:
         return float(variable)
