@@ -7,6 +7,7 @@ import numpy as np
 
 from prysm.conf import config
 from prysm.pupil import Pupil
+from prysm.mathops import cos
 
 
 class Seidel(Pupil):
