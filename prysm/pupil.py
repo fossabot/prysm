@@ -3,7 +3,7 @@
 from copy import deepcopy
 
 from numpy import (
-    empty, ones,
+    empty, zeros,
     linspace, meshgrid,
     isfinite,
 )
@@ -238,7 +238,7 @@ class Pupil(object):
         self._gengrid()
 
         # fill in the phase of the pupil
-        self.phase = ones((self.samples, self.samples), dtype=config.precision)
+        self.phase = zeros((self.samples, self.samples), dtype=config.precision)
         self._correct_phase_units()
         self._phase_to_wavefunction()
 
