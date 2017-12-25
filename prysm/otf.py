@@ -326,11 +326,24 @@ def diffraction_limited_mtf(fno, wavelength, frequencies=None, num_pts=128):
         normalized_frequency = np.linspace(0, 1, num_pts)
     else:
         normalized_frequency = frequencies / extinction
-    mtf = (2 / pi) * \
-          (arccos(normalized_frequency) - normalized_frequency *
-           sqrt(1 - normalized_frequency ** 2))
+
+    mtf = difflim_mtf_core(normalized_frequency)
 
     if frequencies is None:
         return normalized_frequency * extinction, mtf
     else:
         return mtf
+
+
+def difflim_mtf_core(normalized_frequency):
+    ''' Computes the MTF at a given normalized spatial frequency.
+    '''
+    if normalized_frequency >= 1.0:
+        return 0
+    else:
+        return (2 / pi) * \
+               (arccos(normalized_frequency) - normalized_frequency *
+                sqrt(1 - normalized_frequency ** 2))
+
+
+difflim_mtf_core = np.vectorize(difflim_mtf_core)  # vectorize allows if statement with numpy arrays
