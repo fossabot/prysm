@@ -11,7 +11,7 @@ _zernike_base = 1
 try:
     import pyculib
     assert pyculib  # silence pyflakes
-    _backend = 'cu'
+    # _backend = 'cu'  # for now, don't enable cuda (only 2-3x perf gain)
 except ImportError:
     pass
 
