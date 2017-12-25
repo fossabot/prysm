@@ -16,7 +16,7 @@ TEST_PARAMETERS = [
     (3.00, 1.125, 3.0)]  # f/2.66666, MWIR light
 
 
-@pytest.mark.parameterize('efl, epd, wvl', TEST_PARAMETERS)
+@pytest.mark.parametrize('efl, epd, wvl', TEST_PARAMETERS)
 def test_diffprop_matches_airydisk(efl, epd, wvl):
     fno = efl / epd
 
@@ -29,7 +29,7 @@ def test_diffprop_matches_airydisk(efl, epd, wvl):
     assert np.allclose(sy, analytic, rtol=PRECISION, atol=PRECISION)
 
 
-@pytest.mark.parameterize('efl, epd, wvl', TEST_PARAMETERS)
+@pytest.mark.parametrize('efl, epd, wvl', TEST_PARAMETERS)
 def test_diffprop_matches_analyticmtf(efl, epd, wvl):
     fno = efl / epd
     p = Pupil(wavelength=wvl, epd=epd)
