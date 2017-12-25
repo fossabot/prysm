@@ -66,7 +66,7 @@ class Pupil(object):
             expressing OPD.
 
     '''
-    def __init__(self, samples=128, epd=1, wavelength=0.55, opd_unit=r'$\lambda$'):
+    def __init__(self, samples=128, epd=1.0, wavelength=0.55, opd_unit=r'$\lambda$'):
         ''' Creates a new Pupil instance.
 
         Args:
