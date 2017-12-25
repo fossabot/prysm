@@ -7,6 +7,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
 
+from prysm.mathops import sqrt
+
 
 def is_odd(int):
     ''' Determines if an interger is odd using binary operations.
