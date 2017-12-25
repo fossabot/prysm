@@ -2,9 +2,6 @@
 '''
 import pytest
 
-import matplotlib
-from matplotlib import pyplot as plt
-
 from prysm import Pupil
 
 
@@ -41,40 +38,13 @@ def test_pupil_passes_valid_params():
     assert(p.samples == parameters['samples'])
     assert(p.epd == parameters['epd'])
     assert(p.wavelength == parameters['wavelength'])
-    assert(p._opd_unit == parameters['opd_unit'])
+    assert(p._opd_str == parameters['opd_unit'])
+    assert(p._opd_unit == 'nanometers')  # make sure this is updated if the test is changed to a different unit
 
 
-def test_pupil_plot2d_makes_own_fig_and_ax(p):
-    return_values = p.plot2d()
-    assert(type(return_values[0]) is matplotlib.figure.Figure)  # first return is a figure
-    assert(len(return_values) == 2)  # figure and axis return values
+def test_pupil_has_zero_pv(p):
+    assert(p.pv == pytest.approx(0))
 
 
-def test_pupil_plot2d_shares_fig_and_ax(p):
-    fig, ax = plt.subplots()
-    fig2, ax2 = p.plot2d()
-    assert(fig.number == fig2.number)
-
-
-def test_pupil_interferogram_makes_own_fig_and_ax(p):
-    return_values = p.plot2d()
-    assert(type(return_values[0]) is matplotlib.figure.Figure)  # first return is a figure
-    assert(len(return_values) == 2)  # figure and axis return values
-
-
-def test_pupil_interferogram_shares_fig_and_ax(p):
-    fig, ax = plt.subplots()
-    fig2, ax2 = p.plot2d()
-    assert(fig.number == fig2.number)
-
-
-def test_pupil_plot_slice_xy_makes_own_fig_and_ax(p):
-    return_values = p.plot2d()
-    assert(type(return_values[0]) is matplotlib.figure.Figure)  # first return is a figure
-    assert(len(return_values) == 2)  # figure and axis return values
-
-
-def test_pupil_plot_slice_xy_shares_fig_and_ax(p):
-    fig, ax = plt.subplots()
-    fig2, ax2 = p.plot2d()
-    assert(fig.number == fig2.number)
+def test_pupil_has_zero_rms(p):
+    assert(p.rms == pytest.approx(0))
