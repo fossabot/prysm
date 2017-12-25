@@ -2,12 +2,16 @@
 '''
 import pytest
 
-from prysm import Pupil
+from prysm import Pupil, Seidel
 
 
 @pytest.fixture
 def p():
     return Pupil()
+
+@pytest.fixture
+def p_tlt():
+    return Seidel(W111=1)
 
 
 def test_create_pupil():
@@ -32,8 +36,7 @@ def test_pupil_passes_valid_params():
         'samples': 16,
         'epd': 128.2,
         'wavelength': 0.6328,
-        'opd_unit': 'nm',
-    }
+        'opd_unit': 'nm'}
     p = Pupil(**parameters)
     assert(p.samples == parameters['samples'])
     assert(p.epd == parameters['epd'])
@@ -48,3 +51,9 @@ def test_pupil_has_zero_pv(p):
 
 def test_pupil_has_zero_rms(p):
     assert(p.rms == pytest.approx(0))
+
+
+def test_tilt_pupil_axis_is_not_x(p_tlt):
+    u, x = p_tlt.slice_x
+    assert(np.allclose(x, 0))
+
