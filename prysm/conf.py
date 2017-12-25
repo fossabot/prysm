@@ -10,6 +10,7 @@ _zernike_base = 1
 
 try:
     import pyculib
+    assert pyculib  # silence pyflakes
     _backend = 'cu'
 except ImportError:
     pass
@@ -113,5 +114,6 @@ class Config(object):
     def zernike_base(self):
         global _zernike_base
         return _zernike_base
+
 
 config = Config()

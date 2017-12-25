@@ -9,6 +9,7 @@ from math import (
     pi,
     nan,
 )
+import numpy as np
 from numpy import (
     sqrt,
     sin,
@@ -25,8 +26,6 @@ from numpy import (
 from numpy.fft import fftshift, ifftshift
 
 atan2 = arctan2
-
-import numpy as np
 
 from prysm.conf import config
 
@@ -73,7 +72,7 @@ except ImportError:
     pass
 
 
-###### CUDA code ---------------------------------------------------------------
+# cuda code below
 
 def cast_array(array):
     ''' Casts an array to the appropriate complex format.
@@ -175,10 +174,9 @@ def cu_ifft2(array):
     d_rslt.copy_to_host(rslt)
     return rslt
 
-###### CUDA code ---------------------------------------------------------------
+# end cuda code
 
-###### export control ----------------------------------------------------------
-
+# export control
 # thanks, ITAR
 
 
@@ -198,3 +196,22 @@ def ifft2(array):
         return cu_ifft2(array)
     else:
         raise KeyError('Invalid backend for fft')
+
+
+# stop pyflakes import errors
+assert floor
+assert ceil
+assert pi
+assert nan
+assert sin
+assert cos
+assert tan
+assert sinc
+assert exp
+assert log
+assert arccos
+assert arcsin
+assert arctan
+assert fftshift
+assert ifftshift
+assert sqrt
