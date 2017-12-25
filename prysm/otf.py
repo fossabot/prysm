@@ -6,7 +6,7 @@ from scipy import interpolate
 
 from matplotlib import pyplot as plt
 
-from prysm.mathops import fft2, fftshift, pi, sqrt
+from prysm.mathops import fft2, fftshift, pi, sqrt, arccos
 from prysm.psf import PSF
 from prysm.fttools import forward_ft_unit
 from prysm.util import correct_gamma, share_fig_ax
@@ -295,7 +295,7 @@ class MTF(object):
         return MTF.from_psf(psf)
 
 
-def diffraction_limited_mtf(fno, wavelength=0.55, num_pts=128):
+def diffraction_limited_mtf(fno, wavelength, frequencies=None, num_pts=128):
     ''' Gives the diffraction limited MTF for a circular pupil and the given parameters.
 
     Args:
@@ -303,7 +303,11 @@ def diffraction_limited_mtf(fno, wavelength=0.55, num_pts=128):
 
         wavelength (`float`): wavelength of light, in microns.
 
-        num_pts (`int`): number of points in the output array.
+        frequencies (`numpy.ndarray`): spatial frequencies of interest, in cy/mm
+            if frequencies are given, num_pts is ignored.
+
+        num_pts (`int`): number of points in the output array, if frequencies
+            not given.
 
     Returns:
         `tuple` containing:
@@ -311,10 +315,22 @@ def diffraction_limited_mtf(fno, wavelength=0.55, num_pts=128):
             `numpy.ndarray`: unit array, in cy/mm.
 
             `numpy.ndarray`: mtf array (rel. 1.0).
+
+    Notes:
+        If frequencies are given, just returns the MTF.  If frequencies are not
+        given, returns both the frequencies and the MTF.
+
     '''
-    normalized_frequency = np.linspace(0, 1, num_pts)
     extinction = 1 / (wavelength / 1000 * fno)
+    if frequencies is None:
+        normalized_frequency = np.linspace(0, 1, num_pts)
+    else:
+        normalized_frequency = frequencies / extinction
     mtf = (2 / pi) * \
-          (np.arccos(normalized_frequency) - normalized_frequency *
+          (arccos(normalized_frequency) - normalized_frequency *
            sqrt(1 - normalized_frequency ** 2))
-    return normalized_frequency * extinction, mtf
+
+    if frequencies is None:
+        return normalized_frequency * extinction, mtf
+    else:
+        return mtf
