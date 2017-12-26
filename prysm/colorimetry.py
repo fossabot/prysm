@@ -150,7 +150,7 @@ def prepare_source_spd(source='D65'):
 
     '''
     if source[0:2].upper() == 'HP':
-        file = CIE_ILLUMINANT_METADATA['HP']
+        file = CIE_ILLUMINANT_METADATA['files']['HP']
     else:
         file = CIE_ILLUMINANT_METADATA['files'][source[0].upper()]
     column = CIE_ILLUMINANT_METADATA['columns'][source.upper()]
