@@ -18,10 +18,16 @@ def test_config_set_precision(precision):
     assert(config.precision == PRECISIONS[precision])
 
 
-@pytest.mark.parametrize('backend', ['np', 'cu'])
+# must make certain the backend is set to numpy last to avoid cuda errors for rest of test suite
+@pytest.mark.parametrize('backend', ['cu', 'np'])
 def test_config_set_backend(backend):
     config.set_backend(backend)
     assert(config.backend == backend)
+
+
+def test__force_testenv_backend_numpy():
+    config.set_backend('np')
+    assert config
 
 
 @pytest.mark.parametrize('zbase', [0, 1])
