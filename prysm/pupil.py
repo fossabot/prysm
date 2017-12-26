@@ -115,13 +115,13 @@ class Pupil(object):
     def slice_x(self):
         ''' Retrieves a slice through the X axis of the pupil
         '''
-        return self.unit, self.phase[:, self.center]
+        return self.unit, self.phase[self.center]
 
     @property
     def slice_y(self):
         ''' Retrieves a slice through the Y axis of the pupil
         '''
-        return self.unit, self.phase[self.center, :]
+        return self.unit, self.phase[:, self.center]
 
     @property
     def pv(self):
@@ -154,7 +154,7 @@ class Pupil(object):
         epd = self.epd
 
         fig, ax = share_fig_ax(fig, ax)
-        im = ax.imshow(convert_phase(self.phase, self).T,
+        im = ax.imshow(convert_phase(self.phase, self),
                        extent=[-epd / 2, epd / 2, -epd / 2, epd / 2],
                        cmap='RdYlBu',
                        interpolation='lanczos',
@@ -215,7 +215,7 @@ class Pupil(object):
 
         fig, ax = share_fig_ax(fig, ax)
         plotdata = (visibility * sin(2 * pi * passes * self.phase))
-        im = ax.imshow(plotdata.T,  # transpose for img vs matrix x, y convention
+        im = ax.imshow(plotdata,
                        extent=[-epd / 2, epd / 2, -epd / 2, epd / 2],
                        cmap='Greys_r',
                        interpolation='lanczos',
