@@ -149,7 +149,7 @@ def prepare_source_spd(source='D65'):
         `dict` with keys: `wvl`, `values`
 
     '''
-    if source[0:1].upper() == 'HP':
+    if source[0:2].upper() == 'HP':
         file = CIE_ILLUMINANT_METADATA['HP']
     else:
         file = CIE_ILLUMINANT_METADATA['files'][source[0].upper()]
