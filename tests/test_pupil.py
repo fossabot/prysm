@@ -2,15 +2,12 @@
 '''
 import pytest
 
-import numpy as np
-
 from prysm import Pupil, Seidel
 
 
 @pytest.fixture
 def p():
     return Pupil()
-
 
 @pytest.fixture
 def p_tlt():
@@ -58,6 +55,5 @@ def test_pupil_has_zero_rms(p):
 
 def test_tilt_pupil_axis_is_not_x(p_tlt):
     u, x = p_tlt.slice_x
-    idxs = np.isfinite(x)
-    zeros = np.zeros(x.shape)
-    assert(np.allclose(x[idxs], zeros[idxs]))
+    assert(np.allclose(x, 0))
+
