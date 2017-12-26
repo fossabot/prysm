@@ -1,0 +1,10 @@
+build:
+  environment:
+    python: '3.6.3'
+checks:
+  python:
+    code_rating: true
+    duplicate_code: true
+filter:
+  exclude_paths:
+    - tests/*
