@@ -1,6 +1,8 @@
 # Prysm
 
-[![Build Status](https://travis-ci.org/brandondube/prysm.svg?branch=master)](https://travis-ci.org/brandondube/prysm) [![Code Quality](https://scrutinizer-ci.com/g/brandondube/prysm/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/brandondube/prysm/?branch=master)
+[![Build Status](https://travis-ci.org/brandondube/prysm.svg?branch=master)](https://travis-ci.org/brandondube/prysm)
+[![Code Quality](https://scrutinizer-ci.com/g/brandondube/prysm/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/brandondube/prysm/?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/brandondube/prysm/badge.svg?branch=master)](https://coveralls.io/github/brandondube/prysm?branch=master)
 
 A python optics module.
 
