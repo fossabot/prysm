@@ -85,13 +85,13 @@ class PSF(object):
     def slice_x(self):
         ''' Retrieves a slice through the x axis of the PSF.
         '''
-        return self.unit_x, self.data[:, self.center_y]
+        return self.unit_x, self.data[self.center_x]
 
     @property
     def slice_y(self):
         ''' Retrieves a slices through the y axis of the PSF.
         '''
-        return self.unit_y, self.data[self.center_x, :]
+        return self.unit_y, self.data[:, self.center_y]
 
     def encircled_energy(self, azimuth=None):
         ''' Returns the encircled energy at the requested azumith.  If azimuth
