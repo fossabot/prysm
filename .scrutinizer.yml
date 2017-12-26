@@ -7,4 +7,6 @@ checks:
     duplicate_code: true
 filter:
   excluded_paths:
+    - Examples
+    - Performance
     - tests/*

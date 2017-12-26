@@ -1,6 +1,6 @@
 # Prysm
 
-[![Build Status](https://travis-ci.org/brandondube/prysm.svg?branch=master)](https://travis-ci.org/brandondube/prysm)
+[![Build Status](https://travis-ci.org/brandondube/prysm.svg?branch=master)](https://travis-ci.org/brandondube/prysm) [![Code Quality](https://scrutinizer-ci.com/g/brandondube/prysm/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/brandondube/prysm/?branch=master)
 
 A python optics module.
 
@@ -30,13 +30,13 @@ Prysm uses numpy for array operations.  If your environment has [numba](http://n
 
 * * Zemax Standard Zernikes, up to Z48 (base-1)
 
-* * Orthogonal and Orthonormal versions of both Zernike sets.
+* * Orthogonal and Orthonormal versions of both Zernike sets
 
 * and with:
 
 * * gaussian apodization
 
-* * noncircular apertures 
+* * noncircular apertures
 
 * * * n-sided regular polygons
 
@@ -64,7 +64,7 @@ Prysm uses numpy for array operations.  If your environment has [numba](http://n
 
 * An OceanOptics spectrometer file reader
 
-* An Object-Oriented Lens model based on physical optics.
+* An Object-Oriented Lens model based on physical optics
 
 ## Usage
 
@@ -102,4 +102,5 @@ See [docs](https://github.com/brandondube/prysm/tree/master/docs) -- the docstri
 
 ## Contributing
 
-If you find an issue with prysm, please open an [issue](https://github.com/brandondube/prysm/issues) or [pull request](https://github.com/brandondube/prysm/pulls).  Prysm has some usage of f-strings, so any code contributed is only expected to work on python 3.6+, and is licensed under the [MIT license](https://github.com/brandondube/prysm/blob/master/LICENSE.md).
+If you find an issue with prysm, please open an [issue](https://github.com/brandondube/prysm/issues) or [pull request](https://github.com/brandondube/prysm/pulls).  Prysm has some usage of f-strings, so any code contributed is only expected to work on python 3.6+, and is licensed under the [MIT license](https://github.com/brandondube/prysm/blob/master/LICENSE.md).  The library is
+most in need of contributions in the form of tests and documentation.
