@@ -14,7 +14,7 @@ def p():
 
 @pytest.fixture
 def p_tlt():
-    return Seidel(W111=1)
+    return Seidel(W111=1, samples=65)
 
 
 def test_create_pupil():
