@@ -69,7 +69,7 @@ def test_robertson_cct_is_valid():
     'F7',
     'F8',
     'F9',
-    'F10,'
+    'F10',
     'F11',
     'F12',
     'HP1',
