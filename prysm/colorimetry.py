@@ -217,7 +217,7 @@ def prepare_cie_1964_10deg_observer():
 
     '''
     tmp_list = []
-    p = Path(__file__) / 'color_data' / 'cie_xyz_1964_10deg_tristimulus_5nm.csv'
+    p = Path(__file__).parent / 'color_data' / 'cie_xyz_1964_10deg_tristimulus_5nm.csv'
     with open(p, 'r') as fid:
         reader = csv.reader(fid)
         for row in reader:
