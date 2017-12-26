@@ -231,7 +231,7 @@ def get_cmf(observer='1931_2deg'):
         observer.
 
     Args:
-        observer (`str): the observer to return.
+        observer (`str`): the observer to return - either `1931_2deg` or `1964_10deg`.
 
     Returns:
         `dict`: cmf dict.
