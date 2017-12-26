@@ -6,5 +6,5 @@ checks:
     code_rating: true
     duplicate_code: true
 filter:
-  exclude_paths:
+  excluded_paths:
     - tests/*
