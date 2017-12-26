@@ -4,7 +4,7 @@ import numpy as np
 
 import pytest
 
-from prysm import Pupil, PSF, MTF
+from prysm import Pupil, PSF, MTF, Seidel
 from prysm.psf import airydisk
 from prysm.otf import diffraction_limited_mtf
 
@@ -42,3 +42,17 @@ def test_diffprop_matches_analyticmtf(efl, epd, wvl):
     analytic_2 = diffraction_limited_mtf(fno, wvl, frequencies=uu)
     assert np.allclose(analytic_1, t, rtol=PRECISION, atol=PRECISION)
     assert np.allclose(analytic_2, s, rtol=PRECISION, atol=PRECISION)
+
+
+def test_array_orientation_consistency_tilt():
+    ''' The pupil array should be shaped as arr[x,y], as should the psf and MTF.
+        A linear phase error in the pupil along y should cause a motion of the
+        PSF in y.  Specifically, for a positive-signed phase, that should cause
+        a shift in the +y direction.
+    '''
+    samples = 128
+    p = Seidel(W111=1, samples=samples)
+    ps = PSF.from_pupil(p, 1)
+    idx_y, idx_x = np.unravel_index(ps.data.argmax(), ps.data.shape)  # row-major y, x
+    assert(idx_x == ps.center_x)
+    assert(idx_y > ps.center_y)
