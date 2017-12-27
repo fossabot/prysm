@@ -1,6 +1,7 @@
 # Prysm
 
 [![Build Status](https://travis-ci.org/brandondube/prysm.svg?branch=master)](https://travis-ci.org/brandondube/prysm)
+[![Documentation Status](https://readthedocs.org/projects/prysm/badge/?version=latest)](http://prysm.readthedocs.io/en/latest/?badge=latest)
 [![Code Quality](https://scrutinizer-ci.com/g/brandondube/prysm/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/brandondube/prysm/?branch=master)
 [![Coverage Status](https://coveralls.io/repos/github/brandondube/prysm/badge.svg?branch=master)](https://coveralls.io/github/brandondube/prysm?branch=master)
 
