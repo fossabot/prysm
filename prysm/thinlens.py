@@ -25,7 +25,7 @@ def object_to_image_dist(efl, object_distance):
 
     '''
     object_distance = guarantee_array(object_distance)
-    ret = 1 / efl - 1 / object_distance
+    ret = 1 / efl + 1 / object_distance
     return 1 / ret
 
 
@@ -121,9 +121,9 @@ def mag_to_fno(mag, infinite_fno, pupil_mag=1):
     '''Computes the working f/# from the magnification and infinite f/#
 
     Args:
-        mag (float or numpy.ndarray): linear or lateral magnification
-        infinite_fno (float): f/# as defined by EFL/EPD
-        pupil_mag (float): pupil magnification
+        mag (`float` or `numpy.ndarray`): linear or lateral magnification
+        infinite_fno (`float`): f/# as defined by EFL/EPD
+        pupil_mag (`float`): pupil magnification
 
     Returns:
         `float`: working f/number.
