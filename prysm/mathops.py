@@ -3,6 +3,8 @@
     utilize more high performance engines if they have them installed, or fall
     back to more widely available options in the case that they do not.
 '''
+from prysm.conf import config
+
 from math import (
     floor,
     ceil,
@@ -27,15 +29,12 @@ from numpy.fft import fftshift, ifftshift
 
 atan2 = arctan2
 
-from prysm.conf import config
-
 # numba funcs, cuda
 try:
     from numba import cuda, jit, vectorize
 except ImportError:
     # if Numba is not installed, create the jit decorator and have it return the
     # original function.
-
     def jit(signature_or_function=None, locals={}, target='cpu', cache=False, **options):
         if signature_or_function is None:
             def _jit(function):
@@ -88,23 +87,6 @@ def cast_array(array):
         return array.astype(np.complex64)
     else:
         return array.astype(np.complex128)
-
-
-def best_grid_size(size, tpb):
-    ''' Computes the best grid size for a gpu array, given an array size and
-        number of threads per block.
-
-    Args:
-        size (`tuple`): shape of the source array.
-
-        tpb (`int`): number of threads per block.
-
-    Returns:
-        `tuple`. TODO: doc more
-
-    '''
-    bpg = np.ceil(np.array(size, dtype=np.float) / tpb).astype(np.int).tolist()
-    return tuple(bpg)
 
 
 def cu_fft2(array):
