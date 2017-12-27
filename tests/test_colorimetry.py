@@ -27,11 +27,11 @@ def test_cmf_is_valid():
     ''' Tests if a cmf returns as valid data.
     '''
     obs = get_cmf()
-    assert('X' in obs)
-    assert('Y' in obs)
-    assert('Z' in obs)
-    assert('wvl' in obs)
-    assert(len(obs['X']) == len(obs['Y']) == len(obs['Z']) == len(obs['wvl']))
+    assert 'X' in obs
+    assert 'Y' in obs
+    assert 'Z' in obs
+    assert 'wvl' in obs
+    assert len(obs['X']) == len(obs['Y']) == len(obs['Z']) == len(obs['wvl'])
 
 
 def test_can_get_roberson_cct():
@@ -45,11 +45,11 @@ def test_robertson_cct_is_valid():
     ''' Tests if the Roberson CCT data is returned properly.
     '''
     cct = prepare_robertson_cct_data()
-    assert(len(cct['urd']) == 31)
-    assert(len(cct['K']) == 31)
-    assert(len(cct['u']) == 31)
-    assert(len(cct['v']) == 31)
-    assert(len(cct['dvdu']) == 31)
+    assert len(cct['urd']) == 31
+    assert len(cct['K']) == 31
+    assert len(cct['u']) == 31
+    assert len(cct['v']) == 31
+    assert len(cct['dvdu']) == 31
 
 
 @pytest.mark.parametrize('illuminant', [

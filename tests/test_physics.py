@@ -54,5 +54,5 @@ def test_array_orientation_consistency_tilt():
     p = Seidel(W111=1, samples=samples)
     ps = PSF.from_pupil(p, 1)
     idx_y, idx_x = np.unravel_index(ps.data.argmax(), ps.data.shape)  # row-major y, x
-    assert(idx_x == ps.center_x)
-    assert(idx_y > ps.center_y)
+    assert idx_x == ps.center_x
+    assert idx_y > ps.center_y
