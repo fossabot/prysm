@@ -21,20 +21,23 @@ def read_oceanoptics(file_path):
         txtlines = fid.readlines()
 
         wavelengths, values = [], []
-        idx = None
+        idx, ready_length, ready_spectral = None, False, False
         for i, line in enumerate(txtlines):
             if 'Number of Pixels in Spectrum' in line:
-                length = int(line.split()[-1])
+                length, ready_length = int(line.split()[-1]), True
             elif '>>>>>Begin Spectral Data<<<<<' in line:
-                idx = i
+                idx, ready_spectral = i, True
 
+        if not ready_length or not ready_spectral:
+            raise IOError('''File lacks line stating "Number of Pixels in Spectrum" or
+                             ">>>>>Begin Spectral Data<<<<<" and appears to be corrupt.''')
         data_lines = txtlines[idx + 1:]
         wavelengths = np.empty(length, dtype=config.precision)
         values = np.empty(length, dtype=config.precision)
         for idx, line in enumerate(data_lines):
-            wvl, v = line.split()
+            wvl, val = line.split()
             wavelengths[idx] = wvl
-            values[idx] = v
+            values[idx] = val
 
         return {
             'wvl': wavelengths,
