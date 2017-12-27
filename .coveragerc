@@ -8,3 +8,6 @@ exclude_lines =
 
     # ignore caught importerrors
     except ImportError:
+
+    # ignore asserts used to silence pyflakes
+    assert
