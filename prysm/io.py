@@ -17,10 +17,8 @@ def read_oceanoptics(file_path):
 
     '''
     with open(file_path, 'r') as fid:
-        # txt = fid.read()
         txtlines = fid.readlines()
 
-        wavelengths, values = [], []
         idx, ready_length, ready_spectral = None, False, False
         for i, line in enumerate(txtlines):
             if 'Number of Pixels in Spectrum' in line:
