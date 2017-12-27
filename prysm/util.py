@@ -133,7 +133,7 @@ def fold_array(array, axis=1):
 
 
 def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
-    ''' Reurns the given figure and/or axis if given one.  If they are None, creates a new fig/ax
+    ''' Reurns the given figure and/or axis if given one.  If they are None, creates a new fig/ax.
 
     Args:
         fig (`pyplot.figure`): figure.
@@ -141,7 +141,7 @@ def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
         ax (`pyplot.axis`): axis or array of axes.
 
         numax (`int`): number of axes in the desired figure.
-                     1 for most plots, 3 for plot_fourier_chain.
+                       1 for most plots, 3 for plot_fourier_chain.
 
     Returns:
         pyplot.figure:  A figure object.
@@ -160,13 +160,13 @@ def share_fig_ax(fig=None, ax=None, numax=1, sharex=False, sharey=False):
 
 
 def rms(array):
-    ''' Returns the RMS value of the valid elements of an array
+    ''' Returns the RMS value of the valid elements of an array.
 
     Args:
-        array (`numpy.ndarray`)
+        array (`numpy.ndarray`) array of values.
 
     Returns:
-        float.  RMS of the array
+        `float`. RMS of the array.
 
     '''
     non_nan = np.isfinite(array)
@@ -174,7 +174,7 @@ def rms(array):
 
 
 def guarantee_array(variable):
-    ''' Guarantees that a varaible is a numpy ndarray and supports -, *, +, and other operators
+    ''' Guarantees that a varaible is a numpy ndarray and supports -, *, +, and other operators.
 
     Args:
         variable (`number` or `numpy.ndarray`): variable to coalesce
