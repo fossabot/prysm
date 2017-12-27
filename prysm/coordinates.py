@@ -67,6 +67,9 @@ def uniform_cart_to_polar(x, y, data):
 
             `numpy.ndarray`: data uniformly sampled in (rho,phi).
 
+    Notes:
+        Assumes data is sampled along x = [-1,1] and y = [-1,1] over a square grid.
+
     '''
     # create a set of polar coordinates to interpolate onto
     xmax = x[-1]
