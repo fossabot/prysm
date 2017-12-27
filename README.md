@@ -102,7 +102,7 @@ Notice that FringeZernike is also a type of pupil, and pupil objects support add
 
 ## Documentation
 
-See [docs](https://github.com/brandondube/prysm/tree/master/docs) -- the docstrings and [Examples](https://github.com/brandondube/prysm/tree/master/Examples) are much more up-to-date and probably more useful.  The docs are currently just an API reference.
+See [prysm.readthedocs.io/](https://github.com/brandondube/prysm/tree/master/docs) -- the docstrings and [Examples](https://github.com/brandondube/prysm/tree/master/Examples) are much more up-to-date and probably more useful.  The docs are currently just an API reference and will require searching to even find anything within them.
 
 ## Contributing
 
