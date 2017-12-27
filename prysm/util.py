@@ -37,7 +37,10 @@ def is_power_of_2(value):
         https://stackoverflow.com/questions/29480680/finding-if-a-number-is-a-power-of-2-using-recursion
 
     '''
-    return bool(value and not value & (value - 1))
+    if value is 1:
+        return False
+    else:
+        return bool(value and not value & (value - 1))
 
 
 def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
