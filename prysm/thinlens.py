@@ -1,9 +1,8 @@
 ''' A collection of thin lens equations for system modeling
 '''
-import numpy as np
-
 from prysm.util import guarantee_array
 from prysm.fringezernike import _normalizations
+from prysm.mathops import atan2, sin
 
 
 def object_to_image_dist(efl, object_distance):
@@ -45,7 +44,7 @@ def image_dist_epd_to_na(image_distance, epd):
     image_distance = guarantee_array(image_distance)
 
     rho = epd / 2
-    marginal_ray_angle = abs(arctan(rho/image_distance))
+    marginal_ray_angle = abs(atan2(rho, image_distance))
     return marginal_ray_angle
 
 
@@ -127,7 +126,7 @@ def mag_to_fno(mag, infinite_fno, pupil_mag=1):
         pupil_mag (float): pupil magnification
 
     Returns:
-        working fno.
+        `float`: working f/number.
 
     '''
     mag = guarantee_array(mag)
