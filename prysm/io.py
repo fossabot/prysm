@@ -2,6 +2,8 @@
 '''
 import numpy as np
 
+from prysm.conf import config
+
 
 def read_oceanoptics(file_path):
     ''' Reads spectral transmission data from an ocean optics spectrometer
@@ -21,16 +23,20 @@ def read_oceanoptics(file_path):
         wavelengths, values = [], []
         idx = None
         for i, line in enumerate(txtlines):
-            if '>>>>>Begin Spectral Data<<<<<' in line:
+            if 'Number of Pixels in Spectrum' in line:
+                length = int(line.split()[-1])
+            elif '>>>>>Begin Spectral Data<<<<<' in line:
                 idx = i
 
         data_lines = txtlines[idx + 1:]
-        for line in data_lines:
+        wavelengths = np.empty(length, dtype=config.precision)
+        values = np.empty(length, dtype=config.precision)
+        for idx, line in enumerate(data_lines):
             wvl, v = line.split()
-            wavelengths.append(float(wvl))
-            values.append(float(v))
+            wavelengths[idx] = wvl
+            values[idx] = v
 
         return {
-            'wvl': np.asarray(wavelengths),
-            'values': np.asarray(values),
+            'wvl': wavelengths,
+            'values': values,
         }
