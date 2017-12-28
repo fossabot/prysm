@@ -1056,10 +1056,15 @@ def xyY_to_XYZ(xyY):
     '''
     xyY = np.asarray(xyY)
     x, y, Y = xyY[..., 0], xyY[..., 1], xyY[..., 2]
-
-    X = (x * Y) / y
+    y_l = y.copy()
+    idxs = y_l == 0
+    y_l[idxs] = 0.3
+    X = (x * Y) / y_l
     Y = Y
-    Z = ((1 - x - y) * Y) / y
+    Z = ((1 - x - y_l) * Y) / y_l
+    X[idxs] = 0
+    Y[idxs] = 0
+    Z[idxs] = 0
 
     shape = X.shape
     return np.stack((X, Y, Z), axis=len(shape))
@@ -1478,11 +1483,16 @@ def sRGB_oetf(L):
         L (`numpy.ndarray`): sRGB values.
 
     Returns:
-        `numpy.ndarray`: V', V modulated by the oetf.
+        `numpy.ndarray`: L', L modulated by the oetf.
 
+    Notes:
+        input must be an array, cannot be a scalar.
     '''
     L = np.asarray(L)
-    return np.where(L <= 0.0031308, L * 12.92, 1.055 * (L ** (1 / 2.4)) - 0.055)
+    zeros = L <= 0
+    L_l = L.copy()
+    L_l[zeros] = 1e-10
+    return np.where(L_l <= 0.0031308, L_l * 12.92, 1.055 * (L_l ** (1 / 2.4)) - 0.055)
 
 
 def sRGB_reverse_oetf(V):
