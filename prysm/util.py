@@ -56,7 +56,7 @@ def pupil_sample_to_psf_sample(pupil_sample, num_samples, wavelength, efl):
         efl (`float`): effective focal length of the optical system in mm.
 
     Returns:
-        float: the sample spacing in the PSF plane.
+        `float`: the sample spacing in the PSF plane.
 
     '''
     return (wavelength * efl * 1e3) / (pupil_sample * num_samples)
@@ -75,10 +75,10 @@ def psf_sample_to_pupil_sample(psf_sample, num_samples, wavelength, efl):
         efl (`float`): effective focal length of the optical system in mm.
 
     Returns:
-        float: the sample spacing in the pupil plane.
+        `float`: the sample spacing in the pupil plane.
 
     '''
-    return (psf_sample * num_samples) / (wavelength * efl * 1e3)
+    return (wavelength * efl * 1e3) / (psf_sample * num_samples)
 
 
 def correct_gamma(img, encoding=2.2):
