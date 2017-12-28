@@ -5,7 +5,7 @@ engines:
     python_version: 3
   duplication:
     enable: true
-    exclude_paths:
-      - Examples/*
-      - Performance/*
-      - tests/*
+exclude_paths:
+  - Examples/*
+  - Performance/*
+  - tests/*
