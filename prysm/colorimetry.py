@@ -417,6 +417,59 @@ def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=300, fig=None, ax=None):
     return fig, ax
 
 
+@lru_cache()
+def prepare_cie_1976_background_raster(xlow, xhigh, ylow, yhigh, samples):
+    ''' Prepares the background for a CIE 1976 plot.
+
+    Args:
+        xlow (`iterable`): left bound of the image.
+
+        xhigh (`iterable`): right bound of the image.
+
+        ylow (`iterable`): lower bound of the image.
+
+        yhigh (`iterable`): upper bound of the image.
+
+        samples (`int`): number of 1D samples within the region of interest,
+            total pixels will be samples^2.
+
+    Returns:
+        `numpy.ndarray`: 3D array of sRGB values in the range [0,1], [:,:,[R,G,B]].
+
+    '''
+    wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
+                500, 505, 510, 515, 520, 525, 530, 535, 570, 700]
+
+    wvl_mask_uv = XYZ_to_uvprime(wavelength_to_XYZ(wvl_mask))
+
+    # make equally spaced u,v coordinates on a grid
+    u = np.linspace(xlow, xhigh, samples)
+    v = np.linspace(ylow, yhigh, samples)
+    uu, vv = np.meshgrid(u, v)
+
+    # stack u and v for vectorized computations, also mask out negative values
+    uuvv = np.stack((uu, vv), axis=2)
+
+    # make a mask, of value 1 outside the horseshoe, 0 inside
+    triangles = Delaunay(wvl_mask_uv, qhull_options='QJ Qf')
+    wvl_mask = triangles.find_simplex(uuvv) < 0
+
+    xy = uvprime_to_xy(uuvv)
+    xyz = xy_to_XYZ(xy)
+    data = XYZ_to_sRGB(xyz)
+
+    # normalize and clip sRGB values.
+    maximum = np.max(data, axis=-1)
+    maximum[maximum == 0] = 1
+    data = np.clip(data / maximum[:, :, np.newaxis], 0, 1)
+
+    # now make an alpha/transparency mask to hide the background
+    alpha = np.ones((samples, samples))
+    alpha[wvl_mask] = 0
+    data = np.dstack((data, alpha))
+    return data
+
+
 def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400, fig=None, ax=None):
     ''' Creates a CIE 1976 plot.
 
@@ -459,9 +512,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400, fig=None, ax=None)
     if ylim[1] > 0.6:
         ylim_bg[1] = 0.6
 
-    # create lists of wavelengths and map them to uv,
-    # a reduced set for a faster mask and
-    # yet another set for annotation.
+    # create lists of wavelengths and map them to uv for the border line and annotation.
     wvl_line = np.arange(400, 700, 2)
     wvl_line_uv = XYZ_to_uvprime(wavelength_to_XYZ(wvl_line))
 
@@ -469,43 +520,13 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400, fig=None, ax=None)
                     500, 510, 520, 540, 555, 570, 580, 590,
                     600, 610, 625, 700, 830]
 
-    wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
-                500, 505, 510, 515, 520, 525, 530, 535, 570, 700]
+    background = prepare_cie_1976_background_raster(*xlim_bg, *ylim_bg, samples)
 
-    wvl_mask_uv = XYZ_to_uvprime(wavelength_to_XYZ(wvl_mask))
-
-    # make equally spaced u,v coordinates on a grid
-    u = np.linspace(xlim_bg[0], xlim_bg[1], samples)
-    v = np.linspace(ylim_bg[0], ylim_bg[1], samples)
-    uu, vv = np.meshgrid(u, v)
-
-    # stack u and v for vectorized computations, also mask out negative values
-    uuvv = np.stack((uu, vv), axis=2)
-
-    # make a mask, of value 1 outside the horseshoe, 0 inside
-    triangles = Delaunay(wvl_mask_uv, qhull_options='QJ Qf')
-    wvl_mask = triangles.find_simplex(uuvv) < 0
-
-    xy = uvprime_to_xy(uuvv)
-    xyz = xy_to_XYZ(xy)
-    dat = XYZ_to_sRGB(xyz)
-
-    # normalize and clip sRGB values.
-    maximum = np.max(dat, axis=-1)
-    dat /= maximum[..., np.newaxis]
-    dat = np.clip(dat, 0, 1)
-
-    # now make an alpha/transparency mask to hide the background
-    # and flip u,v axes because of column-major symantics
-    alpha = np.ones((samples, samples))
-    alpha[wvl_mask] = 0
-    dat = np.dstack((dat, alpha))
-
-    # lastly, duplicate the lowest wavelength so that the boundary line is closed
+    # duplicate the lowest wavelength so that the boundary line is closed
     wvl_line_uv = np.vstack((wvl_line_uv, wvl_line_uv[0, :]))
 
     fig, ax = share_fig_ax(fig, ax)
-    ax.imshow(dat,
+    ax.imshow(background,
               extent=[*xlim_bg, *ylim_bg],
               interpolation='bilinear',
               origin='lower')
@@ -1489,9 +1510,9 @@ def sRGB_oetf(L):
         input must be an array, cannot be a scalar.
     '''
     L = np.asarray(L)
-    zeros = L <= 0
+    negative = L < 0
     L_l = L.copy()
-    L_l[zeros] = 1e-10
+    L_l[negative] = 0.0
     return np.where(L_l <= 0.0031308, L_l * 12.92, 1.055 * (L_l ** (1 / 2.4)) - 0.055)
 
 
