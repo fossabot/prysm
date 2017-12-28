@@ -1,0 +1,11 @@
+---
+engines:
+  pylint:
+    enable: true
+    python_version: 3
+  duplication:
+    enable: true
+    exclude_paths:
+      - Examples/*
+      - Performance/*
+      - tests/*
