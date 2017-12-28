@@ -18,7 +18,7 @@ from matplotlib import ticker
 
 from prysm.conf import config
 from prysm.util import share_fig_ax, colorline, smooth
-from prysm.mathops import atan2, pi, cos, sin, exp, sqrt, arccos
+from prysm.mathops import atan2, pi, cos, sin, exp, sqrt, arccos, jit
 
 # some CIE constants
 CIE_K = 24389 / 27
@@ -735,6 +735,17 @@ def cie_1976_plankian_locust(trange=(2000, 10000), num_points=100,
     return fig, ax
 
 
+@jit
+def multi_cct_duv_to_upvp(cct, duv):
+    upvp = np.empty((len(cct), len(duv), 2))
+    for i, cct_v in enumerate(cct):
+        for j, duv_v in enumerate(duv):
+            values = CCT_Duv_to_uvprime(cct_v, duv_v)
+            upvp[j, i, 0] = values[0]
+            upvp[j, i, 1] = values[1]
+    return upvp
+
+
 def cct_duv_diagram(samples=100, fig=None, ax=None):
     ''' Creates a CCT-Duv diagram, for more information see Calculation of
         CCT and Duv and Practical Conversion Formulae, Yoshi Ohno, 2011.
@@ -754,17 +765,15 @@ def cct_duv_diagram(samples=100, fig=None, ax=None):
             `matplotlib.axes.Axis`: Axis containing the plot.
 
     '''
-    raise UserWarning('this type of plot is not yet properly implemented')
+    # raise UserWarning('this type of plot is not yet properly implemented')
     xlim = (2000, 10000)
     ylim = (-0.03, 0.03)
 
     cct = np.linspace(xlim[0], xlim[1], samples)  # todo: even sampling along log, not linear
     duv = np.linspace(ylim[0], ylim[1], samples)
 
-    upvp = np.empty((samples, samples, 2))
-    for i, cct_v in enumerate(cct):
-        for j, duv_v in enumerate(duv):
-            upvp[i, j, :] = CCT_Duv_to_uvprime(cct_v, duv_v)
+    upvp = multi_cct_duv_to_upvp(cct, duv)
+    cct, duv = np.meshgrid(cct, duv)
 
     xy = uvprime_to_xy(upvp)
     xyz = xy_to_XYZ(xy)
@@ -782,11 +791,9 @@ def cct_duv_diagram(samples=100, fig=None, ax=None):
               origin='lower',
               aspect='auto')
 
-    tick = ticker.ScalarFormatter()
-    tick.set_powerlimits((-3, 20))
-    ax.xaxis.set_major_formatter(tick)
-    ax.set(xlim=xlim, xlabel='CCT', xscale='log',
-           ylim=ylim, ylabel='Duv')
+    ax.set(xlim=xlim, xlabel='CCT [K]',
+           ylim=ylim, ylabel='Duv [a.u.]')
+
     return fig, ax
 
 
@@ -1358,7 +1365,11 @@ def CCT_Duv_to_uvprime(CCT, Duv, delta_t=0.01):
             line to the plankian locust.  Default to 0.01, Ohno suggested (2011).
 
     Returns:
-        `numpy.ndarray` with last two dimensions corresponding to (u',v')
+        `tuple` containing:
+
+            `float` u'
+
+            `float` v'
 
     '''
     CCT, Duv = np.asarray(CCT), np.asarray(Duv)
@@ -1385,7 +1396,7 @@ def CCT_Duv_to_uvprime(CCT, Duv, delta_t=0.01):
     du, dv = u1 - u0, v1 - v0
     u = u0 + Duv * dv / sqrt(du**2 + dv**2)
     v = u0 + Duv * du / sqrt(du**2 + dv**2)
-    return u, v * 1.5  # factor of 1.5 converts v -> v'
+    return u, v * 1.5**2  # factor of 1.5 converts v -> v'
 
 
 def spectrum_to_CCT_Duv(spectrum_dict):
