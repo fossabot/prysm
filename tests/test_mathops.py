@@ -57,3 +57,9 @@ def test_fft2(sample_data_2d):
 def test_ifft2(sample_data_2d):
     result = mathops.ifft2(sample_data_2d)
     assert type(result) is np.ndarray
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_cast_array(dtype):
+    arr = np.ones((TEST_ARR_SIZE, TEST_ARR_SIZE), dtype=dtype)
+    assert mathops.cast_array(arr).all()
