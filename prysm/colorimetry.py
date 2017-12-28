@@ -319,6 +319,58 @@ def normalize_spectrum(spectrum):
     }
 
 
+@lru_cache()
+def prepare_cie_1931_background_raster(xlow, xhigh, ylow, yhigh, samples):
+    ''' Prepares the background for a CIE 1931 plot.
+
+    Args:
+        xlow (`iterable`): left bound of the image.
+
+        xhigh (`iterable`): right bound of the image.
+
+        ylow (`iterable`): lower bound of the image.
+
+        yhigh (`iterable`): upper bound of the image.
+
+        samples (`int`): number of 1D samples within the region of interest,
+            total pixels will be samples^2.
+
+    Returns:
+        `numpy.ndarray`: 3D array of sRGB values in the range [0,1], [:,:,[R,G,B]].
+
+    '''
+    wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
+                500, 505, 510, 515, 520, 525, 530, 540, 555, 570, 700]
+
+    wvl_mask_xy = XYZ_to_xy(wavelength_to_XYZ(wvl_mask))
+
+    # make equally spaced u,v coordinates on a grid
+    x = np.linspace(xlow, xhigh, samples)
+    y = np.linspace(ylow, yhigh, samples)
+    xx, yy = np.meshgrid(x, y)
+
+    # stack u and v for vectorized computations, also mask out negative values
+    xxyy = np.stack((xx, yy), axis=2)
+
+    # make a mask, of value 1 outside the horseshoe, 0 inside
+    triangles = Delaunay(wvl_mask_xy, qhull_options='QJ Qf')
+    wvl_mask = triangles.find_simplex(xxyy) < 0
+
+    xyz = xy_to_XYZ(xxyy)
+    data = XYZ_to_sRGB(xyz)
+
+    # normalize and clip sRGB values.
+    maximum = np.max(data, axis=-1)
+    maximum[maximum == 0] = 1
+    data = np.clip(data / maximum[:, :, np.newaxis], 0, 1)
+
+    # now make an alpha/transparency mask to hide the background
+    alpha = np.ones((samples, samples))
+    alpha[wvl_mask] = 0
+    data = np.dstack((data, alpha))
+    return data
+
+
 def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=300, fig=None, ax=None):
     ''' Creates a CIE 1931 plot.
 
@@ -370,42 +422,13 @@ def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=300, fig=None, ax=None):
                     500, 510, 520, 540, 555, 570, 580, 590,
                     600, 615, 630, 700, 830]
 
-    wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
-                500, 505, 510, 515, 520, 525, 530, 540, 555, 570, 700]
+    data = prepare_cie_1931_background_raster(*xlim_bg, *ylim_bg, samples)
 
-    wvl_mask_xy = XYZ_to_xy(wavelength_to_XYZ(wvl_mask))
-
-    # make equally spaced u,v coordinates on a grid
-    x = np.linspace(xlim_bg[0], xlim_bg[1], samples)
-    y = np.linspace(ylim_bg[0], ylim_bg[1], samples)
-    xx, yy = np.meshgrid(x, y)
-
-    # stack u and v for vectorized computations, also mask out negative values
-    xxyy = np.stack((xx, yy), axis=2)
-
-    # make a mask, of value 1 outside the horseshoe, 0 inside
-    triangles = Delaunay(wvl_mask_xy, qhull_options='QJ Qf')
-    wvl_mask = triangles.find_simplex(xxyy) < 0
-
-    xyz = xy_to_XYZ(xxyy) / 220
-    dat = XYZ_to_sRGB(xyz)
-
-    # normalize and clip sRGB values.
-    maximum = np.max(dat, axis=-1)
-    dat /= maximum[..., np.newaxis]
-    dat = np.clip(dat, 0, 1)
-
-    # now make an alpha/transparency mask to hide the background
-    # and flip u,v axes because of column-major symantics
-    alpha = np.ones((samples, samples))
-    alpha[wvl_mask] = 0
-    dat = np.dstack((dat, alpha))
-
-    # lastly, duplicate the lowest wavelength so that the boundary line is closed
+    # duplicate the lowest wavelength so that the boundary line is closed
     wvl_line_xy = np.vstack((wvl_line_xy, wvl_line_xy[0, :]))
 
     fig, ax = share_fig_ax(fig, ax)
-    ax.imshow(dat,
+    ax.imshow(data,
               extent=[*xlim_bg, *ylim_bg],
               interpolation='bilinear',
               origin='lower')
@@ -470,7 +493,9 @@ def prepare_cie_1976_background_raster(xlow, xhigh, ylow, yhigh, samples):
     return data
 
 
-def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400, fig=None, ax=None):
+def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400,
+                  annotate_wvl=True, draw_plankian_locust=False,
+                  fig=None, ax=None):
     ''' Creates a CIE 1976 plot.
 
     Args:
@@ -482,6 +507,10 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400, fig=None, ax=None)
 
         samples (`int`): number of 1D samples within the region of interest,
             total pixels will be samples^2.
+
+        annotate_wvl (`bool`): whether to plot wavelength annotations.
+
+        draw_plankian_locust (`bool`): whether to draw the plankian locust.
 
         fig (`matplotlib.figure.Figure`): figure to plot in.
 
@@ -515,15 +544,10 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400, fig=None, ax=None)
     # create lists of wavelengths and map them to uv for the border line and annotation.
     wvl_line = np.arange(400, 700, 2)
     wvl_line_uv = XYZ_to_uvprime(wavelength_to_XYZ(wvl_line))
-
-    wvl_annotate = [360, 400, 455, 470, 480, 490,
-                    500, 510, 520, 540, 555, 570, 580, 590,
-                    600, 610, 625, 700, 830]
-
-    background = prepare_cie_1976_background_raster(*xlim_bg, *ylim_bg, samples)
-
     # duplicate the lowest wavelength so that the boundary line is closed
     wvl_line_uv = np.vstack((wvl_line_uv, wvl_line_uv[0, :]))
+
+    background = prepare_cie_1976_background_raster(*xlim_bg, *ylim_bg, samples)
 
     fig, ax = share_fig_ax(fig, ax)
     ax.imshow(background,
@@ -531,7 +555,13 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400, fig=None, ax=None)
               interpolation='bilinear',
               origin='lower')
     ax.plot(wvl_line_uv[:, 0], wvl_line_uv[:, 1], ls='-', c='0.25', lw=2.5)
-    fig, ax = cie_1976_wavelength_annotations(wvl_annotate, fig=fig, ax=ax)
+    if annotate_wvl:
+        wvl_annotate = [360, 400, 455, 470, 480, 490,
+                        500, 510, 520, 540, 555, 570, 580, 590,
+                        600, 610, 625, 700, 830]
+        fig, ax = cie_1976_wavelength_annotations(wvl_annotate, fig=fig, ax=ax)
+    if draw_plankian_locust:
+        fig, ax = cie_1976_plankian_locust(fig=fig, ax=ax)
     ax.set(xlim=xlim, xlabel='CIE u\'',
            ylim=ylim, ylabel='CIE v\'')
 
