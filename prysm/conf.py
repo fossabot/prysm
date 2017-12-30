@@ -8,13 +8,6 @@ _parallel_rgb = True
 _backend = 'np'
 _zernike_base = 1
 
-try:
-    import pyculib
-    assert pyculib  # silence pyflakes
-    # _backend = 'cu'  # for now, don't enable cuda (only 2-3x perf gain)
-except ImportError:
-    pass
-
 
 class Config(object):
     ''' global configuration of prysm.
@@ -34,9 +27,8 @@ class Config(object):
                 things down if arrays are relatively small due to the spinup
                 time of new processes.
 
-            backend (`string`): a supported backend.  Current options are "np"
-                for numpy, or "cuda" for CUDA GPU based computation based on
-                numba and pyculib.
+            backend (`string`): a supported backend.  Current options are only
+                "np" for numpy.
 
             zernike_base (`int`): base for zernikes; start at 0 or 1.
 
@@ -74,14 +66,11 @@ class Config(object):
         _parallel_rgb = parallel
 
     def set_backend(self, backend):
-        if backend.lower() not in ('np', 'numpy', 'cu', 'cuda'):
-            raise ValueError('Backend must be numpy or cuda.')
+        if backend.lower() not in ('np', 'numpy'):
+            raise ValueError('Backend must be numpy')
 
         global _backend
-        if backend.lower() in ('np', 'numpy'):
-            _backend = 'np'
-        else:
-            _backend = 'cu'
+        _backend = 'np'
 
     def set_zernike_base(self, base):
         if base not in (0, 1):

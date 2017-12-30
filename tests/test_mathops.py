@@ -6,7 +6,6 @@ import numpy as np
 
 from prysm import mathops
 
-pyculib = pytest.importorskip('pyculib')
 np.random.seed(1234)
 TEST_ARR_SIZE = 32
 
@@ -14,18 +13,6 @@ TEST_ARR_SIZE = 32
 @pytest.fixture
 def sample_data_2d():
     return np.random.rand(TEST_ARR_SIZE, TEST_ARR_SIZE)
-
-
-@pytest.mark.skipif(not pyculib, reason='pyculib not installed / no CUDA support here.')
-def test_cufft_returns_array_same_size(sample_data_2d):
-    result = mathops.cu_fft2(sample_data_2d)
-    assert result.shape == sample_data_2d.shape
-
-
-@pytest.mark.skipif(not pyculib, reason='pyculib not installed / no CUDA support here.')
-def test_cuifft_returns_array_same_size(sample_data_2d):
-    result = mathops.cu_ifft2(sample_data_2d)
-    assert result.shape == sample_data_2d.shape
 
 
 def test_mathops_handles_own_jit_and_vectorize_definitions():
