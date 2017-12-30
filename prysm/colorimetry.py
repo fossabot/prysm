@@ -138,7 +138,7 @@ def prepare_robertson_cct_data():
 
 
 @lru_cache()
-def prepare_source_spd(source='D65'):
+def prepare_illuminant_spectrum(source='D65'):
     ''' Prepares the SPD for a given source.
 
     Args:
@@ -886,7 +886,7 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'
     if ill_type is 'blackbody':
         ill_spectrum = blackbody_spectral_power_distribution(temperature, wvl_cmf)
     else:
-        ill_spectrum = prepare_source_spd(illuminant)
+        ill_spectrum = prepare_illuminant_spectrum(illuminant)
 
         try:
             can_be_direct_illuminant = np.allclose(wvl_cmf, ill_spectrum['wvl'])

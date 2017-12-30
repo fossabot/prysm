@@ -57,7 +57,7 @@ def test_robertson_cct_is_valid():
     'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12',
     'HP1', 'HP2', 'HP3', 'HP4', 'HP5'])
 def test_can_get_illuminant(illuminant):
-    ill_spectrum = colorimetry.prepare_source_spd(illuminant)
+    ill_spectrum = colorimetry.prepare_illuminant_spectrum(illuminant)
     assert ill_spectrum
 
 
