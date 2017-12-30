@@ -225,7 +225,7 @@ def prepare_cie_1964_10deg_observer():
     return value_array_to_tristimulus(tmp_list[1:])
 
 
-def get_cmf(observer='1931_2deg'):
+def prepare_cmf(observer='1931_2deg'):
     ''' Safely returns the color matching function dictionary for the specified
         observer.
 
@@ -818,7 +818,7 @@ def spectrum_to_XYZ_emissive(spectrum_dict, cmf='1931_2deg'):
     '''
     wvl, values = spectrum_dict['wvl'], spectrum_dict['values']
 
-    cmf = get_cmf(cmf)
+    cmf = prepare_cmf(cmf)
     wvl_cmf = cmf['wvl']
     try:
         can_be_direct = np.allclose(wvl_cmf, wvl)
@@ -872,7 +872,7 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'
         # standard illuminant, not implemented
         raise ValueError('Must use black body illuminants or CIE standard illuminants')
 
-    cmf = get_cmf(cmf)
+    cmf = prepare_cmf(cmf)
     wvl_cmf = cmf['wvl']
     try:
         can_be_direct = np.allclose(wvl_cmf, wvl)
@@ -922,7 +922,7 @@ def wavelength_to_XYZ(wavelength, observer='1931_2deg'):
     '''
     wavelength = np.asarray(wavelength, dtype=config.precision)
 
-    cmf = get_cmf(observer)
+    cmf = prepare_cmf(observer)
     wvl, X, Y, Z = cmf['wvl'], cmf['X'], cmf['Y'], cmf['Z']
 
     ia = {'bounds_error': False, 'fill_value': 0, 'assume_sorted': True}
