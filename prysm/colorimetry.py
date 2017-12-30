@@ -14,7 +14,6 @@ from scipy.constants import c, h, k
 # k - boltzman constant
 
 from matplotlib.collections import LineCollection
-from matplotlib import ticker
 
 from prysm.conf import config
 from prysm.util import share_fig_ax, colorline, smooth
@@ -457,7 +456,8 @@ def render_cie_1976_background(xlow, xhigh, ylow, yhigh, samples):
             total pixels will be samples^2.
 
     Returns:
-        `numpy.ndarray`: 3D array of sRGB values in the range [0,1], [:,:,[R,G,B]].
+        `numpy.ndarray`: 3D array of sRGB values in the range [0,1]
+                         with shape [samples,samples,[R,G,B]].
 
     '''
     wvl_mask = [400, 430, 460, 465, 470, 475, 480, 485, 490, 495,
