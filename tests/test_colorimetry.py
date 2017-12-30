@@ -61,7 +61,7 @@ def test_can_get_illuminant(illuminant):
     assert ill_spectrum
 
 
-def test_blackbody_spd_correctness():
+def test_blackbody_spectrum_correctness():
     pass
 
 

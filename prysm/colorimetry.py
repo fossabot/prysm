@@ -282,7 +282,7 @@ def plot_spectrum(spectrum_dict, xrange=(370, 730), yrange=(0, 100), smoothing=N
     return fig, ax
 
 
-def blackbody_spectral_power_distribution(temperature, wavelengths):
+def blackbody_spectrum(temperature, wavelengths):
     ''' Computes the spectral power distribution of a black body at a given
         temperature.
 
@@ -884,7 +884,7 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'
         values = dat_interpf(wvl_cmf)
 
     if ill_type is 'blackbody':
-        ill_spectrum = blackbody_spectral_power_distribution(temperature, wvl_cmf)
+        ill_spectrum = blackbody_spectrum(temperature, wvl_cmf)
     else:
         ill_spectrum = prepare_illuminant_spectrum(illuminant)
 
@@ -1051,7 +1051,7 @@ def XYZ_to_Luv(xyz, refwhite='bb_6500'):
     up, vp = upvp[..., 0], upvp[..., 1]
 
     wvl = np.arange(360, 830, 5)
-    spectrum = blackbody_spectral_power_distribution(6500, wvl)
+    spectrum = blackbody_spectrum(6500, wvl)
     ref_xyz = spectrum_to_XYZ_emissive(wvl, spectrum)
     ref_upvp = XYZ_to_uvprime(ref_xyz)
     ref_up, ref_vp = ref_upvp[..., 0], ref_upvp[..., 1]
@@ -1375,8 +1375,8 @@ def CCT_Duv_to_uvprime(CCT, Duv, delta_t=0.01):
     CCT, Duv = np.asarray(CCT), np.asarray(Duv)
 
     wvl = np.arange(360, 835, 5)
-    bb_spec_0 = blackbody_spectral_power_distribution(CCT, wvl)
-    bb_spec_1 = blackbody_spectral_power_distribution(CCT + delta_t, wvl)
+    bb_spec_0 = blackbody_spectrum(CCT, wvl)
+    bb_spec_1 = blackbody_spectrum(CCT + delta_t, wvl)
     bb_spec_0 = {
         'wvl': wvl,
         'values': bb_spec_0,
