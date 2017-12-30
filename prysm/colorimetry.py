@@ -169,11 +169,11 @@ def prepare_illuminant_spectrum(illuminant='D65', bb_wvl=None, bb_norm=True):
         else:
             return spec
     else:
-        return prepare_ciesource_spectrum(illuminant)
+        return _prepare_ciesource_spectrum(illuminant)
 
 
 @lru_cache()
-def prepare_ciesource_spectrum(illuminant):
+def _prepare_ciesource_spectrum(illuminant):
     ''' Retrives a CIE standard source from its csv file.
 
     Args:
