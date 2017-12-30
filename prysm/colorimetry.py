@@ -320,7 +320,7 @@ def normalize_spectrum(spectrum):
 
 
 @lru_cache()
-def prepare_cie_1931_background_raster(xlow, xhigh, ylow, yhigh, samples):
+def render_cie_1931_background(xlow, xhigh, ylow, yhigh, samples):
     ''' Prepares the background for a CIE 1931 plot.
 
     Args:
@@ -422,7 +422,7 @@ def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=300, fig=None, ax=None):
                     500, 510, 520, 540, 555, 570, 580, 590,
                     600, 615, 630, 700, 830]
 
-    data = prepare_cie_1931_background_raster(*xlim_bg, *ylim_bg, samples)
+    data = render_cie_1931_background(*xlim_bg, *ylim_bg, samples)
 
     # duplicate the lowest wavelength so that the boundary line is closed
     wvl_line_xy = np.vstack((wvl_line_xy, wvl_line_xy[0, :]))
@@ -441,7 +441,7 @@ def cie_1931_plot(xlim=(0, 0.9), ylim=None, samples=300, fig=None, ax=None):
 
 
 @lru_cache()
-def prepare_cie_1976_background_raster(xlow, xhigh, ylow, yhigh, samples):
+def render_cie_1976_background(xlow, xhigh, ylow, yhigh, samples):
     ''' Prepares the background for a CIE 1976 plot.
 
     Args:
@@ -547,7 +547,7 @@ def cie_1976_plot(xlim=(-0.09, 0.68), ylim=None, samples=400,
     # duplicate the lowest wavelength so that the boundary line is closed
     wvl_line_uv = np.vstack((wvl_line_uv, wvl_line_uv[0, :]))
 
-    background = prepare_cie_1976_background_raster(*xlim_bg, *ylim_bg, samples)
+    background = render_cie_1976_background(*xlim_bg, *ylim_bg, samples)
 
     fig, ax = share_fig_ax(fig, ax)
     ax.imshow(background,
