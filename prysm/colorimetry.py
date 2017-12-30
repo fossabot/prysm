@@ -137,22 +137,58 @@ def prepare_robertson_cct_data():
     }
 
 
-@lru_cache()
-def prepare_illuminant_spectrum(source='D65'):
-    ''' Prepares the SPD for a given source.
+def prepare_illuminant_spectrum(illuminant='D65', bb_wvl=None, bb_norm=True):
+    ''' Prepares the SPD for a given illuminant.
 
     Args:
-        source (`str`): one of (A, B, C, D50, D55, D65, E, F1..F12, HP1..HP5).
+        illuminant (`str`): one of (A, B, C, D50, D55, D65, E, F1..F12, HP1..HP5)
+                            or bb_xxxx, for "blackbody_temperature."
+
+        bb_wvl (`numpy.ndarray`): array of wavelengths to compute a requested black body
+                                  spd at.
+
+        bb_norm (`bool`): whether to normalize a computed blackbody spectrum.
 
     Returns:
         `dict` with keys: `wvl`, `values`
 
     '''
-    if source[0:2].upper() == 'HP':
+    if illuminant[0:2].lower() == 'bb':
+        _, temp = illuminant.split('_')
+        if bb_wvl is None:
+            bb_wvl = np.arange(380, 780, 5, dtype=config.precision)
+        spd = blackbody_spectrum(float(temp), bb_wvl)
+        spec = {
+            'wvl': bb_wvl,
+            'values': spd
+        }
+        if bb_norm is True:
+            spec = normalize_spectrum(spec, to='peak 560')
+            spec['values'] *= 100
+            return spec
+        else:
+            return spec
+    else:
+        return prepare_ciesource_spectrum(illuminant)
+
+
+@lru_cache()
+def prepare_ciesource_spectrum(illuminant):
+    ''' Retrives a CIE standard source from its csv file.
+
+    Args:
+        illuminant (`str`): one of (A, B, C, D50, D55, D65, E, F1..F12, HP1..HP5)
+                                or bb_xxxx, for "blackbody_temperature."
+
+    Returns:
+        `dict` with keys: `wvl`, `values`
+
+    '''
+    if illuminant[0:2].upper() == 'HP':
         file = CIE_ILLUMINANT_METADATA['files']['HP']
     else:
-        file = CIE_ILLUMINANT_METADATA['files'][source[0].upper()]
-    column = CIE_ILLUMINANT_METADATA['columns'][source.upper()]
+        file = CIE_ILLUMINANT_METADATA['files'][illuminant[0].upper()]
+    column = CIE_ILLUMINANT_METADATA['columns'][illuminant.upper()]
 
     tmp_list = []
     p = Path(__file__).parent / 'color_data' / file
@@ -300,21 +336,29 @@ def blackbody_spectrum(temperature, wavelengths):
         1 / (exp((h * c) / (wavelengths * k * temperature) - 1))
 
 
-def normalize_spectrum(spectrum):
+def normalize_spectrum(spectrum, to='peak vis'):
     ''' Normalizes a spectrum to have unit peak within the visible band.
     Args:
         spectrum (`Spectrum`): object with iterable wavelength, value fields.
+
+        to (`str`): either `peak vis` or `peak 560`.
+                    'peak vis' - peak falls within visible range.
+                    'peak 560' - peak at 560nm.
 
     Returns:
         `Spectrum`: new spectrum object.
 
     '''
     wvl, vals = spectrum['wvl'], spectrum['values']
-    low, high = np.searchsorted(wvl, 400), np.searchsorted(wvl, 700)
-    vis_values_max = vals[low:high].max()
+    if to.lower() == 'peak vis':
+        low, high = np.searchsorted(wvl, 400), np.searchsorted(wvl, 700)
+        vals2 = vals / vals[low:high].max()
+    elif to.lower() == 'peak 560':
+        idx = np.searchsorted(wvl, 560)
+        vals2 = vals / vals[idx]
     return {
         'wvl': wvl,
-        'values': vals / vis_values_max,
+        'values': vals2,
     }
 
 
@@ -860,18 +904,6 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'
     '''
     wvl, values = spectrum_dict['wvl'], spectrum_dict['values']
 
-    try:
-        if illuminant[2] == '_':
-            # black body
-            _, temperature = illuminant.split('_')
-            temperature = float(temperature)
-            ill_type = 'blackbody'
-        else:
-            ill_type = 'cie_std'
-    except (ValueError, IndexError) as err:
-        # standard illuminant, not implemented
-        raise ValueError('Must use black body illuminants or CIE standard illuminants')
-
     cmf = prepare_cmf(cmf)
     wvl_cmf = cmf['wvl']
     try:
@@ -883,21 +915,18 @@ def spectrum_to_XYZ_nonemissive(spectrum_dict, illuminant='D65', cmf='1931_2deg'
         dat_interpf = interp1d(wvl, values, kind='linear', bounds_error=False, fill_value=0, assume_sorted=True)
         values = dat_interpf(wvl_cmf)
 
-    if ill_type is 'blackbody':
-        ill_spectrum = blackbody_spectrum(temperature, wvl_cmf)
-    else:
-        ill_spectrum = prepare_illuminant_spectrum(illuminant)
+    ill_spectrum = prepare_illuminant_spectrum(illuminant)
 
-        try:
-            can_be_direct_illuminant = np.allclose(wvl_cmf, ill_spectrum['wvl'])
-        except ValueError as e:
-            can_be_direct_illuminant = False
-        if can_be_direct_illuminant:
-            ill_spectrum = ill_spectrum['values']
-        else:
-            ill_wvl, ill_vals = ill_spectrum['wvl'], ill_spectrum['values']
-            ill_interpf = interp1d(ill_wvl, ill_vals, kind='linear', bounds_error=False, fill_value=0, assume_sorted=True)
-            ill_spectrum = ill_interpf(wvl_cmf)
+    try:
+        can_be_direct_illuminant = np.allclose(wvl_cmf, ill_spectrum['wvl'])
+    except ValueError as e:
+        can_be_direct_illuminant = False
+    if can_be_direct_illuminant:
+        ill_spectrum = ill_spectrum['values']
+    else:
+        ill_wvl, ill_vals = ill_spectrum['wvl'], ill_spectrum['values']
+        ill_interpf = interp1d(ill_wvl, ill_vals, kind='linear', bounds_error=False, fill_value=0, assume_sorted=True)
+        ill_spectrum = ill_interpf(wvl_cmf)
 
     dw = wvl_cmf[1] - wvl_cmf[0]
     k = 100 / (values * ill_spectrum * cmf['Y']).sum() / dw

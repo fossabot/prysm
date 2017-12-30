@@ -2,6 +2,8 @@
 '''
 import pytest
 
+import numpy as np
+
 from prysm import colorimetry
 
 
@@ -59,6 +61,25 @@ def test_robertson_cct_is_valid():
 def test_can_get_illuminant(illuminant):
     ill_spectrum = colorimetry.prepare_illuminant_spectrum(illuminant)
     assert ill_spectrum
+
+
+@pytest.mark.parametrize('illuminant', ['bb_2000', 'bb_6500', 'bb_6504', 'bb_6500.123'])
+def test_can_get_blackbody_illuminants(illuminant):
+    wvl = np.arange(360, 780, 5)
+    bb_spectrum = colorimetry.prepare_illuminant_spectrum(illuminant, wvl)
+    assert bb_spectrum
+
+
+def test_can_get_blackbody_illuminant_without_defined_wvl():
+    ill = 'bb_6500'
+    bb_spectrum = colorimetry.prepare_illuminant_spectrum(ill)
+    assert bb_spectrum
+
+
+@pytest.mark.parametrize('boolean', [True, False])
+def test_can_get_blackbody_illuminant_with_without_normalization(boolean):
+    bb_spectrum = colorimetry.prepare_illuminant_spectrum('bb_6500', bb_norm=boolean)
+    assert bb_spectrum
 
 
 def test_blackbody_spectrum_correctness():
