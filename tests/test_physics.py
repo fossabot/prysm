@@ -1,5 +1,7 @@
 ''' Unit tests for the physics of prysm.
 '''
+from itertools import product
+
 import numpy as np
 
 import pytest
@@ -56,3 +58,19 @@ def test_array_orientation_consistency_tilt():
     idx_y, idx_x = np.unravel_index(ps.data.argmax(), ps.data.shape)  # row-major y, x
     assert idx_x == ps.center_x
     assert idx_y > ps.center_y
+
+
+def test_array_orientation_consistency_astigmatic_blur():
+    ''' A quadratic phase error of the pupil in y should cause the
+        PSF to dilate in y, and the MTF to contract in y.
+    '''
+    pass
+
+
+FNOS = [1, 1.4, 2, 2.8, 4, 5.6, 8]
+WVLS = [.5, .55, 1, 10]
+
+
+@pytest.mark.parametrize('fno, wvl', product(FNOS, WVLS))
+def test_airydisk_has_unit_peak(fno, wvl):
+    assert airydisk(0, fno=fno, wavelength=wvl) == 1
