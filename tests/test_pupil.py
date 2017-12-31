@@ -66,3 +66,22 @@ def test_tilt_pupil_axis_is_not_x(p_tlt):
     idxs = np.isfinite(x)
     zeros = np.zeros(x.shape)
     assert np.allclose(x[idxs], zeros[idxs])
+
+
+def test_pupil_plot2d_functions(p):
+    fig, ax = p.plot2d()
+    assert fig
+    assert ax
+
+
+def test_pupil_interferogram_functions(p):
+    fig, ax = p.interferogram()
+    assert fig
+    assert ax
+
+
+def test_pupil_plot_slice_xy_functions(p):
+    fig, ax = p.plot_slice_xy()
+    assert fig
+    assert ax
+
