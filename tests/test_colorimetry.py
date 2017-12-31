@@ -24,6 +24,11 @@ def test_can_prepare_cmf_1964_10deg():
     assert obs
 
 
+def test_prepare_cmf_throws_for_bad_choices():
+    with pytest.raises(ValueError):
+        colorimetry.prepare_cmf('asdf')
+
+
 def test_cmf_is_valid():
     ''' Tests if a cmf returns as valid data.
     '''
@@ -98,3 +103,34 @@ def test_cct_duv_to_uvprime():
     u = up
     assert u == pytest.approx(true_u, rel=PRECISION, abs=PRECISION)
     assert v == pytest.approx(true_v, rel=PRECISION, abs=PRECISION)
+
+
+def test_plot_spectrum_functions():
+    spec = colorimetry.prepare_illuminant_spectrum()
+    fig, ax = colorimetry.plot_spectrum(spec)
+    assert fig
+    assert ax
+
+
+def test_cie_1931_functions():
+    fig, ax = colorimetry.cie_1931_plot()
+    assert fig
+    assert ax
+
+
+def test_cie_1976_functions():
+    fig, ax = colorimetry.cie_1976_plot()
+    assert fig
+    assert ax
+
+
+def test_cie_1976_plankian_locust_functions():
+    fig, ax = colorimetry.cie_1976_plankian_locust()
+    assert fig
+    assert ax
+
+
+def test_cct_duv_diagram_functions():
+    fig, ax = colorimetry.cct_duv_diagram()
+    assert fig
+    assert ax
