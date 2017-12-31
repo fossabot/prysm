@@ -196,7 +196,7 @@ class MTF(object):
                        extent=[left, right, bottom, top],
                        origin='lower',
                        cmap='Greys_r',
-                       interpolation='lanczo',
+                       interpolation='lanczos',
                        clim=lims)
         cb = fig.colorbar(im, label=label_str, ax=ax, fraction=0.046)
         cb.outline.set_edgecolor('k')
