@@ -49,9 +49,9 @@ class MTF(object):
         Args:
             data (`numpy.ndarray`): MTF values on 2D grid.
 
-            unit_x (`numpy.ndarray`): array of x units.
+            unit_x (`numpy.ndarray`): array of x units, 1D.
 
-            unit_y (`numpy.ndarray`): array of y units.
+            unit_y (`numpy.ndarray`): array of y units, 1D.
 
         Returns:
             `MTF`: a new :class:`MTF` instance.
