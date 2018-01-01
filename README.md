@@ -5,7 +5,7 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/679039930cbe48f69abc719685fcb964)](https://www.codacy.com/app/brandondube/prysm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=brandondube/prysm&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://coveralls.io/repos/github/brandondube/prysm/badge.svg?branch=master)](https://coveralls.io/github/brandondube/prysm?branch=master)
 
-A python optics module.
+A python3.6+ optics module.
 
 ## Installation
 
@@ -18,11 +18,11 @@ prysm is also on pypi, but is not kept very up-to-date there:
 pip install prysm
 ```
 
-If you would like to see more frequent updates to the version on pypi, please let the author know.  prysm requires [numpy](http://www.numpy.org/), [scipy](https://www.scipy.org/), [pandas](https://pandas.pydata.org/), and [matplotlib](https://matplotlib.org/) as well as [pytest](http://pytest.org/) for its testing framework.  Pip should take care of these for you, but if for some reason it doesn't, make sure they are installed first.
+If you would like to see more frequent updates to the version on pypi, please let the author know.  prysm requires [numpy](http://www.numpy.org/), [scipy](https://www.scipy.org/), [pandas](https://pandas.pydata.org/), and [matplotlib](https://matplotlib.org/).  Pip should take care of these for you, but if for some reason it doesn't, make sure they are installed first.
 
 ### Optional Dependencies
 
-Prysm uses numpy for array operations.  If your environment has [numba](http://numba.pydata.org/) installed, it will automatically accelerate many of prysm's compuations.  If [pyculib](http://pyculib.readthedocs.io/en/latest/) is installed with a compatible nVidia GPU, FFTs should be performed on the GPU automatically.
+Prysm uses numpy for array operations.  If your environment has [numba](http://numba.pydata.org/) installed, it will automatically accelerate many of prysm's compuations.  The tests will require [pytest](http://pytest.org/) to run.
 
 ## Features
 
@@ -62,13 +62,15 @@ Prysm uses numpy for array operations.  If your environment has [numba](http://n
 
 * Shack-Hartmann sensor models
 
-* Colorimetry and color space transforms
+* Colorimetry and color space transforms<sup>[1](#colour)</sup>
 
 * Utilities for processing MTF and spectral data
 
 * An OceanOptics spectrometer file reader
 
 * An Object-Oriented Lens model based on physical optics
+
+<a name="colour">1</a> For a more complete color science experience, it is recommended to use [colour](http://colour-science.org/).
 
 ## Usage
 
@@ -102,7 +104,7 @@ Notice that FringeZernike is also a type of pupil, and pupil objects support add
 
 ## Documentation
 
-See [prysm.readthedocs.io/](https://github.com/brandondube/prysm/tree/master/docs) -- the docstrings and [Examples](https://github.com/brandondube/prysm/tree/master/Examples) are much more up-to-date and probably more useful.  The docs are currently just an API reference and will require searching to even find anything within them.
+See [the docs](https://prysm.readthedocs.io/) -- the docstrings and [Examples](https://github.com/brandondube/prysm/tree/master/Examples) are much more up-to-date and probably more useful.  The docs are currently just an API reference and will require searching to even find anything within them.
 
 ## Contributing
 
