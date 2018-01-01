@@ -1059,46 +1059,6 @@ def XYZ_to_uvprime(XYZ):
     return np.stack((u, v), axis=len(shape))
 
 
-def XYZ_to_Luv(xyz, ref_white='D65'):
-    ''' Converts XYZ to Luv coordinates with a given white point.
-
-    Args:
-        xyz (`numpy.ndarray`): array with last dimension X, Y, Z.
-
-        ref_white (`str`): reference white, must be a valid illuminant black body.
-
-    Returns:
-        `tuple` containing:
-
-            `numpy.ndarray`: L coordinates.
-
-            `numpy.ndarray`: u coordinates.
-
-            `numpy.ndarray`: v coordinates.
-
-    '''
-    xyz = np.asarray(xyz)
-    upvp = XYZ_to_uvprime(xyz)
-    up, vp = upvp[..., 0], upvp[..., 1]
-
-    spectrum = prepare_illuminant_spectrum(ref_white)
-    ref_xyz = spectrum_to_XYZ_emissive(spectrum)
-    ref_upvp = XYZ_to_uvprime(ref_xyz)
-    ref_up, ref_vp = ref_upvp[..., 0], ref_upvp[..., 1]
-
-    Y = xyz[..., 1]
-    yr = Y / ref_xyz[1]
-
-    L_case_one = np.where(yr > CIE_E)
-    L = CIE_K * yr
-    L[L_case_one] = 116 * yr ** (1 / 3) - 16
-    u = 13 * L * (up - ref_up)
-    v = 13 * L * (vp - ref_vp)
-
-    shape = xyz.shape
-    return np.stack((L, u, v), axis=len(shape))
-
-
 def xyY_to_xy(xyY):
     ''' converts xyY points to xy points.
 
@@ -1323,29 +1283,6 @@ def uvprime_to_xy(uvprime):
 
     shape = x.shape
     return np.stack((x, y), axis=len(shape))
-
-
-def uvprime_to_Luv(uvprime):
-    ''' Converts u' v' points to CIE L*u*v* points.
-
-    Args:
-        uv (`numpy.ndarray`): ndarray with last dimension corresponding to
-            u', v'.
-
-    Returns:
-        `tuple` containing:
-
-            `numpy.ndarray`: L coordinates.
-
-            `numpy.ndarray`: u coordinates.
-
-            `numpy.ndarray`: v coordinates.
-
-    '''
-    xy = uvprime_to_xy(uvprime)
-    xyz = xy_to_XYZ(xy)
-    luv = XYZ_to_Luv(xyz)
-    return luv
 
 
 def uvprime_to_CCT(uvprime):
