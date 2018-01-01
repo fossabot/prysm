@@ -1300,7 +1300,7 @@ def Luv_to_chroma_hue(luv):
     return np.stack((C, h), axis=len(shape))
 
 
-def uvprime_to_xy(uv):
+def uvprime_to_xy(uvprime):
     ''' Converts u' v' points to xyY x,y points.
 
     Args:
@@ -1315,7 +1315,7 @@ def uvprime_to_xy(uv):
             `numpy.ndarray`: y coordinates.
 
     '''
-    uv = np.asarray(uv)
+    uv = np.asarray(uvprime)
     u, v = uv[..., 0], uv[..., 1]
     x = (9 * u) / (6 * u - 16 * v + 12)
     y = (4 * v) / (6 * u - 16 * v + 12)
@@ -1324,7 +1324,30 @@ def uvprime_to_xy(uv):
     return np.stack((x, y), axis=len(shape))
 
 
-def uvprime_to_CCT(uv):
+def uvprime_to_Luv(uvprime):
+    ''' Converts u' v' points to CIE L*u*v* points.
+
+    Args:
+        uv (`numpy.ndarray`): ndarray with last dimension corresponding to
+            u', v'.
+
+    Returns:
+        `tuple` containing:
+
+            `numpy.ndarray`: L coordinates.
+
+            `numpy.ndarray`: u coordinates.
+
+            `numpy.ndarray`: v coordinates.
+
+    '''
+    xy = uvprime_to_xy(uvprime)
+    xyz = xy_to_XYZ(xy)
+    luv = XYZ_to_Luv(xyz)
+    return luv
+
+
+def uvprime_to_CCT(uvprime):
     ''' Computes CCT from u'v' coordinates.
 
     Args:
@@ -1334,12 +1357,12 @@ def uvprime_to_CCT(uv):
         `float`: CCT.
 
     '''
-    uv = np.asarray(uv)
+    uv = np.asarray(uvprime)
     xy = uvprime_to_xy(uv)
     return xy_to_CCT(xy)
 
 
-def uvprime_to_Duv(uv):
+def uvprime_to_Duv(uvprime):
     ''' Computes Duv from u'v' coordiantes.
 
     Args:
@@ -1355,7 +1378,7 @@ def uvprime_to_Duv(uv):
     k0, k1, k2, k3 = CIE_DUV_k0, CIE_DUV_k1, CIE_DUV_k2, CIE_DUV_k3
     k4, k5, k6 = CIE_DUV_k4, CIE_DUV_k5, CIE_DUV_k6
 
-    uv = np.asarray(uv)
+    uv = np.asarray(uvprime)
     u, v = uv[..., 0], uv[..., 1] / 1.5  # inline convert v' to v
     L_FP = sqrt((u - 0.292) ** 2 + (v - 0.24) ** 2)
     a = arccos((u - 0.292) / L_FP)
@@ -1363,7 +1386,7 @@ def uvprime_to_Duv(uv):
     return L_FP - L_BB
 
 
-def uvprime_to_CCT_Duv(uv):
+def uvprime_to_CCT_Duv(uvprime):
     ''' Computes CCT and Duv from u'v' coordiantes.
 
     Args:
@@ -1377,8 +1400,8 @@ def uvprime_to_CCT_Duv(uv):
         http://www.cormusa.org/uploads/CORM_2011_Calculation_of_CCT_and_Duv_and_Practical_Conversion_Formulae.PDF
 
     '''
-    duv = uvprime_to_Duv(uv)
-    cct = uvprime_to_CCT(uv)
+    duv = uvprime_to_Duv(uvprime)
+    cct = uvprime_to_CCT(uvprime)
     return cct, duv
 
 
@@ -1443,29 +1466,6 @@ def spectrum_to_CCT_Duv(spectrum_dict):
     CCT = uvprime_to_CCT(upvp)
     Duv = uvprime_to_Duv(upvp)
     return (CCT, Duv)
-
-
-def uvprime_to_Luv(uv):
-    ''' Converts u' v' points to CIE L*u*v* points.
-
-    Args:
-        uv (`numpy.ndarray`): ndarray with last dimension corresponding to
-            u', v'.
-
-    Returns:
-        `tuple` containing:
-
-            `numpy.ndarray`: L coordinates.
-
-            `numpy.ndarray`: u coordinates.
-
-            `numpy.ndarray`: v coordinates.
-
-    '''
-    xy = uvprime_to_xy(uv)
-    xyz = xy_to_XYZ(xy)
-    luv = XYZ_to_Luv(xyz)
-    return luv
 
 
 def XYZ_to_AdobeRGB(XYZ, illuminant='D65'):
