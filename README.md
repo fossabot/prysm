@@ -70,7 +70,7 @@ Prysm uses numpy for array operations.  If your environment has [numba](http://n
 
 * An Object-Oriented Lens model based on physical optics
 
-<a name="colour">1</a> For a more complete color science experience, it is recommended to use [colour](http://colour-science.org/).
+<a name="colour"><sup>1</sup></a> For a more complete color science experience, it is recommended to use [colour](http://colour-science.org/).
 
 ## Usage
 
