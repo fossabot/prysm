@@ -1597,4 +1597,4 @@ def sRGB_reverse_oetf(V):
 
     '''
     V = np.asarray(V)
-    np.where(V <= sRGB_oetf(0.0031308), V / 12.92, ((V + 0.055) / 1.055) ** 2.4)
+    return np.where(V <= sRGB_oetf(0.0031308), V / 12.92, ((V + 0.055) / 1.055) ** 2.4)
