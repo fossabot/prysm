@@ -962,7 +962,7 @@ def wavelength_to_XYZ(wavelength, observer='1931_2deg'):
     return np.stack((x, y, z), axis=len(shape))
 
 
-def XYZ_to_xyY(XYZ, assume_nozeros=True, zero_ref_illuminant='D65'):
+def XYZ_to_xyY(XYZ, assume_nozeros=True, ref_white='D65'):
     ''' Converts xyz points to xy points.
 
     Args:
@@ -973,7 +973,7 @@ def XYZ_to_xyY(XYZ, assume_nozeros=True, zero_ref_illuminant='D65'):
             will run faster as `True`, if `False` will correct for all-zero
             values.
 
-        zero_ref_illuminant (`str): string for reference illuminant in the case
+        ref_white (`str): string for reference illuminant in the case
             where X==Y==Z==0.
 
     Returns:
@@ -989,7 +989,6 @@ def XYZ_to_xyY(XYZ, assume_nozeros=True, zero_ref_illuminant='D65'):
         zero_ref_illuminant is unimplemented, forced to D65 at the time being.
 
     '''
-    x_D65, y_D65 = 0.3128, 0.3290
 
     X, Y, Z = XYZ[..., 0], XYZ[..., 1], XYZ[..., 2]
 
@@ -1008,8 +1007,11 @@ def XYZ_to_xyY(XYZ, assume_nozeros=True, zero_ref_illuminant='D65'):
     shape = x.shape
 
     if not assume_nozeros:
-        x[allzeros] = x_D65
-        y[allzeros] = y_D65
+        spectrum = prepare_illuminant_spectrum(ref_white)
+        xyz = spectrum_to_XYZ_emissive(spectrum)
+        xr, yr = XYZ_to_xy(xyz)
+        x[allzeros] = xr
+        y[allzeros] = yr
 
     return np.stack((x, y, Y), axis=len(shape))
 
@@ -1057,13 +1059,13 @@ def XYZ_to_uvprime(XYZ):
     return np.stack((u, v), axis=len(shape))
 
 
-def XYZ_to_Luv(xyz, refwhite='bb_6500'):
+def XYZ_to_Luv(xyz, ref_white='D65'):
     ''' Converts XYZ to Luv coordinates with a given white point.
 
     Args:
         xyz (`numpy.ndarray`): array with last dimension X, Y, Z.
 
-        refwhite (`str`): reference white, must be a 6500K black body.
+        ref_white (`str`): reference white, must be a valid illuminant black body.
 
     Returns:
         `tuple` containing:
@@ -1079,9 +1081,8 @@ def XYZ_to_Luv(xyz, refwhite='bb_6500'):
     upvp = XYZ_to_uvprime(xyz)
     up, vp = upvp[..., 0], upvp[..., 1]
 
-    wvl = np.arange(360, 830, 5)
-    spectrum = blackbody_spectrum(6500, wvl)
-    ref_xyz = spectrum_to_XYZ_emissive(wvl, spectrum)
+    spectrum = prepare_illuminant_spectrum(ref_white)
+    ref_xyz = spectrum_to_XYZ_emissive(spectrum)
     ref_upvp = XYZ_to_uvprime(ref_xyz)
     ref_up, ref_vp = ref_upvp[..., 0], ref_upvp[..., 1]
 
@@ -1146,9 +1147,9 @@ def xyY_to_XYZ(xyY):
     y_l = y.copy()
     idxs = y_l == 0
     y_l[idxs] = 0.3
-    X = (x * Y) / y_l
-    Y = Y
-    Z = ((1 - x - y_l) * Y) / y_l
+    X = np.asarray((x * Y) / y_l)
+    Y = np.asarray(Y)
+    Z = np.asarray(((1 - x - y_l) * Y) / y_l)
     X[idxs] = 0
     Y[idxs] = 0
     Z[idxs] = 0
