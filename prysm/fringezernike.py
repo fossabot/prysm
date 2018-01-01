@@ -518,6 +518,8 @@ class FringeZernike(Pupil):
             bb = kwargs['base']
             if bb > 1:
                 raise ValueError('It violates convention to use a base greater than 1.')
+            elif bb < 0:
+                raise ValueError('It is nonsensical to use a negative base.')
             self.base = bb
         except KeyError:
             # user did not specify base
