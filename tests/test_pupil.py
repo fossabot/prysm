@@ -84,4 +84,3 @@ def test_pupil_plot_slice_xy_functions(p):
     fig, ax = p.plot_slice_xy()
     assert fig
     assert ax
-
