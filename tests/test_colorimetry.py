@@ -87,10 +87,6 @@ def test_can_get_blackbody_illuminant_with_without_normalization(boolean):
     assert bb_spectrum
 
 
-def test_blackbody_spectrum_correctness():
-    pass
-
-
 def test_cct_duv_to_uvprime():
     cct = 2900  # values from Ohno 2013
     duv = 0.0200
@@ -130,7 +126,32 @@ def test_cie_1976_plankian_locust_functions():
     assert ax
 
 
+def test_cie_1976_plankian_locust_takes_no_isotemperature_lines():
+    fig, ax = colorimetry.cie_1976_plankian_locust(isotemperature_lines_at=False)
+    assert fig
+    assert ax
+
+
 def test_cct_duv_diagram_functions():
     fig, ax = colorimetry.cct_duv_diagram()
     assert fig
     assert ax
+
+
+@pytest.mark.parametrize('illuminant', ['D50', 'D65'])
+def test_XYZ_to_AdobeRGB_functions_for_allowed_illuminants(illuminant):
+    XYZ = [1, 1, 1]
+    assert colorimetry.XYZ_to_AdobeRGB(XYZ, illuminant).all()
+    assert colorimetry.XYZ_to_AdobeRGB(XYZ, illuminant).all()
+
+
+@pytest.mark.parametrize('illuminant', ['F3', 'HP1', 'A', 'B', 'C', 'E'])
+def test_XYZ_to_AdobeRGB_rejects_bad_illuminant(illuminant):
+    XYZ = [1, 1, 1]
+    with pytest.raises(ValueError):
+        colorimetry.XYZ_to_AdobeRGB(XYZ, illuminant)
+
+
+@pytest.mark.parametrize('L', [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1])
+def test_sRGB_oetf_and_reverse_oetf_cancel(L):
+    assert colorimetry.sRGB_reverse_oetf(colorimetry.sRGB_oetf(L)) == pytest.approx(L)
