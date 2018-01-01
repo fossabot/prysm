@@ -507,8 +507,6 @@ class FringeZernike(Pupil):
                 self.coefs = [0] * len(zernfcns)
             else:
                 self.coefs = [*args[0]]
-        else:
-            self.coefs = [0] * len(zernfcns)
 
         self.normalize = False
         pass_args = {}
