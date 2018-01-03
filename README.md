@@ -4,6 +4,7 @@
 [![Documentation Status](https://readthedocs.org/projects/prysm/badge/?version=latest)](http://prysm.readthedocs.io/en/latest/?badge=latest)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/679039930cbe48f69abc719685fcb964)](https://www.codacy.com/app/brandondube/prysm?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=brandondube/prysm&amp;utm_campaign=Badge_Grade)
 [![Coverage Status](https://coveralls.io/repos/github/brandondube/prysm/badge.svg?branch=master)](https://coveralls.io/github/brandondube/prysm?branch=master)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FMichaelMauderer%2Fprysm.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FMichaelMauderer%2Fprysm?ref=badge_shield)
 
 A python3.6+ optics module.
 
@@ -110,3 +111,7 @@ See [the docs](https://prysm.readthedocs.io/) -- the docstrings and [Examples](h
 
 If you find an issue with prysm, please open an [issue](https://github.com/brandondube/prysm/issues) or [pull request](https://github.com/brandondube/prysm/pulls).  Prysm has some usage of f-strings, so any code contributed is only expected to work on python 3.6+, and is licensed under the [MIT license](https://github.com/brandondube/prysm/blob/master/LICENSE.md).  The library is
 most in need of contributions in the form of tests and documentation.
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FMichaelMauderer%2Fprysm.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FMichaelMauderer%2Fprysm?ref=badge_large)
